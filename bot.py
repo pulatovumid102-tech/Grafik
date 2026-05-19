@@ -1,58 +1,57 @@
-import asyncio
-from datetime import datetime
-
-import pytz
-from telegram import Bot
-from telegram.ext import Application
+from telegram import Update
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    ContextTypes,
+)
 
 TOKEN = "8780693245:AAENyEtQ2DDidajLdDaOeKuZKg0nniGI4zw"
 
-CHAT_ID = "1645167548"
 
-timezone = pytz.timezone("Asia/Tashkent")
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Bot ishladi ✅")
 
 
-async def send_graphic_reminder(context):
-    now = datetime.now(timezone).strftime("%H:%M:%S")
-
-    message = f"""
-📊 Grafikni tekshir
-
-🕒 Vaqt: {now}
-
-❗️Savdoga kirishdan oldin:
-- Trendni tekshir
-- Newsni tekshir
-- Riskni hisobla
-"""
-
-    await context.bot.send_message(
-        chat_id=CHAT_ID,
-        text=message
+async def grafik(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "📊 Grafikni tekshir\n\n❗️Trendni va riskni tekshir"
     )
 
 
-async def start_bot():
+async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
+    await context.bot.send_message(
+        chat_id=context.job.chat_id,
+        text="📊 Grafikni tekshir\n\n❗️Trendni va riskni tekshir"
+    )
+
+
+async def set_timer(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+
+    context.job_queue.run_repeating(
+        send_reminder,
+        interval=60,
+        first=5,
+        chat_id=chat_id,
+        name=str(chat_id),
+    )
+
+    await update.message.reply_text(
+        "⏰ Endi har 1 minutda eslatma yuboraman"
+    )
+
+
+def main():
     app = Application.builder().token(TOKEN).build()
 
-    job_queue = app.job_queue
-
-    # Har 1 minutda yuboradi
-    job_queue.run_repeating(
-        send_graphic_reminder,
-        interval=60,
-        first=5
-    )
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("grafik", grafik))
+    app.add_handler(CommandHandler("timer", set_timer))
 
     print("Bot ishladi ✅")
 
-    await app.initialize()
-    await app.start()
-    await app.updater.start_polling()
-
-    while True:
-        await asyncio.sleep(60)
+    app.run_polling()
 
 
 if __name__ == "__main__":
-    asyncio.run(start_bot())
+    main()
