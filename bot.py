@@ -24,10 +24,10 @@ async def send_main_reminder(context: ContextTypes.DEFAULT_TYPE):
     chat_id = context.job.chat_id
 
     # eski followupni ochirish
-    if chat_id in followup_jobs:
-        old_job = followup_jobs[chat_id]
-        old_job.schedule_removal()
-        del followup_jobs[chat_id]
+if chat_id in followup_jobs:
+    old_job = followup_jobs[chat_id]
+    old_job.schedule_removal()
+    del followup_jobs[chat_id]
 
     text = (
         "📊 Grafikga qara\n\n"
