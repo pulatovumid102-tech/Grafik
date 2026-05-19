@@ -1,46 +1,151 @@
-from telegram import Update
+from datetime import time
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+)
 from telegram.ext import (
     Application,
     CommandHandler,
+    CallbackQueryHandler,
     ContextTypes,
 )
 
 TOKEN = "8780693245:AAF8w_cxMTHyr0xHrQnGotDyZrYlfIzj97Q"
 
-counter = 1
+START_HOUR = 5
+END_HOUR = 22
+
+followup_jobs = {}
 
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("✅ Bot ishladi")
+# =========================
+# MAIN REMINDER
+# =========================
 
+async def send_main_reminder(context: ContextTypes.DEFAULT_TYPE):
+    chat_id = context.job.chat_id
 
-async def send_numbers(context: ContextTypes.DEFAULT_TYPE):
-    global counter
+    # eski follow-up ni o'chirish
+    if chat_id in followup_jobs:
+        old_job = followup_jobs[chat_id]
+        old_job.schedule_removal()
+        del followup_jobs[chat_id]
+
+    text = (
+        "📊 Grafikga qara\n\n"
+        "📐 Faqat fibo bo‘lsa kirgin\n\n"
+        "📋 Hamma instrumentni tekshirib chiq\n\n"
+        "⏳ 5 minutda habar olaman"
+    )
 
     await context.bot.send_message(
-        chat_id=context.job.chat_id,
-        text=str(counter)
+        chat_id=chat_id,
+        text=text
     )
 
-    counter += 1
+    # 5 minutdan keyin follow-up
+    job = context.job_queue.run_once(
+        send_followup,
+        when=30,
+        chat_id=chat_id,
+        name=f"followup_{chat_id}"
+    )
+
+    followup_jobs[chat_id] = job
 
 
-async def count(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# =========================
+# FOLLOWUP
+# =========================
+
+async def send_followup(context: ContextTypes.DEFAULT_TYPE):
+    chat_id = context.job.chat_id
+
+    keyboard = [
+        [
+            InlineKeyboardButton("✅ Ҳа", callback_data="done"),
+            InlineKeyboardButton("❌ Йўқ", callback_data="no"),
+        ]
+    ]
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await context.bot.send_message(
+        chat_id=chat_id,
+        text="❓ Tekshirdingmi?",
+        reply_markup=reply_markup
+    )
+
+
+# =========================
+# BUTTONS
+# =========================
+
+async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    chat_id = query.message.chat.id
+
+    # HA
+    if query.data == "done":
+        await query.message.reply_text("👍")
+
+    # YO'Q
+    elif query.data == "no":
+        await query.message.reply_text(
+            "⏳ Tekshir, yana 5 minutdan keyin yozaman."
+        )
+
+        # eski follow-up ni o'chirish
+        if chat_id in followup_jobs:
+            old_job = followup_jobs[chat_id]
+            old_job.schedule_removal()
+
+        # yangi 5 minutlik follow-up
+        job = context.job_queue.run_once(
+            send_followup,
+            when=30,
+            chat_id=chat_id,
+            name=f"followup_{chat_id}"
+        )
+
+        followup_jobs[chat_id] = job
+
+
+# =========================
+# START
+# =========================
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+
+    # Har 20 minut
     context.job_queue.run_repeating(
-        send_numbers,
-        interval=10,
+        send_main_reminder,
+        interval=30,
         first=1,
-        chat_id=update.effective_chat.id,
+        chat_id=chat_id,
+        name=f"main_{chat_id}"
     )
 
-    await update.message.reply_text("🚀 Sanash boshlandi")
+    await update.message.reply_text(
+        "✅ Bot ishga tushdi\n\n"
+        "⏰ Ish vaqti: 05:00 → 22:00\n"
+        "🔁 Har 20 minut reminder keladi"
+    )
 
+
+# =========================
+# MAIN
+# =========================
 
 def main():
     app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("count", count))
+    app.add_handler(CallbackQueryHandler(buttons))
 
     print("Bot ishladi ✅")
 
