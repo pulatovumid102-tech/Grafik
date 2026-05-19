@@ -1,9 +1,9 @@
-from datetime import time
 from telegram import (
     Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
 )
+
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -12,9 +12,6 @@ from telegram.ext import (
 )
 
 TOKEN = "8780693245:AAF8w_cxMTHyr0xHrQnGotDyZrYlfIzj97Q"
-
-START_HOUR = 5
-END_HOUR = 22
 
 followup_jobs = {}
 
@@ -26,7 +23,7 @@ followup_jobs = {}
 async def send_main_reminder(context: ContextTypes.DEFAULT_TYPE):
     chat_id = context.job.chat_id
 
-    # eski follow-up ni o'chirish
+    # eski followupni ochirish
     if chat_id in followup_jobs:
         old_job = followup_jobs[chat_id]
         old_job.schedule_removal()
@@ -34,7 +31,7 @@ async def send_main_reminder(context: ContextTypes.DEFAULT_TYPE):
 
     text = (
         "📊 Grafikga qara\n\n"
-        "📐 Faqat fibo bo‘lsa kirgin\n\n"
+        "📐 Faqat fibo bolsa kirgin\n\n"
         "📋 Hamma instrumentni tekshirib chiq\n\n"
         "⏳ 5 minutda habar olaman"
     )
@@ -44,7 +41,7 @@ async def send_main_reminder(context: ContextTypes.DEFAULT_TYPE):
         text=text
     )
 
-    # 5 minutdan keyin follow-up
+    # TEST UCHUN 10 SEKUND
     job = context.job_queue.run_once(
         send_followup,
         when=10,
@@ -64,8 +61,15 @@ async def send_followup(context: ContextTypes.DEFAULT_TYPE):
 
     keyboard = [
         [
-            InlineKeyboardButton("✅ Ҳа", callback_data="done"),
-            InlineKeyboardButton("❌ Йўқ", callback_data="no"),
+            InlineKeyboardButton(
+                "✅ Ha",
+                callback_data="done"
+            ),
+
+            InlineKeyboardButton(
+                "❌ Yoq",
+                callback_data="no"
+            ),
         ]
     ]
 
@@ -84,26 +88,35 @@ async def send_followup(context: ContextTypes.DEFAULT_TYPE):
 
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
+
     await query.answer()
 
     chat_id = query.message.chat.id
 
     # HA
     if query.data == "done":
-        await query.message.reply_text("👍")
 
-    # YO'Q
+        # eski followupni ochirish
+        if chat_id in followup_jobs:
+            old_job = followup_jobs[chat_id]
+            old_job.schedule_removal()
+            del followup_jobs[chat_id]
+
+        await query.message.reply_text("👍🏻👍🏻")
+
+    # YOQ
     elif query.data == "no":
+
         await query.message.reply_text(
             "⏳ Tekshir, yana 5 minutdan keyin yozaman."
         )
 
-        # eski follow-up ni o'chirish
+        # eski followupni ochirish
         if chat_id in followup_jobs:
             old_job = followup_jobs[chat_id]
             old_job.schedule_removal()
 
-        # yangi 5 minutlik follow-up
+        # TEST UCHUN 10 SEKUND
         job = context.job_queue.run_once(
             send_followup,
             when=10,
@@ -121,7 +134,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
 
-    # Har 20 minut
+    # TEST UCHUN HAR 60 SEKUND
     context.job_queue.run_repeating(
         send_main_reminder,
         interval=60,
@@ -132,8 +145,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         "✅ Bot ishga tushdi\n\n"
-        "⏰ Ish vaqti: 05:00 → 22:00\n"
-        "🔁 Har 20 minut reminder keladi"
+        "🔁 Test rejim ishlayapti"
     )
 
 
@@ -144,8 +156,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     app = Application.builder().token(TOKEN).build()
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(buttons))
+    app.add_handler(
+        CommandHandler("start", start)
+    )
+
+    app.add_handler(
+        CallbackQueryHandler(buttons)
+    )
 
     print("Bot ishladi ✅")
 
