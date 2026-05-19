@@ -1,6 +1,5 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
-import os
 
 from telegram import (
     Update,
@@ -15,11 +14,7 @@ from telegram.ext import (
     ContextTypes,
 )
 
-# =========================
-# TOKEN
-# =========================
-
-TOKEN = os.getenv("8780693245:AAF8w_cxMTHyr0xHrQnGotDyZrYlfIzj97Q")
+TOKEN = "8780693245:AAF8w_cxMTHyr0xHrQnGotDyZrYlfIzj97Q"
 
 # =========================
 # SOZLAMALAR
@@ -193,7 +188,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # HA
     if query.data == "done":
 
-        await query.message.reply_text("👍")
+        await query.message.reply_text("👍🏻👍🏻")
 
     # YOQ
     elif query.data == "no":
