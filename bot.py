@@ -47,7 +47,7 @@ async def send_main_reminder(context: ContextTypes.DEFAULT_TYPE):
     # 5 minutdan keyin follow-up
     job = context.job_queue.run_once(
         send_followup,
-        when=30,
+        when=10,
         chat_id=chat_id,
         name=f"followup_{chat_id}"
     )
@@ -106,7 +106,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # yangi 5 minutlik follow-up
         job = context.job_queue.run_once(
             send_followup,
-            when=30,
+            when=10,
             chat_id=chat_id,
             name=f"followup_{chat_id}"
         )
@@ -124,7 +124,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Har 20 minut
     context.job_queue.run_repeating(
         send_main_reminder,
-        interval=30,
+        interval=60,
         first=1,
         chat_id=chat_id,
         name=f"main_{chat_id}"
