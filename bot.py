@@ -1,49 +1,58 @@
-from telegram import Update
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    ContextTypes,
-)
-import pytz
+import asyncio
 from datetime import datetime
 
-TOKEN = "8780693245:AAENyEtQ2DDidajLdDaOeKuZKg0nniGI4zw"
+import pytz
+from telegram import Bot
+from telegram.ext import Application
+
+TOKEN = "TOKENINGNI_BUYERGA_QOY"
+
+CHAT_ID = "CHAT_IDINGNI_BUYERGA_QOY"
+
+timezone = pytz.timezone("Asia/Tashkent")
 
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Bot ishlayapti 😄🔥")
+async def send_graphic_reminder(context):
+    now = datetime.now(timezone).strftime("%H:%M:%S")
 
+    message = f"""
+📊 Grafikni tekshir
 
-async def send_graphic_reminder(context: ContextTypes.DEFAULT_TYPE):
-    chat_id = 1645167548
+🕒 Vaqt: {now}
 
-    current_time = datetime.now(
-        pytz.timezone("Asia/Tashkent")
-    ).strftime("%H:%M")
+❗️Savdoga kirishdan oldin:
+- Trendni tekshir
+- Newsni tekshir
+- Riskni hisobla
+"""
 
     await context.bot.send_message(
-        chat_id=chat_id,
-        text=f"📊 Grafikni tekshirish vaqti bo'ldi\n⏰ {current_time}"
+        chat_id=CHAT_ID,
+        text=message
     )
 
 
-def main():
+async def start_bot():
     app = Application.builder().token(TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
 
     job_queue = app.job_queue
 
+    # Har 1 minutda yuboradi
     job_queue.run_repeating(
         send_graphic_reminder,
         interval=60,
         first=5
     )
 
-    print("Bot ishga tushdi 🚀")
+    print("Bot ishladi ✅")
 
-    app.run_polling()
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling()
+
+    while True:
+        await asyncio.sleep(60)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(start_bot())
