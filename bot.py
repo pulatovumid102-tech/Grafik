@@ -1,5 +1,6 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
+import os
 
 from telegram import (
     Update,
@@ -14,7 +15,11 @@ from telegram.ext import (
     ContextTypes,
 )
 
-TOKEN = "8780693245:AAF8w_cxMTHyr0xHrQnGotDyZrYlfIzj97Q"
+# =========================
+# TOKEN
+# =========================
+
+TOKEN = os.getenv("8780693245:AAF8w_cxMTHyr0xHrQnGotDyZrYlfIzj97Q")
 
 # =========================
 # SOZLAMALAR
@@ -31,13 +36,20 @@ FOLLOWUP_TIME = 300    # 5 minut
 main_jobs = {}
 followup_jobs = {}
 
-
 # =========================
-# VAQT TEKSHIRISH
+# ISH VAQTI
 # =========================
 
 def is_active_time():
     now = datetime.now(TIMEZONE)
+
+    weekday = now.weekday()
+
+    # shanba va yakshanba
+    if weekday >= 5:
+        return False
+
+    # vaqt oraligi
     return START_HOUR <= now.hour < END_HOUR
 
 
@@ -166,6 +178,12 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     chat_id = query.message.chat.id
 
+    # buttonlarni ochirish
+    try:
+        await query.edit_message_reply_markup(reply_markup=None)
+    except:
+        pass
+
     # eski followupni ochirish
     if chat_id in followup_jobs:
         old_job = followup_jobs[chat_id]
@@ -175,7 +193,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # HA
     if query.data == "done":
 
-        await query.message.reply_text("👍🏻👍🏻")
+        await query.message.reply_text("👍")
 
     # YOQ
     elif query.data == "no":
@@ -202,17 +220,34 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
 
+    now = datetime.now(TIMEZONE)
+    weekday = now.weekday()
+
+    restarted = False
+
     # eski main jobni ochirish
     if chat_id in main_jobs:
         old_main = main_jobs[chat_id]
         old_main.schedule_removal()
         del main_jobs[chat_id]
+        restarted = True
 
     # eski followupni ochirish
     if chat_id in followup_jobs:
         old_follow = followup_jobs[chat_id]
         old_follow.schedule_removal()
         del followup_jobs[chat_id]
+
+    # weekend
+    if weekday >= 5:
+
+        await update.message.reply_text(
+            "🌙 Hozir bozor yopiq\n\n"
+            "📅 Shanba va Yakshanba dam olish kuni\n\n"
+            "📈 Dushanba kuni savdoni davom ettiramiz"
+        )
+
+        return
 
     # tun rejimi
     if not is_active_time():
@@ -225,10 +260,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     else:
 
-        await update.message.reply_text(
-            "☀️ Savdo vaqti boshlandi\n\n"
-            "📊 Grafiklarni tekshirishni boshlaymiz"
-        )
+        if restarted:
+
+            await update.message.reply_text(
+                "♻️ Bot qayta ishga tushirildi\n\n"
+                "🔁 Reminder tizimi faol"
+            )
+
+        else:
+
+            await update.message.reply_text(
+                "☀️ Savdo vaqti boshlandi\n\n"
+                "📊 Grafiklarni tekshirishni boshlaymiz"
+            )
 
     # scheduler
     main_job = context.job_queue.run_repeating(
@@ -243,6 +287,30 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # =========================
+# STOP
+# =========================
+
+async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+
+    # main job
+    if chat_id in main_jobs:
+        old_main = main_jobs[chat_id]
+        old_main.schedule_removal()
+        del main_jobs[chat_id]
+
+    # followup
+    if chat_id in followup_jobs:
+        old_follow = followup_jobs[chat_id]
+        old_follow.schedule_removal()
+        del followup_jobs[chat_id]
+
+    await update.message.reply_text(
+        "🛑 Reminder tizimi toxtatildi"
+    )
+
+
+# =========================
 # MAIN
 # =========================
 
@@ -251,6 +319,10 @@ def main():
 
     app.add_handler(
         CommandHandler("start", start)
+    )
+
+    app.add_handler(
+        CommandHandler("stop", stop)
     )
 
     app.add_handler(
