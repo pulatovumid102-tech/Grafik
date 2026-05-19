@@ -139,7 +139,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.job_queue.run_repeating(
         send_main_reminder,
         interval=60,
-        first=1,
+        first=0,
         chat_id=chat_id,
         name=f"main_{chat_id}"
     )
