@@ -102,30 +102,30 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             old_job.schedule_removal()
             del followup_jobs[chat_id]
 
-        await query.message.reply_text("👍")
+        await query.message.reply_text("👍🏻👍🏻")
 
     # YOQ
     elif query.data == "no":
 
-    await query.message.reply_text(
-        "⏳ Tekshir, yana 5 minutdan keyin yozaman."
-    )
+        await query.message.reply_text(
+            "⏳ Tekshir, yana 5 minutdan keyin yozaman."
+        )
 
-    # eski followupni ochirish
-    if chat_id in followup_jobs:
-        old_job = followup_jobs[chat_id]
-        old_job.schedule_removal()
-        del followup_jobs[chat_id]
+        # eski followupni ochirish
+        if chat_id in followup_jobs:
+            old_job = followup_jobs[chat_id]
+            old_job.schedule_removal()
+            del followup_jobs[chat_id]
 
-    # yangi followup
-    job = context.job_queue.run_once(
-        send_followup,
-        when=10,
-        chat_id=chat_id,
-        name=f"followup_{chat_id}"
-    )
+        # yangi followup
+        job = context.job_queue.run_once(
+            send_followup,
+            when=10,
+            chat_id=chat_id,
+            name=f"followup_{chat_id}"
+        )
 
-    followup_jobs[chat_id] = job
+        followup_jobs[chat_id] = job
 
 
 # =========================
@@ -135,7 +135,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
 
-    # TEST UCHUN HAR 60 SEKUND
+    # HAR 60 SEKUND TEST
     context.job_queue.run_repeating(
         send_main_reminder,
         interval=60,
