@@ -102,7 +102,7 @@ def main():
     # Har 15 minut reminder
     app.job_queue.run_repeating(
         send_graphic_reminder,
-        interval=900,
+        interval=60,
         first=5
     )
 
