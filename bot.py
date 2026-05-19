@@ -5,7 +5,7 @@ from telegram.ext import (
     ContextTypes,
 )
 
-TOKEN = "8780693245:AAENyEtQ2DDidajLdDaOeKuZKg0nniGI4zw"
+TOKEN = "8780693245:AAF8w_cxMTHyr0xHrQnGotDyZrYlfIzj97Q"
 
 counter = 0.0
 
