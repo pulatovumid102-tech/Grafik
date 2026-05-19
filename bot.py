@@ -1,28 +1,115 @@
-#!/usr/bin/env python3
-"""
-Simple Telegram Support Bot
-"""
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+)
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    CallbackQueryHandler,
+    ContextTypes,
+)
 
-from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+import asyncio
 
+TOKEN = "8780693245:AAENyEtQ2DDidajLdDaOeKuZKg0nniGI4zw"
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a message when the command /start is issued."""
-    await update.message.reply_text("Bot ishlayapti 😄🔥")
-
-
-def main() -> None:
-    """Start the bot."""
-    # Create the Application
-    application = Application.builder().token("8780693245:AAENyEtQ2DDidajLdDaOeKuZKg0nniGI4zw").build()
-
-    # on different commands - answer in Telegram
-    application.add_handler(CommandHandler("start", start))
-
-    # Run the bot until the user presses Ctrl-C
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+CHAT_ID = -5076135815
 
 
-if __name__ == '__main__':
+# /start command
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "Grafik nazorat boti ishga tushdi."
+    )
+
+
+# Reminder yuborish
+async def send_graphic_reminder(context: ContextTypes.DEFAULT_TYPE):
+
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                "✅ Grafik tekshirildi",
+                callback_data="checked"
+            )
+        ]
+    ]
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    message = await context.bot.send_message(
+        chat_id=CHAT_ID,
+        text="📊 Grafikni tekshirish vaqti bo‘ldi.",
+        reply_markup=reply_markup
+    )
+
+    # Oldingi statusni reset qilamiz
+    context.bot_data["confirmed"] = False
+
+    # 2 minut kutadi
+    await asyncio.sleep(120)
+
+    # Agar hali tasdiqlanmagan bo‘lsa
+    if context.bot_data.get("confirmed") is False:
+
+        warning = await context.bot.send_message(
+            chat_id=CHAT_ID,
+            text="⚠️ Grafik hali tekshirilmagan."
+        )
+
+        # Warning ID saqlanadi
+        context.bot_data["warning_id"] = warning.message_id
+
+
+# Tugma bosilganda
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    query = update.callback_query
+
+    await query.answer()
+
+    # confirmed status
+    context.bot_data["confirmed"] = True
+
+    # old warningni o‘chirish
+    warning_id = context.bot_data.get("warning_id")
+
+    if warning_id:
+        try:
+            await context.bot.delete_message(
+                chat_id=query.message.chat.id,
+                message_id=warning_id
+            )
+        except:
+            pass
+
+    await query.message.reply_text(
+        "Grafik nazorati o‘z vaqtida bajarildi."
+    )
+
+
+def main():
+
+    app = Application.builder().token(TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+
+    app.add_handler(
+        CallbackQueryHandler(button_handler)
+    )
+
+    # Har 15 minut reminder
+    app.job_queue.run_repeating(
+        send_graphic_reminder,
+        interval=900,
+        first=5
+    )
+
+    print("🔥 Bot ishlayapti")
+
+    app.run_polling()
+
+
+if __name__ == "__main__":
     main()
