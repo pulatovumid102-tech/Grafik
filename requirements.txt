@@ -1,2 +1,1 @@
-python-telegram-bot==21.3
-pytz
+python-3.11.9
