@@ -5,9 +5,9 @@ import pytz
 from telegram import Bot
 from telegram.ext import Application
 
-TOKEN = "TOKENINGNI_BUYERGA_QOY"
+TOKEN = "8780693245:AAENyEtQ2DDidajLdDaOeKuZKg0nniGI4zw"
 
-CHAT_ID = "CHAT_IDINGNI_BUYERGA_QOY"
+CHAT_ID = "1645167548"
 
 timezone = pytz.timezone("Asia/Tashkent")
 
