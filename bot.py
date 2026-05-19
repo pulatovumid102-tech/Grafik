@@ -1,11 +1,8 @@
+import os
 from telegram import Update
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    ContextTypes,
-)
+from telegram.ext import Application, CommandHandler, ContextTypes
 
-TOKEN = "8780693245:AAENyEtQ2DDidajLdDaOeKuZKg0nniGI4zw"
+TOKEN = os.getenv("8780693245:AAENyEtQ2DDidajLdDaOeKuZKg0nniGI4zw")
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -36,12 +33,13 @@ async def set_timer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         name=str(chat_id),
     )
 
-    await update.message.reply_text(
-        "⏰ Endi har 1 minutda eslatma yuboraman"
-    )
+    await update.message.reply_text("⏰ Endi har 1 minutda eslatma yuboraman")
 
 
 def main():
+    if not TOKEN:
+        raise ValueError("BOT_TOKEN topilmadi")
+
     app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
@@ -49,7 +47,6 @@ def main():
     app.add_handler(CommandHandler("timer", set_timer))
 
     print("Bot ishladi ✅")
-
     app.run_polling()
 
 
