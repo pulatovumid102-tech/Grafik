@@ -7,7 +7,7 @@ from telegram.ext import (
 
 TOKEN = "8780693245:AAF8w_cxMTHyr0xHrQnGotDyZrYlfIzj97Q"
 
-counter = 0.0
+counter = 0
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -19,9 +19,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def send_counter(context: ContextTypes.DEFAULT_TYPE):
     global counter
 
-    counter += 0.01
+    counter += 1
 
-    text = f"{counter:.2f}"
+    if counter % 2 == 1:
+        text = f"{counter}.3"
+    else:
+        text = str(counter // 2)
 
     await context.bot.send_message(
         chat_id=context.job.chat_id,
