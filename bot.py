@@ -30,7 +30,6 @@ logging.basicConfig(
 # TEST REJIM
 # =========================
 
-# HAR MINUT XABAR KELADI
 REMINDER_INTERVAL = 60
 
 # =========================
@@ -54,7 +53,7 @@ def build_message():
     # Trading HAR DOIM chiqadi
     lines.append("Trading checklistga qaradingmi? ☑️")
 
-    # Russ tili
+    # Russ
     if not user_state["russ"]:
         lines.append("Russ tili - dars qildingmi? ☑️")
 
@@ -79,19 +78,19 @@ def build_buttons():
 
     buttons = []
 
-    # Trading HAR DOIM chiqadi
+    # Trading
     buttons.append([
         InlineKeyboardButton(
-            "Trading bajarildi ✅",
+            "Trading bajarildi",
             callback_data="trading"
         )
     ])
 
-    # Russ tili
+    # Russ
     if not user_state["russ"]:
         buttons.append([
             InlineKeyboardButton(
-                "Russ tili bajarildi ✅",
+                "Russ tili bajarildi",
                 callback_data="russ"
             )
         ])
@@ -100,7 +99,7 @@ def build_buttons():
     if not user_state["kitob"]:
         buttons.append([
             InlineKeyboardButton(
-                "Kitob oqildi ✅",
+                "Kitob oqildi",
                 callback_data="kitob"
             )
         ])
@@ -109,15 +108,15 @@ def build_buttons():
     if not user_state["soz"]:
         buttons.append([
             InlineKeyboardButton(
-                "So'zlar yodlandi ✅",
+                "So'zlar yodlandi",
                 callback_data="soz"
             )
         ])
 
-    # Sirly HAR DOIM chiqadi
+    # Sirly
     buttons.append([
         InlineKeyboardButton(
-            "Sirlydan habar olindi ✅",
+            "Sirlydan habar olindi",
             callback_data="sirly"
         )
     ])
@@ -152,26 +151,26 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     data = query.data
 
-    # BUTTONLARNI OCHIRISH
+    # ESKI XABARNI OCHIRISH
     try:
-        await query.edit_message_reply_markup(reply_markup=None)
+        await query.message.delete()
     except:
         pass
 
     # Trading
     if data == "trading":
 
-        await query.message.reply_text(
-            "Trading checklistga qaraldi ✅"
+        await query.message.chat.send_message(
+            "📊 Trading checklistga qaraldi"
         )
 
-    # Russ tili
+    # Russ
     elif data == "russ":
 
         user_state["russ"] = True
 
-        await query.message.reply_text(
-            "Russ tili bajarildi ✅"
+        await query.message.chat.send_message(
+            "🇷🇺 Russ tili bajarildi"
         )
 
     # Kitob
@@ -179,8 +178,8 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         user_state["kitob"] = True
 
-        await query.message.reply_text(
-            "Kitob oqildi ✅"
+        await query.message.chat.send_message(
+            "📘 Kitob oqildi"
         )
 
     # Sozlar
@@ -188,15 +187,15 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         user_state["soz"] = True
 
-        await query.message.reply_text(
-            "So'zlar yodlandi ✅"
+        await query.message.chat.send_message(
+            "🧠 So'zlar yodlandi"
         )
 
     # Sirly
     elif data == "sirly":
 
-        await query.message.reply_text(
-            "Sirlyda hammasi yaxshi ✅"
+        await query.message.chat.send_message(
+            "🤝 Sirlyda hammasi yaxshi"
         )
 
 # =========================
@@ -230,8 +229,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     await update.message.reply_text(
-        "Bot ishga tushdi ✅\n\n"
-        "TEST rejim: har minut reminder keladi"
+        "Bot ishga tushdi ✅"
     )
 
 # =========================
