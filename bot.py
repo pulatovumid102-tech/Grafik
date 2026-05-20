@@ -211,19 +211,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_state["kitob"] = False
     user_state["soz"] = False
 
-    # OLD JOBLARNI OCHIRISH
+    # OLD JOBLARNI TOPISH
     old_jobs = context.job_queue.get_jobs_by_name(
         f"reminder_{chat_id}"
     )
 
-    for job in old_jobs:
-        job.schedule_removal()
+    # ESKI JOBLARNI OCHIRISH
+    if old_jobs:
+        for job in old_jobs:
+            job.schedule_removal()
 
     # LOOP
     context.job_queue.run_repeating(
         send_reminder,
         interval=REMINDER_INTERVAL,
-        first=1,
+        first=5,
         chat_id=chat_id,
         name=f"reminder_{chat_id}"
     )
