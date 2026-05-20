@@ -30,9 +30,7 @@ logging.basicConfig(
 # TEST REJIM
 # =========================
 
-# TEST uchun:
-# har minut reminder
-
+# HAR MINUT XABAR KELADI
 REMINDER_INTERVAL = 60
 
 # =========================
@@ -53,20 +51,23 @@ def build_message():
 
     lines = []
 
-    if not user_state["trading"]:
-        lines.append("Trading checklistga qaradingmi?")
+    # Trading HAR DOIM chiqadi
+    lines.append("Trading checklistga qaradingmi? ☑️")
 
+    # Russ tili
     if not user_state["russ"]:
-        lines.append("Russ tilidan bitta dars organdingmi?")
+        lines.append("Russ tili - dars qildingmi? ☑️")
 
+    # Kitob
     if not user_state["kitob"]:
-        lines.append("Kitob oqidingmi?")
+        lines.append("Kitob oqidingmi? ☑️")
 
+    # Sozlar
     if not user_state["soz"]:
-        lines.append("Yangi sozlar yodladingmi?")
+        lines.append("Rus tilida yangi sozlar yodladingmi?")
 
-    # TEST rejimda doim chiqadi
-    lines.append("Sirlyda hammasi yaxshimi?")
+    # Sirly HAR DOIM chiqadi
+    lines.append("Sirlyda bollardan habar oldingmi?")
 
     return "\n\n".join(lines)
 
@@ -78,14 +79,15 @@ def build_buttons():
 
     buttons = []
 
-    if not user_state["trading"]:
-        buttons.append([
-            InlineKeyboardButton(
-                "Trading bajarildi",
-                callback_data="trading"
-            )
-        ])
+    # Trading HAR DOIM chiqadi
+    buttons.append([
+        InlineKeyboardButton(
+            "Trading bajarildi",
+            callback_data="trading"
+        )
+    ])
 
+    # Russ tili
     if not user_state["russ"]:
         buttons.append([
             InlineKeyboardButton(
@@ -94,6 +96,7 @@ def build_buttons():
             )
         ])
 
+    # Kitob
     if not user_state["kitob"]:
         buttons.append([
             InlineKeyboardButton(
@@ -102,6 +105,7 @@ def build_buttons():
             )
         ])
 
+    # Sozlar
     if not user_state["soz"]:
         buttons.append([
             InlineKeyboardButton(
@@ -110,7 +114,7 @@ def build_buttons():
             )
         ])
 
-    # Sirly har doim chiqadi
+    # Sirly HAR DOIM chiqadi
     buttons.append([
         InlineKeyboardButton(
             "Ha hammasi yaxshi",
@@ -121,7 +125,7 @@ def build_buttons():
     return InlineKeyboardMarkup(buttons)
 
 # =========================
-# REMINDER
+# SEND REMINDER
 # =========================
 
 async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
@@ -148,35 +152,52 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     data = query.data
 
-    # BUTTON REMOVE
+    # BUTTONLARNI OCHIRISH
     try:
         await query.edit_message_reply_markup(reply_markup=None)
     except:
         pass
 
+    # Trading
     if data == "trading":
-        user_state["trading"] = True
 
+        await query.message.reply_text(
+            "Trading checklistga qaraldi ✅"
+        )
+
+    # Russ tili
     elif data == "russ":
+
         user_state["russ"] = True
 
+        await query.message.reply_text(
+            "Russ tili bajarildi ✅"
+        )
+
+    # Kitob
     elif data == "kitob":
+
         user_state["kitob"] = True
 
+        await query.message.reply_text(
+            "Kitob oqildi ✅"
+        )
+
+    # Sozlar
     elif data == "soz":
+
         user_state["soz"] = True
 
+        await query.message.reply_text(
+            "So'zlar yodlandi ✅"
+        )
+
+    # Sirly
     elif data == "sirly":
 
         await query.message.reply_text(
-            "Rahmat 🙂"
+            "Sirlyda hammasi yaxshi ✅"
         )
-
-        return
-
-    await query.message.reply_text(
-        "Qabul qilindi ✅"
-    )
 
 # =========================
 # START
@@ -187,12 +208,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
 
     # RESET
-    user_state["trading"] = False
     user_state["russ"] = False
     user_state["kitob"] = False
     user_state["soz"] = False
 
-    # REMINDER LOOP
+    # OLD JOBLARNI OCHIRISH
+    old_jobs = context.job_queue.get_jobs_by_name(
+        f"reminder_{chat_id}"
+    )
+
+    for job in old_jobs:
+        job.schedule_removal()
+
+    # LOOP
     context.job_queue.run_repeating(
         send_reminder,
         interval=REMINDER_INTERVAL,
@@ -204,6 +232,25 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Bot ishga tushdi ✅\n\n"
         "TEST rejim: har minut reminder keladi"
+    )
+
+# =========================
+# STOP
+# =========================
+
+async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    chat_id = update.effective_chat.id
+
+    jobs = context.job_queue.get_jobs_by_name(
+        f"reminder_{chat_id}"
+    )
+
+    for job in jobs:
+        job.schedule_removal()
+
+    await update.message.reply_text(
+        "Bot toxtatildi 🛑"
     )
 
 # =========================
@@ -219,6 +266,10 @@ def main():
     )
 
     app.add_handler(
+        CommandHandler("stop", stop)
+    )
+
+    app.add_handler(
         CallbackQueryHandler(buttons)
     )
 
@@ -230,5 +281,4 @@ def main():
 # RUN
 # =========================
 
-if __name__ == "__main__":
-    main()
+if __
