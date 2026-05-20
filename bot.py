@@ -1,9 +1,12 @@
 import logging
+from datetime import datetime
+
 from telegram import (
     Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
 )
+
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -27,10 +30,14 @@ logging.basicConfig(
 )
 
 # =========================
-# TEST REJIM
+# TEST / REAL REJIM
 # =========================
 
-REMINDER_INTERVAL = 60
+# TEST uchun:
+# REMINDER_INTERVAL = 10
+
+# REAL uchun:
+REMINDER_INTERVAL = 3600
 
 # =========================
 # USER STATE
@@ -129,6 +136,12 @@ def build_buttons():
 
 async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
 
+    current_hour = datetime.now().hour
+
+    # FAQAT 06:00 → 20:00
+    if current_hour < 6 or current_hour >= 20:
+        return
+
     text = build_message()
 
     keyboard = build_buttons()
@@ -151,7 +164,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     data = query.data
 
-    # ESKI XABARNI OCHIRISH
+    # REMINDERNI OCHIRISH
     try:
         await query.message.delete()
     except:
