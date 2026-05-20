@@ -64,10 +64,10 @@ def build_message():
 
     # Sozlar
     if not user_state["soz"]:
-        lines.append("Rus tilida yangi sozlar yodladingmi?")
+        lines.append("Rus tilida yangi sozlar yodladingmi? ☑️")
 
     # Sirly HAR DOIM chiqadi
-    lines.append("Sirlyda bollardan habar oldingmi?")
+    lines.append("Sirlyda bollardan habar oldingmi? ☑️")
 
     return "\n\n".join(lines)
 
@@ -82,7 +82,7 @@ def build_buttons():
     # Trading HAR DOIM chiqadi
     buttons.append([
         InlineKeyboardButton(
-            "Trading bajarildi",
+            "Trading bajarildi ✅",
             callback_data="trading"
         )
     ])
@@ -91,7 +91,7 @@ def build_buttons():
     if not user_state["russ"]:
         buttons.append([
             InlineKeyboardButton(
-                "Russ tili bajarildi",
+                "Russ tili bajarildi ✅",
                 callback_data="russ"
             )
         ])
@@ -100,7 +100,7 @@ def build_buttons():
     if not user_state["kitob"]:
         buttons.append([
             InlineKeyboardButton(
-                "Kitob oqildi",
+                "Kitob oqildi ✅",
                 callback_data="kitob"
             )
         ])
@@ -109,7 +109,7 @@ def build_buttons():
     if not user_state["soz"]:
         buttons.append([
             InlineKeyboardButton(
-                "Sozlar yodlandi",
+                "So'zlar yodlandi ✅",
                 callback_data="soz"
             )
         ])
@@ -117,7 +117,7 @@ def build_buttons():
     # Sirly HAR DOIM chiqadi
     buttons.append([
         InlineKeyboardButton(
-            "Ha hammasi yaxshi",
+            "Sirlydan habar olindi ✅",
             callback_data="sirly"
         )
     ])
