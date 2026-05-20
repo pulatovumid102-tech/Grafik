@@ -1,12 +1,9 @@
-from datetime import datetime
-from zoneinfo import ZoneInfo
-
+import logging
 from telegram import (
     Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
 )
-
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -14,310 +11,211 @@ from telegram.ext import (
     ContextTypes,
 )
 
+# =========================
+# TOKEN
+# =========================
+
 TOKEN = "8780693245:AAF8w_cxMTHyr0xHrQnGotDyZrYlfIzj97Q"
 
 # =========================
-# SOZLAMALAR
+# LOGGING
 # =========================
 
-TIMEZONE = ZoneInfo("Asia/Tashkent")
-
-START_HOUR = 5
-END_HOUR = 22
-
-MAIN_INTERVAL = 1200   # 20 minut
-FOLLOWUP_TIME = 300    # 5 minut
-
-main_jobs = {}
-followup_jobs = {}
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
+)
 
 # =========================
-# ISH VAQTI
+# TEST REJIM
 # =========================
 
-def is_active_time():
-    now = datetime.now(TIMEZONE)
+# TEST uchun:
+# har minut reminder
 
-    weekday = now.weekday()
-
-    # shanba va yakshanba
-    if weekday >= 5:
-        return False
-
-    # vaqt oraligi
-    return START_HOUR <= now.hour < END_HOUR
-
+REMINDER_INTERVAL = 60
 
 # =========================
-# MAIN REMINDER
+# USER STATE
 # =========================
 
-async def send_main_reminder(context: ContextTypes.DEFAULT_TYPE):
-    chat_id = context.job.chat_id
-
-    # aktiv vaqt emas
-    if not is_active_time():
-        return
-
-    # eski followupni ochirish
-    if chat_id in followup_jobs:
-        old_job = followup_jobs[chat_id]
-        old_job.schedule_removal()
-        del followup_jobs[chat_id]
-
-    text = (
-        "📊 Grafikga qara\n\n"
-        "📐 Faqat fibo bolsa kirgin\n\n"
-        "📋 Hamma instrumentni tekshirib chiq\n\n"
-        "⏳ 5 minutda habar olaman"
-    )
-
-    await context.bot.send_message(
-        chat_id=chat_id,
-        text=text
-    )
-
-    # followup
-    job = context.job_queue.run_once(
-        send_followup,
-        when=FOLLOWUP_TIME,
-        chat_id=chat_id,
-        name=f"followup_{chat_id}"
-    )
-
-    followup_jobs[chat_id] = job
-
+user_state = {
+    "russ": False,
+    "kitob": False,
+    "soz": False,
+}
 
 # =========================
-# FOLLOWUP
+# BUILD MESSAGE
 # =========================
 
-async def send_followup(context: ContextTypes.DEFAULT_TYPE):
-    chat_id = context.job.chat_id
+def build_message():
 
-    # aktiv vaqt emas
-    if not is_active_time():
-        return
+    lines = []
 
-    keyboard = [
-        [
+    if not user_state["trading"]:
+        lines.append("Trading checklistga qaradingmi?")
+
+    if not user_state["russ"]:
+        lines.append("Russ tilidan bitta dars organdingmi?")
+
+    if not user_state["kitob"]:
+        lines.append("Kitob oqidingmi?")
+
+    if not user_state["soz"]:
+        lines.append("Yangi sozlar yodladingmi?")
+
+    # TEST rejimda doim chiqadi
+    lines.append("Sirlyda hammasi yaxshimi?")
+
+    return "\n\n".join(lines)
+
+# =========================
+# BUILD BUTTONS
+# =========================
+
+def build_buttons():
+
+    buttons = []
+
+    if not user_state["trading"]:
+        buttons.append([
             InlineKeyboardButton(
-                "✅ Ha",
-                callback_data="done"
-            ),
+                "Trading bajarildi",
+                callback_data="trading"
+            )
+        ])
 
+    if not user_state["russ"]:
+        buttons.append([
             InlineKeyboardButton(
-                "❌ Yoq",
-                callback_data="no"
-            ),
-        ]
-    ]
+                "Russ tili bajarildi",
+                callback_data="russ"
+            )
+        ])
 
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    if not user_state["kitob"]:
+        buttons.append([
+            InlineKeyboardButton(
+                "Kitob oqildi",
+                callback_data="kitob"
+            )
+        ])
 
-    await context.bot.send_message(
-        chat_id=chat_id,
-        text="❓ Tekshirdingmi?",
-        reply_markup=reply_markup
-    )
+    if not user_state["soz"]:
+        buttons.append([
+            InlineKeyboardButton(
+                "Sozlar yodlandi",
+                callback_data="soz"
+            )
+        ])
 
-    # auto-no
-    auto_job = context.job_queue.run_once(
-        auto_no,
-        when=FOLLOWUP_TIME,
-        chat_id=chat_id,
-        name=f"auto_no_{chat_id}"
-    )
-
-    followup_jobs[chat_id] = auto_job
-
-
-# =========================
-# AUTO NO
-# =========================
-
-async def auto_no(context: ContextTypes.DEFAULT_TYPE):
-    chat_id = context.job.chat_id
-
-    # aktiv vaqt emas
-    if not is_active_time():
-        return
-
-    await context.bot.send_message(
-        chat_id=chat_id,
-        text=(
-            "⏳ Javob kelmadi.\n\n"
-            "Yana 5 minutdan keyin yozaman."
+    # Sirly har doim chiqadi
+    buttons.append([
+        InlineKeyboardButton(
+            "Ha hammasi yaxshi",
+            callback_data="sirly"
         )
+    ])
+
+    return InlineKeyboardMarkup(buttons)
+
+# =========================
+# REMINDER
+# =========================
+
+async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
+
+    text = build_message()
+
+    keyboard = build_buttons()
+
+    await context.bot.send_message(
+        chat_id=context.job.chat_id,
+        text=text,
+        reply_markup=keyboard
     )
-
-    # yana followup
-    job = context.job_queue.run_once(
-        send_followup,
-        when=FOLLOWUP_TIME,
-        chat_id=chat_id,
-        name=f"followup_{chat_id}"
-    )
-
-    followup_jobs[chat_id] = job
-
 
 # =========================
 # BUTTONS
 # =========================
 
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
     query = update.callback_query
 
     await query.answer()
 
-    chat_id = query.message.chat.id
+    data = query.data
 
-    # buttonlarni ochirish
+    # BUTTON REMOVE
     try:
         await query.edit_message_reply_markup(reply_markup=None)
     except:
         pass
 
-    # eski followupni ochirish
-    if chat_id in followup_jobs:
-        old_job = followup_jobs[chat_id]
-        old_job.schedule_removal()
-        del followup_jobs[chat_id]
+    if data == "trading":
+        user_state["trading"] = True
 
-    # HA
-    if query.data == "done":
+    elif data == "russ":
+        user_state["russ"] = True
 
-        await query.message.reply_text("👍🏻👍🏻")
+    elif data == "kitob":
+        user_state["kitob"] = True
 
-    # YOQ
-    elif query.data == "no":
+    elif data == "soz":
+        user_state["soz"] = True
+
+    elif data == "sirly":
 
         await query.message.reply_text(
-            "⏳ Tekshir, yana 5 minutdan keyin yozaman."
+            "Rahmat 🙂"
         )
 
-        # yangi followup
-        job = context.job_queue.run_once(
-            send_followup,
-            when=FOLLOWUP_TIME,
-            chat_id=chat_id,
-            name=f"followup_{chat_id}"
-        )
+        return
 
-        followup_jobs[chat_id] = job
-
+    await query.message.reply_text(
+        "Qabul qilindi ✅"
+    )
 
 # =========================
 # START
 # =========================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
     chat_id = update.effective_chat.id
 
-    now = datetime.now(TIMEZONE)
-    weekday = now.weekday()
+    # RESET
+    user_state["trading"] = False
+    user_state["russ"] = False
+    user_state["kitob"] = False
+    user_state["soz"] = False
 
-    restarted = False
-
-    # eski main jobni ochirish
-    if chat_id in main_jobs:
-        old_main = main_jobs[chat_id]
-        old_main.schedule_removal()
-        del main_jobs[chat_id]
-        restarted = True
-
-    # eski followupni ochirish
-    if chat_id in followup_jobs:
-        old_follow = followup_jobs[chat_id]
-        old_follow.schedule_removal()
-        del followup_jobs[chat_id]
-
-    # weekend
-    if weekday >= 5:
-
-        await update.message.reply_text(
-            "🌙 Hozir bozor yopiq\n\n"
-            "📅 Shanba va Yakshanba dam olish kuni\n\n"
-            "📈 Dushanba kuni savdoni davom ettiramiz"
-        )
-
-        return
-
-    # tun rejimi
-    if not is_active_time():
-
-        await update.message.reply_text(
-            "🌙 Hozir dam olish vaqti\n\n"
-            "📈 Savdo sessiyasi 05:00 da boshlanadi\n\n"
-            "⏰ Ertalab grafiklarni birga kuzatamiz"
-        )
-
-    else:
-
-        if restarted:
-
-            await update.message.reply_text(
-                "♻️ Bot qayta ishga tushirildi\n\n"
-                "🔁 Reminder tizimi faol"
-            )
-
-        else:
-
-            await update.message.reply_text(
-                "☀️ Savdo vaqti boshlandi\n\n"
-                "📊 Grafiklarni tekshirishni boshlaymiz"
-            )
-
-    # scheduler
-    main_job = context.job_queue.run_repeating(
-        send_main_reminder,
-        interval=MAIN_INTERVAL,
+    # REMINDER LOOP
+    context.job_queue.run_repeating(
+        send_reminder,
+        interval=REMINDER_INTERVAL,
         first=1,
         chat_id=chat_id,
-        name=f"main_{chat_id}"
+        name=f"reminder_{chat_id}"
     )
-
-    main_jobs[chat_id] = main_job
-
-
-# =========================
-# STOP
-# =========================
-
-async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.effective_chat.id
-
-    # main job
-    if chat_id in main_jobs:
-        old_main = main_jobs[chat_id]
-        old_main.schedule_removal()
-        del main_jobs[chat_id]
-
-    # followup
-    if chat_id in followup_jobs:
-        old_follow = followup_jobs[chat_id]
-        old_follow.schedule_removal()
-        del followup_jobs[chat_id]
 
     await update.message.reply_text(
-        "🛑 Reminder tizimi toxtatildi"
+        "Bot ishga tushdi ✅\n\n"
+        "TEST rejim: har minut reminder keladi"
     )
-
 
 # =========================
 # MAIN
 # =========================
 
 def main():
+
     app = Application.builder().token(TOKEN).build()
 
     app.add_handler(
         CommandHandler("start", start)
-    )
-
-    app.add_handler(
-        CommandHandler("stop", stop)
     )
 
     app.add_handler(
@@ -328,6 +226,9 @@ def main():
 
     app.run_polling()
 
+# =========================
+# RUN
+# =========================
 
 if __name__ == "__main__":
     main()
