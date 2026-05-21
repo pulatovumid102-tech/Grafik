@@ -11,7 +11,7 @@ from telegram import (
 from telegram.ext import (
     Application,
     CommandHandler,
-   CallbackQueryHandler,
+    CallbackQueryHandler,
     ContextTypes,
 )
 
@@ -37,10 +37,9 @@ logging.basicConfig(
 )
 
 # =========================
-# INTERVAL
+# 30 DAQIQA
 # =========================
 
-# 30 daqiqa
 REMINDER_INTERVAL = 1800
 
 # =========================
@@ -52,6 +51,12 @@ user_state = {
     "kitob": False,
     "soz": False,
 }
+
+# =========================
+# LAST REMINDER
+# =========================
+
+last_reminder_message_id = None
 
 # =========================
 # VAQT
@@ -106,7 +111,7 @@ def build_buttons():
     if not user_state["russ"]:
         buttons.append([
             InlineKeyboardButton(
-                "Rus tili bajarildi ✅",
+                "Russ tili bajarildi ✅",
                 callback_data="russ"
             )
         ])
@@ -142,6 +147,8 @@ def build_buttons():
 
 async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
 
+    global last_reminder_message_id
+
     current_hour = datetime.now(
         ZoneInfo("Asia/Tashkent")
     ).hour
@@ -150,21 +157,37 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
     if current_hour < 6 or current_hour >= 20:
         return
 
+    # ESKI REMINDERNI OCHIRISH
+    if last_reminder_message_id:
+
+        try:
+            await context.bot.delete_message(
+                chat_id=CHAT_ID,
+                message_id=last_reminder_message_id
+            )
+        except:
+            pass
+
     text = build_message()
 
     keyboard = build_buttons()
 
-    await context.bot.send_message(
+    sent_message = await context.bot.send_message(
         chat_id=CHAT_ID,
         text=text,
         reply_markup=keyboard
     )
+
+    # OXIRGI REMINDER ID
+    last_reminder_message_id = sent_message.message_id
 
 # =========================
 # BUTTONS
 # =========================
 
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    global last_reminder_message_id
 
     query = update.callback_query
 
@@ -174,9 +197,14 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # REMINDERNI OCHIRISH
     try:
+
         await query.message.delete()
+
     except:
         pass
+
+    # RESET
+    last_reminder_message_id = None
 
     time_now = get_time()
 
@@ -193,7 +221,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_state["russ"] = True
 
         await query.message.chat.send_message(
-            f"Russ tili bajarildi ✅ {time_now}"
+            f"Rus tili bajarildi ✅ {time_now}"
         )
 
     # Kitob
@@ -227,10 +255,14 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    global last_reminder_message_id
+
     # RESET
     user_state["russ"] = False
     user_state["kitob"] = False
     user_state["soz"] = False
+
+    last_reminder_message_id = None
 
     # ESKI JOBLARNI TOPISH
     old_jobs = context.job_queue.get_jobs_by_name(
