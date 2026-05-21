@@ -427,7 +427,12 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
 
-    app = Application.builder().token(TOKEN).build()
+    app = (
+    Application.builder()
+    .token(TOKEN)
+    .timezone(ZoneInfo("Asia/Tashkent"))
+    .build()
+)
 
     app.add_handler(
         CommandHandler("start", start)
