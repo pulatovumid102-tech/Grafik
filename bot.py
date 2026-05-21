@@ -1,7 +1,7 @@
 import logging
 import asyncio
 
-from datetime import datetime, time
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from telegram import (
@@ -88,7 +88,6 @@ def build_message():
 
     lines.append("Doimiy vazifalar:\n")
 
-    # DOIMIY
     lines.append("• Trading checklistga qaradingmi? ☑️")
 
     if not user_state["russ"]:
@@ -120,7 +119,7 @@ def build_buttons():
 
     buttons = []
 
-    # ASOSIY
+    # TRADING
     buttons.append([
         InlineKeyboardButton(
             "Trading bajarildi ✅",
@@ -128,7 +127,9 @@ def build_buttons():
         )
     ])
 
+    # RUSS
     if not user_state["russ"]:
+
         buttons.append([
             InlineKeyboardButton(
                 "Russ tili bajarildi ✅",
@@ -136,7 +137,9 @@ def build_buttons():
             )
         ])
 
+    # KITOB
     if not user_state["kitob"]:
+
         buttons.append([
             InlineKeyboardButton(
                 "Kitob oqildi ✅",
@@ -144,7 +147,9 @@ def build_buttons():
             )
         ])
 
+    # SOZ
     if not user_state["soz"]:
+
         buttons.append([
             InlineKeyboardButton(
                 "So'zlar yodlandi ✅",
@@ -152,6 +157,7 @@ def build_buttons():
             )
         ])
 
+    # SIRLY
     buttons.append([
         InlineKeyboardButton(
             "Sirlydan habar olindi ✅",
@@ -169,21 +175,6 @@ def build_buttons():
             )
         ])
 
-    # MENU BUTTONLAR
-    buttons.append([
-        InlineKeyboardButton(
-            "📋 Aktual checklist",
-            callback_data="aktual"
-        )
-    ])
-
-    buttons.append([
-        InlineKeyboardButton(
-            "➕ Vazifa qo‘shish",
-            callback_data="add_task"
-        )
-    ])
-
     return InlineKeyboardMarkup(buttons)
 
 # =========================
@@ -194,7 +185,7 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
 
     global last_reminder_message_id
 
-    # ESKI REMINDERNI O‘CHIRISH
+    # OLD REMINDER DELETE
     if last_reminder_message_id:
 
         try:
@@ -215,7 +206,6 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
         reply_markup=keyboard
     )
 
-    # OXIRGI MESSAGE ID
     last_reminder_message_id = sent_message.message_id
 
 # =========================
@@ -236,54 +226,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     time_now = get_time()
 
-    # =========================
-    # AKTUAL CHECKLIST
-    # =========================
-
-    if data == "aktual":
-
-        checklist_text = build_message()
-
-        sent_message = await query.message.chat.send_message(
-            checklist_text
-        )
-
-        # 60 sekund
-        await asyncio.sleep(60)
-
-        try:
-            await sent_message.delete()
-        except:
-            pass
-
-        return
-
-    # =========================
-    # VAZIFA QO‘SHISH
-    # =========================
-
-    if data == "add_task":
-
-        waiting_for_task = True
-
-        sent_message = await query.message.chat.send_message(
-            "Yangi vazifani yuboring ✍️"
-        )
-
-        # 60 sekund
-        await asyncio.sleep(60)
-
-        try:
-            await sent_message.delete()
-        except:
-            pass
-
-        return
-
-    # =========================
-    # REMINDERNI O‘CHIRISH
-    # =========================
-
+    # DELETE REMINDER
     try:
         await query.message.delete()
     except:
@@ -291,10 +234,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     last_reminder_message_id = None
 
-    # =========================
     # EXTRA TASK COMPLETE
-    # =========================
-
     if data.startswith("task_"):
 
         index = int(data.split("_")[1])
@@ -309,10 +249,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
 
-    # =========================
-    # ASOSIY
-    # =========================
-
+    # ASOSIY TASKS
     if data == "trading":
 
         await query.message.chat.send_message(
@@ -360,10 +297,7 @@ async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = update.message.text
 
-    # =========================
-    # YANGI TASK
-    # =========================
-
+    # NEW TASK
     if waiting_for_task:
 
         extra_tasks.append(text)
@@ -375,6 +309,34 @@ async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 # =========================
+# MENU
+# =========================
+
+async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    keyboard = InlineKeyboardMarkup([
+
+        [
+            InlineKeyboardButton(
+                "📋 Aktual checklist",
+                callback_data="aktual"
+            )
+        ],
+
+        [
+            InlineKeyboardButton(
+                "➕ Vazifa qo‘shish",
+                callback_data="add_task"
+            )
+        ]
+    ])
+
+    await update.message.reply_text(
+        "Menu:",
+        reply_markup=keyboard
+    )
+
+# =========================
 # START
 # =========================
 
@@ -384,52 +346,24 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     last_reminder_message_id = None
 
-    # ESKI JOBLARNI O‘CHIRISH
+    # REMOVE OLD JOBS
     old_jobs = context.job_queue.jobs()
 
     for job in old_jobs:
         job.schedule_removal()
 
     # =========================
-    # 06:00 → 20:00
-    # HAR 30 DAQIQA
+    # EVERY 1 MINUTE
     # =========================
 
-    for hour in range(6, 21):
+    context.job_queue.run_repeating(
+        send_reminder,
+        interval=60,
+        first=1
+    )
 
-        # :00
-        context.job_queue.run_daily(
-            send_reminder,
-            time=time(hour, 0),
-            name=f"reminder_{hour}_00"
-        )
-
-        # :30
-        if hour != 20:
-
-            context.job_queue.run_daily(
-                send_reminder,
-                time=time(hour, 30),
-                name=f"reminder_{hour}_30"
-            )
-
-    # START MESSAGE
     await update.message.reply_text(
-        "Bot ishga tushdi ✅",
-        reply_markup=InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton(
-                    "📋 Aktual checklist",
-                    callback_data="aktual"
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    "➕ Vazifa qo‘shish",
-                    callback_data="add_task"
-                )
-            ]
-        ])
+        "Bot ishga tushdi ✅\n\n/menu ni yozing"
     )
 
 # =========================
@@ -448,6 +382,59 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # =========================
+# CALLBACKS
+# =========================
+
+async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    global waiting_for_task
+
+    query = update.callback_query
+
+    await query.answer()
+
+    data = query.data
+
+    # AKTUAL CHECKLIST
+    if data == "aktual":
+
+        checklist_text = build_message()
+
+        sent_message = await query.message.chat.send_message(
+            checklist_text
+        )
+
+        await asyncio.sleep(60)
+
+        try:
+            await sent_message.delete()
+        except:
+            pass
+
+        return
+
+    # ADD TASK
+    if data == "add_task":
+
+        waiting_for_task = True
+
+        sent_message = await query.message.chat.send_message(
+            "Yangi vazifani yuboring ✍️"
+        )
+
+        await asyncio.sleep(60)
+
+        try:
+            await sent_message.delete()
+        except:
+            pass
+
+        return
+
+    # MAIN BUTTONS
+    await buttons(update, context)
+
+# =========================
 # MAIN
 # =========================
 
@@ -464,7 +451,11 @@ def main():
     )
 
     app.add_handler(
-        CallbackQueryHandler(buttons)
+        CommandHandler("menu", menu)
+    )
+
+    app.add_handler(
+        CallbackQueryHandler(callbacks)
     )
 
     app.add_handler(
@@ -483,4 +474,4 @@ def main():
 # =========================
 
 if __name__ == "__main__":
-    main()
+    main
