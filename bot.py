@@ -41,10 +41,10 @@ logging.basicConfig(
 # =========================
 
 # TEST:
-REMINDER_INTERVAL = 10
+# REMINDER_INTERVAL = 10
 
 # REAL:
-# REMINDER_INTERVAL = 3600
+REMINDER_INTERVAL = 900
 
 # =========================
 # USER STATE
