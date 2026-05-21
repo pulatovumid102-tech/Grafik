@@ -91,27 +91,29 @@ def build_message():
 
     lines = []
 
+    lines.append("Doimiy vazifalar:\n")
+
     # ASOSIY
-    lines.append("Trading checklistga qaradingmi? ☑️")
+    lines.append("• Trading checklistga qaradingmi? ☑️")
 
     if not user_state["russ"]:
-        lines.append("Russ tili - dars qildingmi? ☑️")
+        lines.append("• Russ tili - dars qildingmi? ☑️")
 
     if not user_state["kitob"]:
-        lines.append("Kitob oqidingmi? ☑️")
+        lines.append("• Kitob oqidingmi? ☑️")
 
     if not user_state["soz"]:
-        lines.append("Rus tilida yangi so'zlar yodladingmi? ☑️")
+        lines.append("• Rus tilida yangi so'zlar yodladingmi? ☑️")
 
-    lines.append("Sirlyda bollardan habar oldingmi? ☑️")
+    lines.append("• Sirlyda bollardan habar oldingmi? ☑️")
 
     # EXTRA TASKS
     if extra_tasks:
 
-        lines.append("\nQo‘shimcha vazifalar:")
+        lines.append("\nQo‘shimcha vazifalar:\n")
 
         for task in extra_tasks:
-            lines.append(f"• {task}")
+            lines.append(f"• {task} ☑️")
 
     return "\n\n".join(lines)
 
@@ -167,7 +169,7 @@ def build_buttons():
 
         buttons.append([
             InlineKeyboardButton(
-                f"✅ {task}",
+                f"{task} ✅",
                 callback_data=f"task_{index}"
             )
         ])
