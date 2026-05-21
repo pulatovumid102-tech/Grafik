@@ -21,6 +21,12 @@ from telegram.ext import (
 TOKEN = "8780693245:AAF8w_cxMTHyr0xHrQnGotDyZrYlfIzj97Q"
 
 # =========================
+# CHAT ID
+# =========================
+
+CHAT_ID = 1645167548
+
+# =========================
 # LOGGING
 # =========================
 
@@ -147,7 +153,7 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
     keyboard = build_buttons()
 
     await context.bot.send_message(
-        chat_id=context.job.data["chat_id"],
+        chat_id=CHAT_ID,
         text=text,
         reply_markup=keyboard
     )
@@ -217,8 +223,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    chat_id = update.effective_chat.id
-
     # RESET
     user_state["russ"] = False
     user_state["kitob"] = False
@@ -226,7 +230,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # ESKI JOBLARNI TOPISH
     old_jobs = context.job_queue.get_jobs_by_name(
-        f"reminder_{chat_id}"
+        "reminder"
     )
 
     # ESKI JOBLARNI OCHIRISH
@@ -239,8 +243,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         send_reminder,
         interval=REMINDER_INTERVAL,
         first=5,
-        data={"chat_id": chat_id},
-        name=f"reminder_{chat_id}"
+        name="reminder"
     )
 
     await update.message.reply_text(
@@ -253,10 +256,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    chat_id = update.effective_chat.id
-
     jobs = context.job_queue.get_jobs_by_name(
-        f"reminder_{chat_id}"
+        "reminder"
     )
 
     for job in jobs:
