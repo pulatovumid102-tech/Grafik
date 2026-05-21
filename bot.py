@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from telegram import (
     Update,
@@ -36,7 +37,7 @@ logging.basicConfig(
 )
 
 # =========================
-# TEST / REAL REJIM
+# TEST / REAL
 # =========================
 
 # TEST:
@@ -63,22 +64,19 @@ def build_message():
 
     lines = []
 
-    # Trading HAR DOIM chiqadi
+    # HAR DOIM
     lines.append("Trading checklistga qaradingmi? ☑️")
 
-    # Russ
     if not user_state["russ"]:
         lines.append("Russ tili - dars qildingmi? ☑️")
 
-    # Kitob
     if not user_state["kitob"]:
         lines.append("Kitob oqidingmi? ☑️")
 
-    # Sozlar
     if not user_state["soz"]:
         lines.append("Rus tilida yangi sozlar yodladingmi? ☑️")
 
-    # Sirly HAR DOIM chiqadi
+    # HAR DOIM
     lines.append("Sirlyda bollardan habar oldingmi? ☑️")
 
     return "\n\n".join(lines)
@@ -91,7 +89,6 @@ def build_buttons():
 
     buttons = []
 
-    # Trading
     buttons.append([
         InlineKeyboardButton(
             "Trading bajarildi",
@@ -99,7 +96,6 @@ def build_buttons():
         )
     ])
 
-    # Russ
     if not user_state["russ"]:
         buttons.append([
             InlineKeyboardButton(
@@ -108,7 +104,6 @@ def build_buttons():
             )
         ])
 
-    # Kitob
     if not user_state["kitob"]:
         buttons.append([
             InlineKeyboardButton(
@@ -117,7 +112,6 @@ def build_buttons():
             )
         ])
 
-    # Sozlar
     if not user_state["soz"]:
         buttons.append([
             InlineKeyboardButton(
@@ -126,7 +120,6 @@ def build_buttons():
             )
         ])
 
-    # Sirly
     buttons.append([
         InlineKeyboardButton(
             "Sirlydan habar olindi",
@@ -142,21 +135,34 @@ def build_buttons():
 
 async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
 
-    current_hour = datetime.now().hour
+    print("REMINDER ISHLADI")
+
+    current_hour = datetime.now(
+        ZoneInfo("Asia/Tashkent")
+    ).hour
 
     # FAQAT 06:00 → 20:00
     if current_hour < 6 or current_hour >= 20:
+        print("HOZIR DAM OLISH VAQTI")
         return
 
     text = build_message()
 
     keyboard = build_buttons()
 
-    await context.bot.send_message(
-        chat_id=CHAT_ID,
-        text=text,
-        reply_markup=keyboard
-    )
+    try:
+
+        await context.bot.send_message(
+            chat_id=CHAT_ID,
+            text=text,
+            reply_markup=keyboard
+        )
+
+        print("XABAR YUBORILDI ✅")
+
+    except Exception as e:
+
+        print(f"XATO: {e}")
 
 # =========================
 # BUTTONS
@@ -170,7 +176,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     data = query.data
 
-    # REMINDERNI OCHIRISH
+    # ESKI REMINDERNI OCHIRISH
     try:
         await query.message.delete()
     except:
