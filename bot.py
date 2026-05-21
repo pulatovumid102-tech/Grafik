@@ -95,7 +95,7 @@ def build_message():
     lines.append("Trading checklistga qaradingmi? ☑️")
 
     if not user_state["russ"]:
-        lines.append("Rus tili - dars qildingmi? ☑️")
+        lines.append("Russ tili - dars qildingmi? ☑️")
 
     if not user_state["kitob"]:
         lines.append("Kitob oqidingmi? ☑️")
@@ -134,7 +134,7 @@ def build_buttons():
     if not user_state["russ"]:
         buttons.append([
             InlineKeyboardButton(
-                "Rus tili bajarildi ✅",
+                "Russ tili bajarildi ✅",
                 callback_data="russ"
             )
         ])
@@ -350,17 +350,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         resize_keyboard=True
     )
 
-    # ESKI JOBLARNI TOPISH
-    old_jobs = context.job_queue.get_jobs_by_name(
+    # AGAR JOB BOR BO‘LSA
+    existing_jobs = context.job_queue.get_jobs_by_name(
         "reminder"
     )
 
-    # ESKI JOBLARNI O‘CHIRISH
-    if old_jobs:
-        for job in old_jobs:
-            job.schedule_removal()
+    if existing_jobs:
 
-    # LOOP
+        await update.message.reply_text(
+            "Bot allaqachon ishlayapti ✅",
+            reply_markup=menu_keyboard
+        )
+
+        return
+
+    # YANGI LOOP
     context.job_queue.run_repeating(
         send_reminder,
         interval=REMINDER_INTERVAL,
