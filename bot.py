@@ -307,7 +307,7 @@ async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
 
     # =========================
-    # TASK QO‘SHISH
+    # VAZIFA QO‘SHISH
     # =========================
 
     if text == "➕ Vazifa qo‘shish":
@@ -316,6 +316,23 @@ async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await update.message.reply_text(
             "Yangi vazifani yuboring ✍️"
+        )
+
+        return
+
+    # =========================
+    # AKTUAL CHECKLIST
+    # =========================
+
+    if text == "📋 Aktual checklist":
+
+        checklist_text = build_message()
+
+        checklist_buttons = build_buttons()
+
+        await update.message.reply_text(
+            checklist_text,
+            reply_markup=checklist_buttons
         )
 
         return
@@ -346,7 +363,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # PASTDA DOIM TURADI
     menu_keyboard = ReplyKeyboardMarkup(
-        [["➕ Vazifa qo‘shish"]],
+        [
+            ["➕ Vazifa qo‘shish"],
+            ["📋 Aktual checklist"]
+        ],
         resize_keyboard=True
     )
 
