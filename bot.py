@@ -88,18 +88,23 @@ def build_message():
 
     lines.append("Doimiy vazifalar:\n")
 
-    lines.append("• Trading checklistga qaradingmi? ⬜")
+    # TRADING
+    lines.append("• Trading checklistga qaradingmi? ☑️")
 
+    # RUSS
     if not user_state["russ"]:
-        lines.append("• Russ tili - dars qildingmi? ⬜")
+        lines.append("• Russ tili - dars qildingmi? ✅")
 
+    # KITOB
     if not user_state["kitob"]:
-        lines.append("• Kitob oqidingmi? ⬜")
+        lines.append("• Kitob oqidingmi? ☑️")
 
+    # SOZ
     if not user_state["soz"]:
-        lines.append("• Rus tilida yangi so'zlar yodladingmi? ⬜")
+        lines.append("• Rus tilida yangi so'zlar yodladingmi? ☑️")
 
-    lines.append("• Sirlyda bollardan habar oldingmi? ⬜")
+    # SIRLY
+    lines.append("• Sirlyda bollardan habar oldingmi? ☑️")
 
     # EXTRA TASKS
     if extra_tasks:
@@ -107,7 +112,7 @@ def build_message():
         lines.append("\nQo‘shimcha vazifalar:\n")
 
         for task in extra_tasks:
-            lines.append(f"• {task} ⬜")
+            lines.append(f"• {task} ☑️")
 
     return "\n\n".join(lines)
 
@@ -356,14 +361,33 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         job.schedule_removal()
 
     # =========================
-    # EVERY 5 MINUTES
+    # 06:00 → 21:00
+    # HAR 30 DAQIQA
     # =========================
 
-    context.job_queue.run_repeating(
-        send_reminder,
-        interval=300,
-        first=1
-    )
+    for hour in range(6, 22):
+
+        # :00
+        context.job_queue.run_daily(
+            send_reminder,
+            time=datetime.strptime(
+                f"{hour}:00",
+                "%H:%M"
+            ).time(),
+            name=f"reminder_{hour}_00"
+        )
+
+        # :30
+        if hour != 21:
+
+            context.job_queue.run_daily(
+                send_reminder,
+                time=datetime.strptime(
+                    f"{hour}:30",
+                    "%H:%M"
+                ).time(),
+                name=f"reminder_{hour}_30"
+            )
 
     # =========================
     # MENU
@@ -381,6 +405,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Bot ishga tushdi ✅",
         reply_markup=keyboard
     )
+
+    # FIRST CHECKLIST
+    await send_reminder(context)
 
 # =========================
 # STOP
