@@ -11,7 +11,7 @@ from telegram import (
 from telegram.ext import (
     Application,
     CommandHandler,
-    CallbackQueryHandler,
+   CallbackQueryHandler,
     ContextTypes,
 )
 
@@ -37,14 +37,11 @@ logging.basicConfig(
 )
 
 # =========================
-# TEST / REAL
+# INTERVAL
 # =========================
 
-# TEST:
+# 30 daqiqa
 REMINDER_INTERVAL = 1800
-
-# REAL:
-# REMINDER_INTERVAL = 3600
 
 # =========================
 # USER STATE
@@ -57,10 +54,14 @@ user_state = {
 }
 
 # =========================
-# LAST REMINDER
+# VAQT
 # =========================
 
-last_reminder_message_id = None
+def get_time():
+
+    return datetime.now(
+        ZoneInfo("Asia/Tashkent")
+    ).strftime("%H:%M")
 
 # =========================
 # BUILD MESSAGE
@@ -141,8 +142,6 @@ def build_buttons():
 
 async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
 
-    global last_reminder_message_id
-
     current_hour = datetime.now(
         ZoneInfo("Asia/Tashkent")
     ).hour
@@ -151,29 +150,15 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
     if current_hour < 6 or current_hour >= 20:
         return
 
-    # ESKI REMINDERNI O‘CHIRISH
-    if last_reminder_message_id:
-
-        try:
-            await context.bot.delete_message(
-                chat_id=CHAT_ID,
-                message_id=last_reminder_message_id
-            )
-        except:
-            pass
-
     text = build_message()
 
     keyboard = build_buttons()
 
-    msg = await context.bot.send_message(
+    await context.bot.send_message(
         chat_id=CHAT_ID,
         text=text,
         reply_markup=keyboard
     )
-
-    # YANGI MESSAGE ID
-    last_reminder_message_id = msg.message_id
 
 # =========================
 # BUTTONS
@@ -181,28 +166,25 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
 
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    global last_reminder_message_id
-
     query = update.callback_query
 
     await query.answer()
 
     data = query.data
 
-    # REMINDERNI O‘CHIRISH
+    # REMINDERNI OCHIRISH
     try:
         await query.message.delete()
     except:
         pass
 
-    # ID RESET
-    last_reminder_message_id = None
+    time_now = get_time()
 
     # Trading
     if data == "trading":
 
         await query.message.chat.send_message(
-            "Trading checklistga qaraldi"
+            f"Trading checklistga qaraldi ✅ {time_now}"
         )
 
     # Russ
@@ -211,7 +193,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_state["russ"] = True
 
         await query.message.chat.send_message(
-            "Rus tili bajarildi"
+            f"Russ tili bajarildi ✅ {time_now}"
         )
 
     # Kitob
@@ -220,7 +202,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_state["kitob"] = True
 
         await query.message.chat.send_message(
-            "Kitob oqildi"
+            f"Kitob oqildi ✅ {time_now}"
         )
 
     # Sozlar
@@ -229,14 +211,14 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_state["soz"] = True
 
         await query.message.chat.send_message(
-            "So'zlar yodlandi"
+            f"So'zlar yodlandi ✅ {time_now}"
         )
 
     # Sirly
     elif data == "sirly":
 
         await query.message.chat.send_message(
-            "Sirlyda hammasi yaxshi"
+            f"Sirlyda hammasi yaxshi ✅ {time_now}"
         )
 
 # =========================
@@ -245,21 +227,17 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    global last_reminder_message_id
-
     # RESET
     user_state["russ"] = False
     user_state["kitob"] = False
     user_state["soz"] = False
-
-    last_reminder_message_id = None
 
     # ESKI JOBLARNI TOPISH
     old_jobs = context.job_queue.get_jobs_by_name(
         "reminder"
     )
 
-    # ESKI JOBLARNI O‘CHIRISH
+    # ESKI JOBLARNI OCHIRISH
     if old_jobs:
         for job in old_jobs:
             job.schedule_removal()
