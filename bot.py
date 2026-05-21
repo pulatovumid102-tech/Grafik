@@ -347,7 +347,7 @@ try:
 except:
     pass
 
-        return
+return
 
     # =========================
     # TASK TEXT
