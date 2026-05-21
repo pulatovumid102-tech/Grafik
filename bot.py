@@ -8,6 +8,7 @@ from telegram import (
     Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
+    ReplyKeyboardMarkup,
 )
 
 from telegram.ext import (
@@ -215,7 +216,6 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     global last_reminder_message_id
-    global waiting_for_task
     global extra_tasks
 
     query = update.callback_query
@@ -249,7 +249,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
 
-    # ASOSIY TASKS
+    # MAIN TASKS
     if data == "trading":
 
         await query.message.chat.send_message(
@@ -297,7 +297,52 @@ async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = update.message.text
 
+    # =========================
+    # AKTUAL CHECKLIST
+    # =========================
+
+    if text == "📋 Aktual checklist":
+
+        checklist_text = build_message()
+
+        sent_message = await update.message.reply_text(
+            checklist_text
+        )
+
+        await asyncio.sleep(60)
+
+        try:
+            await sent_message.delete()
+        except:
+            pass
+
+        return
+
+    # =========================
+    # ADD TASK
+    # =========================
+
+    if text == "➕ Vazifa qo‘shish":
+
+        waiting_for_task = True
+
+        sent_message = await update.message.reply_text(
+            "Yangi vazifani yuboring ✍️"
+        )
+
+        await asyncio.sleep(60)
+
+        try:
+            await sent_message.delete()
+        except:
+            pass
+
+        return
+
+    # =========================
     # NEW TASK
+    # =========================
+
     if waiting_for_task:
 
         extra_tasks.append(text)
@@ -307,34 +352,6 @@ async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             f"Vazifa qo‘shildi ✅\n\n• {text}"
         )
-
-# =========================
-# MENU
-# =========================
-
-async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    keyboard = InlineKeyboardMarkup([
-
-        [
-            InlineKeyboardButton(
-                "📋 Aktual checklist",
-                callback_data="aktual"
-            )
-        ],
-
-        [
-            InlineKeyboardButton(
-                "➕ Vazifa qo‘shish",
-                callback_data="add_task"
-            )
-        ]
-    ])
-
-    await update.message.reply_text(
-        "Menu:",
-        reply_markup=keyboard
-    )
 
 # =========================
 # START
@@ -362,8 +379,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         first=1
     )
 
+    # =========================
+    # MENU
+    # =========================
+
+    keyboard = ReplyKeyboardMarkup(
+        [
+            ["📋 Aktual checklist"],
+            ["➕ Vazifa qo‘shish"]
+        ],
+        resize_keyboard=True
+    )
+
     await update.message.reply_text(
-        "Bot ishga tushdi ✅\n\n/menu ni yozing"
+        "Bot ishga tushdi ✅",
+        reply_markup=keyboard
     )
 
 # =========================
@@ -382,59 +412,6 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # =========================
-# CALLBACKS
-# =========================
-
-async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    global waiting_for_task
-
-    query = update.callback_query
-
-    await query.answer()
-
-    data = query.data
-
-    # AKTUAL CHECKLIST
-    if data == "aktual":
-
-        checklist_text = build_message()
-
-        sent_message = await query.message.chat.send_message(
-            checklist_text
-        )
-
-        await asyncio.sleep(60)
-
-        try:
-            await sent_message.delete()
-        except:
-            pass
-
-        return
-
-    # ADD TASK
-    if data == "add_task":
-
-        waiting_for_task = True
-
-        sent_message = await query.message.chat.send_message(
-            "Yangi vazifani yuboring ✍️"
-        )
-
-        await asyncio.sleep(60)
-
-        try:
-            await sent_message.delete()
-        except:
-            pass
-
-        return
-
-    # MAIN BUTTONS
-    await buttons(update, context)
-
-# =========================
 # MAIN
 # =========================
 
@@ -451,11 +428,7 @@ def main():
     )
 
     app.add_handler(
-        CommandHandler("menu", menu)
-    )
-
-    app.add_handler(
-        CallbackQueryHandler(callbacks)
+        CallbackQueryHandler(buttons)
     )
 
     app.add_handler(
