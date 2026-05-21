@@ -1,5 +1,4 @@
 import logging
-import asyncio
 
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -58,7 +57,7 @@ user_state = {
 extra_tasks = []
 
 # =========================
-# TASK MODE
+# WAITING TASK
 # =========================
 
 waiting_for_task = False
@@ -89,18 +88,18 @@ def build_message():
 
     lines.append("Doimiy vazifalar:\n")
 
-    lines.append("• Trading checklistga qaradingmi? ☑️")
+    lines.append("• Trading checklistga qaradingmi? ⬜")
 
     if not user_state["russ"]:
-        lines.append("• Russ tili - dars qildingmi? ☑️")
+        lines.append("• Russ tili - dars qildingmi? ⬜")
 
     if not user_state["kitob"]:
-        lines.append("• Kitob oqidingmi? ☑️")
+        lines.append("• Kitob oqidingmi? ⬜")
 
     if not user_state["soz"]:
-        lines.append("• Rus tilida yangi so'zlar yodladingmi? ☑️")
+        lines.append("• Rus tilida yangi so'zlar yodladingmi? ⬜")
 
-    lines.append("• Sirlyda bollardan habar oldingmi? ☑️")
+    lines.append("• Sirlyda bollardan habar oldingmi? ⬜")
 
     # EXTRA TASKS
     if extra_tasks:
@@ -108,7 +107,7 @@ def build_message():
         lines.append("\nQo‘shimcha vazifalar:\n")
 
         for task in extra_tasks:
-            lines.append(f"• {task} ☑️")
+            lines.append(f"• {task} ⬜")
 
     return "\n\n".join(lines)
 
@@ -186,7 +185,7 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
 
     global last_reminder_message_id
 
-    # OLD REMINDER DELETE
+    # DELETE OLD REMINDER
     if last_reminder_message_id:
 
         try:
@@ -210,7 +209,7 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
     last_reminder_message_id = sent_message.message_id
 
 # =========================
-# BUTTONS
+# BUTTON HANDLER
 # =========================
 
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -305,16 +304,10 @@ async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         checklist_text = build_message()
 
-        sent_message = await update.message.reply_text(
-            checklist_text
+        await update.message.reply_text(
+            checklist_text,
+            reply_markup=build_buttons()
         )
-
-        await asyncio.sleep(60)
-
-        try:
-            await sent_message.delete()
-        except:
-            pass
 
         return
 
@@ -326,16 +319,9 @@ async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         waiting_for_task = True
 
-        sent_message = await update.message.reply_text(
+        await update.message.reply_text(
             "Yangi vazifani yuboring ✍️"
         )
-
-        await asyncio.sleep(60)
-
-        try:
-            await sent_message.delete()
-        except:
-            pass
 
         return
 
@@ -370,12 +356,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         job.schedule_removal()
 
     # =========================
-    # EVERY 1 MINUTE
+    # EVERY 5 MINUTES
     # =========================
 
     context.job_queue.run_repeating(
         send_reminder,
-        interval=60,
+        interval=300,
         first=1
     )
 
