@@ -93,7 +93,7 @@ def build_message():
 
     # RUSS
     if not user_state["russ"]:
-        lines.append("• Russ tili - dars qildingmi? ✅")
+        lines.append("• Russ tili - dars qildingmi? ☑️")
 
     # KITOB
     if not user_state["kitob"]:
