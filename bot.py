@@ -37,7 +37,7 @@ logging.basicConfig(
 # REMINDER_INTERVAL = 10
 
 # REAL uchun:
-REMINDER_INTERVAL = 3600
+REMINDER_INTERVAL = 10
 
 # =========================
 # USER STATE
