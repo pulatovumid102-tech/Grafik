@@ -88,22 +88,17 @@ def build_message():
 
     lines.append("Doimiy vazifalar:\n")
 
-    # TRADING
     lines.append("• Trading checklistga qaradingmi? ☑️")
 
-    # RUSS
     if not user_state["russ"]:
         lines.append("• Russ tili - dars qildingmi? ☑️")
 
-    # KITOB
     if not user_state["kitob"]:
         lines.append("• Kitob oqidingmi? ☑️")
 
-    # SOZ
     if not user_state["soz"]:
         lines.append("• Rus tilida yangi so'zlar yodladingmi? ☑️")
 
-    # SIRLY
     lines.append("• Sirlyda bollardan habar oldingmi? ☑️")
 
     # EXTRA TASKS
@@ -301,10 +296,7 @@ async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = update.message.text
 
-    # =========================
     # AKTUAL CHECKLIST
-    # =========================
-
     if text == "📋 Aktual checklist":
 
         checklist_text = build_message()
@@ -316,10 +308,7 @@ async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
 
-    # =========================
     # ADD TASK
-    # =========================
-
     if text == "➕ Vazifa qo‘shish":
 
         waiting_for_task = True
@@ -330,10 +319,7 @@ async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
 
-    # =========================
     # NEW TASK
-    # =========================
-
     if waiting_for_task:
 
         extra_tasks.append(text)
@@ -373,7 +359,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             time=datetime.strptime(
                 f"{hour}:00",
                 "%H:%M"
-            ).time(),
+            ).time().replace(
+                tzinfo=ZoneInfo("Asia/Tashkent")
+            ),
             name=f"reminder_{hour}_00"
         )
 
@@ -385,14 +373,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 time=datetime.strptime(
                     f"{hour}:30",
                     "%H:%M"
-                ).time(),
+                ).time().replace(
+                    tzinfo=ZoneInfo("Asia/Tashkent")
+                ),
                 name=f"reminder_{hour}_30"
             )
 
-    # =========================
     # MENU
-    # =========================
-
     keyboard = ReplyKeyboardMarkup(
         [
             ["📋 Aktual checklist"],
@@ -427,12 +414,7 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
 
-    app = (
-    Application.builder()
-    .token(TOKEN)
-    .timezone(ZoneInfo("Asia/Tashkent"))
-    .build()
-)
+    app = Application.builder().token(TOKEN).build()
 
     app.add_handler(
         CommandHandler("start", start)
