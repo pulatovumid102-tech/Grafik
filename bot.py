@@ -1,7 +1,7 @@
 import logging
 import asyncio
 
-from datetime import datetime
+from datetime import datetime, time
 from zoneinfo import ZoneInfo
 
 from telegram import (
@@ -42,12 +42,6 @@ logging.basicConfig(
 )
 
 # =========================
-# HAR 30 DAQIQA
-# =========================
-
-REMINDER_INTERVAL = 1800
-
-# =========================
 # USER STATE
 # =========================
 
@@ -76,7 +70,7 @@ waiting_for_task = False
 last_reminder_message_id = None
 
 # =========================
-# VAQT
+# TIME
 # =========================
 
 def get_time():
@@ -95,7 +89,7 @@ def build_message():
 
     lines.append("Doimiy vazifalar:\n")
 
-    # ASOSIY
+    # DOIMIY
     lines.append("• Trading checklistga qaradingmi? ☑️")
 
     if not user_state["russ"]:
@@ -166,7 +160,7 @@ def build_buttons():
         )
     ])
 
-    # EXTRA TASK BUTTONLAR
+    # EXTRA TASKS
     for index, task in enumerate(extra_tasks):
 
         buttons.append([
@@ -185,14 +179,6 @@ def build_buttons():
 async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
 
     global last_reminder_message_id
-
-    current_hour = datetime.now(
-        ZoneInfo("Asia/Tashkent")
-    ).hour
-
-    # FAQAT 06:00 → 20:00
-    if current_hour < 6 or current_hour >= 20:
-        return
 
     # ESKI REMINDERNI O‘CHIRISH
     if last_reminder_message_id:
@@ -374,7 +360,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     last_reminder_message_id = None
 
-    # PASTDA DOIM TURADI
+    # MENU
     menu_keyboard = ReplyKeyboardMarkup(
         [
             ["➕ Vazifa qo‘shish"],
@@ -383,27 +369,34 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         resize_keyboard=True
     )
 
-    # AGAR JOB BOR BO‘LSA
-    existing_jobs = context.job_queue.get_jobs_by_name(
-        "reminder"
-    )
+    # ESKI JOBLARNI O‘CHIRISH
+    old_jobs = context.job_queue.jobs()
 
-    if existing_jobs:
+    for job in old_jobs:
+        job.schedule_removal()
 
-        await update.message.reply_text(
-            "Bot allaqachon ishlayapti ✅",
-            reply_markup=menu_keyboard
+    # =========================
+    # 06:00 → 20:00
+    # HAR 30 DAQIQA
+    # =========================
+
+    for hour in range(6, 21):
+
+        # :00
+        context.job_queue.run_daily(
+            send_reminder,
+            time=time(hour, 0),
+            name=f"reminder_{hour}_00"
         )
 
-        return
+        # :30
+        if hour != 20:
 
-    # YANGI LOOP
-    context.job_queue.run_repeating(
-        send_reminder,
-        interval=REMINDER_INTERVAL,
-        first=5,
-        name="reminder"
-    )
+            context.job_queue.run_daily(
+                send_reminder,
+                time=time(hour, 30),
+                name=f"reminder_{hour}_30"
+            )
 
     await update.message.reply_text(
         "Bot ishga tushdi ✅",
@@ -416,9 +409,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    jobs = context.job_queue.get_jobs_by_name(
-        "reminder"
-    )
+    jobs = context.job_queue.jobs()
 
     for job in jobs:
         job.schedule_removal()
