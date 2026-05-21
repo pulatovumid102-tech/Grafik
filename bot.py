@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from zoneinfo import ZoneInfo
+import asyncio
 
 from telegram import (
     Update,
@@ -332,10 +333,19 @@ async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         checklist_buttons = build_buttons()
 
-        await update.message.reply_text(
-            checklist_text,
-            reply_markup=checklist_buttons
-        )
+        sent_message = await update.message.reply_text(
+    checklist_text,
+    reply_markup=checklist_buttons
+)
+
+# 60 sekund kutish
+await asyncio.sleep(60)
+
+# Xabarni o‘chirish
+try:
+    await sent_message.delete()
+except:
+    pass
 
         return
 
