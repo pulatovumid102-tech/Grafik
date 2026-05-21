@@ -33,11 +33,11 @@ logging.basicConfig(
 # TEST / REAL REJIM
 # =========================
 
-# TEST uchun:
-# REMINDER_INTERVAL = 10
-
-# REAL uchun:
+# TEST:
 REMINDER_INTERVAL = 10
+
+# REAL:
+# REMINDER_INTERVAL = 3600
 
 # =========================
 # USER STATE
@@ -147,7 +147,7 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
     keyboard = build_buttons()
 
     await context.bot.send_message(
-        chat_id=context.job.chat_id,
+        chat_id=context.job.data["chat_id"],
         text=text,
         reply_markup=keyboard
     )
@@ -224,7 +224,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_state["kitob"] = False
     user_state["soz"] = False
 
-    # OLD JOBLARNI TOPISH
+    # ESKI JOBLARNI TOPISH
     old_jobs = context.job_queue.get_jobs_by_name(
         f"reminder_{chat_id}"
     )
@@ -239,7 +239,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         send_reminder,
         interval=REMINDER_INTERVAL,
         first=5,
-        chat_id=chat_id,
+        data={"chat_id": chat_id},
         name=f"reminder_{chat_id}"
     )
 
