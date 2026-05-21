@@ -97,7 +97,7 @@ def build_buttons():
 
     buttons.append([
         InlineKeyboardButton(
-            "Trading bajarildi",
+            "Trading bajarildi ✅",
             callback_data="trading"
         )
     ])
@@ -105,7 +105,7 @@ def build_buttons():
     if not user_state["russ"]:
         buttons.append([
             InlineKeyboardButton(
-                "Russ tili bajarildi",
+                "Rus tili bajarildi ✅",
                 callback_data="russ"
             )
         ])
@@ -113,7 +113,7 @@ def build_buttons():
     if not user_state["kitob"]:
         buttons.append([
             InlineKeyboardButton(
-                "Kitob oqildi",
+                "Kitob oqildi ✅",
                 callback_data="kitob"
             )
         ])
@@ -121,14 +121,14 @@ def build_buttons():
     if not user_state["soz"]:
         buttons.append([
             InlineKeyboardButton(
-                "So'zlar yodlandi",
+                "So'zlar yodlandi ✅",
                 callback_data="soz"
             )
         ])
 
     buttons.append([
         InlineKeyboardButton(
-            "Sirlydan habar olindi",
+            "Sirlydan habar olindi ✅",
             callback_data="sirly"
         )
     ])
