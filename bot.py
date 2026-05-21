@@ -18,7 +18,7 @@ from telegram.ext import (
 # TOKEN
 # =========================
 
-TOKEN = "8780693245:AAF8w_cxMTHyr0xHrQnGotDyZrYlfIzj97Q"
+TOKEN = "8780693245:AAGEbojMC_6WodZtHRvYG52EVTic8BB2x7c"
 
 # =========================
 # CHAT ID
