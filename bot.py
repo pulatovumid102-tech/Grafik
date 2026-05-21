@@ -41,10 +41,10 @@ logging.basicConfig(
 # =========================
 
 # TEST:
-# REMINDER_INTERVAL = 10
+REMINDER_INTERVAL = 10
 
 # REAL:
-REMINDER_INTERVAL = 900
+# REMINDER_INTERVAL = 3600
 
 # =========================
 # USER STATE
@@ -55,6 +55,12 @@ user_state = {
     "kitob": False,
     "soz": False,
 }
+
+# =========================
+# LAST REMINDER
+# =========================
+
+last_reminder_message_id = None
 
 # =========================
 # BUILD MESSAGE
@@ -135,7 +141,7 @@ def build_buttons():
 
 async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
 
-    print("REMINDER ISHLADI")
+    global last_reminder_message_id
 
     current_hour = datetime.now(
         ZoneInfo("Asia/Tashkent")
@@ -143,26 +149,31 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
 
     # FAQAT 06:00 → 20:00
     if current_hour < 6 or current_hour >= 20:
-        print("HOZIR DAM OLISH VAQTI")
         return
+
+    # ESKI REMINDERNI O‘CHIRISH
+    if last_reminder_message_id:
+
+        try:
+            await context.bot.delete_message(
+                chat_id=CHAT_ID,
+                message_id=last_reminder_message_id
+            )
+        except:
+            pass
 
     text = build_message()
 
     keyboard = build_buttons()
 
-    try:
+    msg = await context.bot.send_message(
+        chat_id=CHAT_ID,
+        text=text,
+        reply_markup=keyboard
+    )
 
-        await context.bot.send_message(
-            chat_id=CHAT_ID,
-            text=text,
-            reply_markup=keyboard
-        )
-
-        print("XABAR YUBORILDI ✅")
-
-    except Exception as e:
-
-        print(f"XATO: {e}")
+    # YANGI MESSAGE ID
+    last_reminder_message_id = msg.message_id
 
 # =========================
 # BUTTONS
@@ -170,23 +181,28 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
 
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    global last_reminder_message_id
+
     query = update.callback_query
 
     await query.answer()
 
     data = query.data
 
-    # ESKI REMINDERNI OCHIRISH
+    # REMINDERNI O‘CHIRISH
     try:
         await query.message.delete()
     except:
         pass
 
+    # ID RESET
+    last_reminder_message_id = None
+
     # Trading
     if data == "trading":
 
         await query.message.chat.send_message(
-            "📊 Trading checklistga qaraldi"
+            "Trading checklistga qaraldi"
         )
 
     # Russ
@@ -195,7 +211,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_state["russ"] = True
 
         await query.message.chat.send_message(
-            "🇷🇺 Russ tili bajarildi"
+            "Rus tili bajarildi"
         )
 
     # Kitob
@@ -204,7 +220,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_state["kitob"] = True
 
         await query.message.chat.send_message(
-            "📘 Kitob oqildi"
+            "Kitob oqildi"
         )
 
     # Sozlar
@@ -213,14 +229,14 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_state["soz"] = True
 
         await query.message.chat.send_message(
-            "🧠 So'zlar yodlandi"
+            "So'zlar yodlandi"
         )
 
     # Sirly
     elif data == "sirly":
 
         await query.message.chat.send_message(
-            "🤝 Sirlyda hammasi yaxshi"
+            "Sirlyda hammasi yaxshi"
         )
 
 # =========================
@@ -229,17 +245,21 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    global last_reminder_message_id
+
     # RESET
     user_state["russ"] = False
     user_state["kitob"] = False
     user_state["soz"] = False
+
+    last_reminder_message_id = None
 
     # ESKI JOBLARNI TOPISH
     old_jobs = context.job_queue.get_jobs_by_name(
         "reminder"
     )
 
-    # ESKI JOBLARNI OCHIRISH
+    # ESKI JOBLARNI O‘CHIRISH
     if old_jobs:
         for job in old_jobs:
             job.schedule_removal()
