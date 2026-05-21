@@ -6,6 +6,7 @@ from telegram import (
     Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
+    ReplyKeyboardMarkup,
 )
 
 from telegram.ext import (
@@ -39,7 +40,7 @@ logging.basicConfig(
 )
 
 # =========================
-# 30 DAQIQA
+# HAR 30 DAQIQA
 # =========================
 
 REMINDER_INTERVAL = 1800
@@ -94,7 +95,7 @@ def build_message():
     lines.append("Trading checklistga qaradingmi? ☑️")
 
     if not user_state["russ"]:
-        lines.append("Russ tili - dars qildingmi? ☑️")
+        lines.append("Rus tili - dars qildingmi? ☑️")
 
     if not user_state["kitob"]:
         lines.append("Kitob oqidingmi? ☑️")
@@ -133,7 +134,7 @@ def build_buttons():
     if not user_state["russ"]:
         buttons.append([
             InlineKeyboardButton(
-                "Russ tili bajarildi ✅",
+                "Rus tili bajarildi ✅",
                 callback_data="russ"
             )
         ])
@@ -161,15 +162,7 @@ def build_buttons():
         )
     ])
 
-    # TASK QO‘SHISH
-    buttons.append([
-        InlineKeyboardButton(
-            "➕ Vazifa qo‘shish",
-            callback_data="add_task"
-        )
-    ])
-
-    # EXTRA TASKLAR
+    # EXTRA TASK BUTTONLAR
     for index, task in enumerate(extra_tasks):
 
         buttons.append([
@@ -193,7 +186,7 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
         ZoneInfo("Asia/Tashkent")
     ).hour
 
-    # FAQAT 06 → 20
+    # FAQAT 06:00 → 20:00
     if current_hour < 6 or current_hour >= 20:
         return
 
@@ -218,6 +211,7 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
         reply_markup=keyboard
     )
 
+    # OXIRGI MESSAGE ID
     last_reminder_message_id = sent_message.message_id
 
 # =========================
@@ -226,7 +220,6 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
 
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    global waiting_for_task
     global last_reminder_message_id
 
     query = update.callback_query
@@ -244,20 +237,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     last_reminder_message_id = None
 
     time_now = get_time()
-
-    # =========================
-    # ADD TASK
-    # =========================
-
-    if data == "add_task":
-
-        waiting_for_task = True
-
-        await query.message.chat.send_message(
-            "Yangi vazifani yuboring ✍️"
-        )
-
-        return
 
     # =========================
     # EXTRA TASK COMPLETE
@@ -318,25 +297,42 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 # =========================
-# TASK MESSAGE
+# MESSAGE HANDLER
 # =========================
 
-async def task_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     global waiting_for_task
 
-    if not waiting_for_task:
+    text = update.message.text
+
+    # =========================
+    # TASK QO‘SHISH
+    # =========================
+
+    if text == "➕ Vazifa qo‘shish":
+
+        waiting_for_task = True
+
+        await update.message.reply_text(
+            "Yangi vazifani yuboring ✍️"
+        )
+
         return
 
-    task_text = update.message.text
+    # =========================
+    # TASK TEXT
+    # =========================
 
-    extra_tasks.append(task_text)
+    if waiting_for_task:
 
-    waiting_for_task = False
+        extra_tasks.append(text)
 
-    await update.message.reply_text(
-        f"Vazifa qo‘shildi ✅\n\n• {task_text}"
-    )
+        waiting_for_task = False
+
+        await update.message.reply_text(
+            f"Vazifa qo‘shildi ✅\n\n• {text}"
+        )
 
 # =========================
 # START
@@ -348,11 +344,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     last_reminder_message_id = None
 
-    # ESKI JOBLAR
+    # PASTDA DOIM TURADI
+    menu_keyboard = ReplyKeyboardMarkup(
+        [["➕ Vazifa qo‘shish"]],
+        resize_keyboard=True
+    )
+
+    # ESKI JOBLARNI TOPISH
     old_jobs = context.job_queue.get_jobs_by_name(
         "reminder"
     )
 
+    # ESKI JOBLARNI O‘CHIRISH
     if old_jobs:
         for job in old_jobs:
             job.schedule_removal()
@@ -366,7 +369,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     await update.message.reply_text(
-        "Bot ishga tushdi ✅"
+        "Bot ishga tushdi ✅",
+        reply_markup=menu_keyboard
     )
 
 # =========================
@@ -409,7 +413,7 @@ def main():
     app.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND,
-            task_message
+            messages
         )
     )
 
