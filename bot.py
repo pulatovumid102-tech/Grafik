@@ -88,17 +88,25 @@ def build_message():
 
     lines.append("Doimiy vazifalar:\n")
 
+    # TRADING
     lines.append("• Trading checklistga qaradingmi? ☑️")
 
+    # SPORT
+    lines.append("• Sport bilan shug‘ullandingmi? ☑️")
+
+    # RUSS
     if not user_state["russ"]:
         lines.append("• Russ tili - dars qildingmi? ☑️")
 
+    # KITOB
     if not user_state["kitob"]:
         lines.append("• Kitob oqidingmi? ☑️")
 
+    # SOZ
     if not user_state["soz"]:
         lines.append("• Rus tilida yangi so'zlar yodladingmi? ☑️")
 
+    # SIRLY
     lines.append("• Sirlyda bollardan habar oldingmi? ☑️")
 
     # EXTRA TASKS
@@ -124,6 +132,14 @@ def build_buttons():
         InlineKeyboardButton(
             "Trading bajarildi ✅",
             callback_data="trading"
+        )
+    ])
+
+    # SPORT
+    buttons.append([
+        InlineKeyboardButton(
+            "Sport bajarildi ✅",
+            callback_data="sport"
         )
     ])
 
@@ -253,6 +269,12 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await query.message.chat.send_message(
             f"Trading checklistga qaraldi ✅ {time_now}"
+        )
+
+    elif data == "sport":
+
+        await query.message.chat.send_message(
+            f"Sport bajarildi ✅ {time_now}"
         )
 
     elif data == "russ":
