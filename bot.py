@@ -605,7 +605,7 @@ async def buttons(
             reply_markup=keyboard
         )
 
-        u["settings_msg_ids"].append(sent.message_id)
+        u["settings_msg_ids"] = [sent.message_id]
 
         return
 
