@@ -677,9 +677,27 @@ async def messages(
     # AKTUAL CHECKLIST
     if "Aktual checklist" in text:
 
-        await update.message.reply_text(
+        sent = await update.message.reply_text(
             build_message(user_id),
             reply_markup=build_buttons(user_id)
+        )
+
+        _chat_id = sent.chat_id
+        _msg_id = sent.message_id
+
+        async def delete_checklist(ctx):
+            try:
+                await ctx.bot.delete_message(
+                    chat_id=_chat_id,
+                    message_id=_msg_id
+                )
+            except:
+                pass
+
+        context.job_queue.run_once(
+            delete_checklist,
+            when=10,
+            data=None,
         )
 
         return
