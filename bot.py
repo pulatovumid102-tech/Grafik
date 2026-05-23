@@ -573,7 +573,7 @@ async def messages(
     text = update.message.text
 
     # AKTUAL CHECKLIST
-    if text == "📋 Aktual checklist":
+    if "Aktual checklist" in text:
 
         checklist_text = build_message()
 
@@ -585,7 +585,7 @@ async def messages(
         return
 
     # ADD TASK
-    if text == "➕ Vazifa qo‘shish":
+    if "Vazifa qo‘shish" in text:
 
         waiting_for_task = True
 
