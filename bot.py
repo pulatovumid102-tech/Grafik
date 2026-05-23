@@ -702,6 +702,9 @@ async def start(
     u = get_user(user_id)
 
     u["last_reminder_message_id"] = None
+    u["user_state"]["sport"] = False
+    u["user_state"]["russ"] = False
+    u["user_state"]["kitob"] = False
 
     rebuild_jobs(context, user_id)
 
