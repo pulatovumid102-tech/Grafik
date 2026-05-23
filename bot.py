@@ -89,18 +89,15 @@ last_reminder_message_id = None
 # TIME
 # =========================
 
-
 def get_time():
 
     return datetime.now(
         ZoneInfo("Asia/Tashkent")
     ).strftime("%H:%M")
 
-
 # =========================
 # REBUILD JOBS
 # =========================
-
 
 def rebuild_jobs(context):
 
@@ -124,22 +121,22 @@ def rebuild_jobs(context):
 
             context.job_queue.run_daily(
                 send_reminder,
+
                 time=datetime.strptime(
                     f"{hour}:{minute:02}",
                     "%H:%M"
                 ).time().replace(
                     tzinfo=ZoneInfo("Asia/Tashkent")
                 ),
+
                 name=f"reminder_{hour}_{minute}"
             )
 
             minute += interval
 
-
 # =========================
 # BUILD MESSAGE
 # =========================
-
 
 def build_message():
 
@@ -204,11 +201,9 @@ def build_message():
 
     return "\n\n".join(lines)
 
-
 # =========================
 # BUILD BUTTONS
 # =========================
-
 
 def build_buttons():
 
@@ -286,11 +281,9 @@ def build_buttons():
 
     return InlineKeyboardMarkup(buttons)
 
-
 # =========================
 # SEND REMINDER
 # =========================
-
 
 async def send_reminder(
     context: ContextTypes.DEFAULT_TYPE
@@ -324,11 +317,9 @@ async def send_reminder(
         sent_message.message_id
     )
 
-
 # =========================
 # SETTINGS MENU
 # =========================
-
 
 async def settings_menu(update, context):
 
@@ -361,11 +352,9 @@ async def settings_menu(update, context):
             reply_markup=keyboard
         )
 
-
 # =========================
 # BUTTON HANDLER
 # =========================
-
 
 async def buttons(
     update: Update,
@@ -385,7 +374,7 @@ async def buttons(
 
     time_now = get_time()
 
-    # SETTINGS
+    # SETTINGS TIME
     if data == "settings_time":
 
         waiting_for_start_hour = True
@@ -442,7 +431,8 @@ async def buttons(
         await query.message.reply_text(
             f"✅ O‘zgartirish qabul qilindi\n\n"
             f"Ish vaqti:\n"
-            f"{settings['start_hour']}:00 → {settings['end_hour']}:00"
+            f"{settings['start_hour']}:00 → "
+            f"{settings['end_hour']}:00"
         )
 
         return
@@ -556,11 +546,9 @@ async def buttons(
             f"Sirlyda hammasi yaxshi ✅ {time_now}"
         )
 
-
 # =========================
 # MESSAGE HANDLER
 # =========================
-
 
 async def messages(
     update: Update,
@@ -602,6 +590,22 @@ async def messages(
 
         return
 
+    # BOT HAQIDA
+    if "Bot haqida" in text:
+
+        await update.message.reply_text(
+            f"ℹ️ Bot haqida\n\n"
+            f"⏰ Ish vaqti: "
+            f"{settings['start_hour']}:00 - "
+            f"{settings['end_hour']}:00\n"
+            f"🔁 Interval: har "
+            f"{settings['interval']} daqiqa\n\n"
+            f"Bot belgilangan vaqtlarda "
+            f"checklist yuboradi."
+        )
+
+        return
+
     # NEW TASK
     if waiting_for_task:
 
@@ -613,11 +617,9 @@ async def messages(
             f"Vazifa qo‘shildi ✅\n\n• {text}"
         )
 
-
 # =========================
 # START
 # =========================
-
 
 async def start(
     update: Update,
@@ -635,21 +637,31 @@ async def start(
         [
             ["📋 Aktual checklist"],
             ["➕ Vazifa qo‘shish"],
-            ["⚙️ Sozlamalar"]
+            ["⚙️ Sozlamalar"],
+            ["ℹ️ Bot haqida"]
         ],
         resize_keyboard=True
     )
 
     await update.message.reply_text(
-        "Bot ishga tushdi ✅",
+        f"Bot ishga tushdi ✅\n\n"
+        f"Bot sizga belgilangan vaqtlarda "
+        f"checklist yuboradi.\n\n"
+        f"⏰ Ish vaqti: "
+        f"{settings['start_hour']}:00 - "
+        f"{settings['end_hour']}:00\n"
+        f"🔁 Interval: har "
+        f"{settings['interval']} daqiqa\n\n"
+        f"⚙️ Sozlamalar orqali:\n"
+        f"• ish vaqtini\n"
+        f"• intervalni\n"
+        f"o‘zgartirishingiz mumkin.",
         reply_markup=keyboard
     )
-
 
 # =========================
 # STOP
 # =========================
-
 
 async def stop(
     update: Update,
@@ -666,11 +678,9 @@ async def stop(
         "Bot to‘xtatildi 🛑"
     )
 
-
 # =========================
 # MAIN
 # =========================
-
 
 def main():
 
@@ -703,11 +713,9 @@ def main():
 
     app.run_polling()
 
-
 # =========================
 # RUN
 # =========================
-
 
 if __name__ == "__main__":
 
