@@ -524,7 +524,7 @@ async def buttons(
 
         u["settings_msg_ids"].append(sent.message_id)
 
-        _chat_id = u.get("settings_chat_id", user_id)
+        _chat_id = user_id
         _msg_ids = list(u["settings_msg_ids"])
 
         async def delete_all_end(ctx):
@@ -578,7 +578,7 @@ async def buttons(
 
         u["settings_msg_ids"].append(sent.message_id)
 
-        _chat_id = u.get("settings_chat_id", user_id)
+        _chat_id = user_id
         _msg_ids = list(u["settings_msg_ids"])
 
         async def delete_all_interval(ctx):
@@ -938,7 +938,7 @@ async def messages(
 
         u["settings_msg_ids"].append(sent.message_id)
 
-        _chat_id = u.get("settings_chat_id", user_id)
+        _chat_id = user_id
         _msg_ids = list(u["settings_msg_ids"])
 
         async def _del_takror_add(ctx):
@@ -969,7 +969,7 @@ async def messages(
 
         u["settings_msg_ids"].append(sent.message_id)
 
-        _chat_id = u.get("settings_chat_id", user_id)
+        _chat_id = user_id
         _msg_ids = list(u["settings_msg_ids"])
 
         async def _del_kunlik_add(ctx):
@@ -999,7 +999,7 @@ async def messages(
 
             u["settings_msg_ids"].append(sent.message_id)
 
-            _chat_id = u.get("settings_chat_id", user_id)
+            _chat_id = user_id
             _msg_ids = list(u["settings_msg_ids"])
 
             async def _del_te(ctx):
@@ -1031,7 +1031,7 @@ async def messages(
 
             u["settings_msg_ids"].append(sent.message_id)
 
-            _chat_id = u.get("settings_chat_id", user_id)
+            _chat_id = user_id
             _msg_ids = list(u["settings_msg_ids"])
 
             async def _del_ke(ctx):
