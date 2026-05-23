@@ -219,7 +219,7 @@ def build_message(user_id):
     takror_items = []
     if today not in [5, 6]:
         takror_items.append("Trading - grafikga qara")
-    takror_items.append("Sirly - hammasini yaxshimi tekshir")
+    takror_items.append("Sirly - hammasi yaxshimi tekshir")
 
     # KUNLIK
     kunlik_all = [
@@ -269,8 +269,7 @@ def build_message(user_id):
         for i, task in enumerate(u["extra_tasks"], 1):
             lines.append(f"{i}\ufe0f\u20e3 {task}")
 
-    lines.append("━━━━━━━━━━━━━━")
-    lines.append(f"• Bugungi progress:  {percent}%")
+
 
     return "\n".join(lines)
 
