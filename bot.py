@@ -223,9 +223,9 @@ def build_message(user_id):
 
     # KUNLIK
     kunlik_all = [
-        ("sport", "Sport bilan shug'ullandingmi?"),
-        ("russ",  "Russ tili dars qildingmi?"),
-        ("kitob", "Kitob oqidingmi?"),
+        ("sport", "Sport"),
+        ("russ",  "Til"),
+        ("kitob", "Kitob"),
     ]
 
     kunlik_items = [
@@ -315,7 +315,7 @@ def build_buttons(user_id):
 
         buttons.append([
             InlineKeyboardButton(
-                "Sport bajarildi ✅",
+                "Sport bilan shug'ullandim ✅",
                 callback_data="sport"
             )
         ])
@@ -325,7 +325,7 @@ def build_buttons(user_id):
 
         buttons.append([
             InlineKeyboardButton(
-                "Russ tili bajarildi ✅",
+                "Til o'rgandim ✅",
                 callback_data="russ"
             )
         ])
@@ -335,7 +335,7 @@ def build_buttons(user_id):
 
         buttons.append([
             InlineKeyboardButton(
-                "Kitob oqildi ✅",
+                "Kitob o'qidim ✅",
                 callback_data="kitob"
             )
         ])
