@@ -88,34 +88,89 @@ def build_message():
 
     lines.append("Doimiy vazifalar:\n")
 
+    # =========================
+    # TODAY
+    # =========================
+
+    today = datetime.now(
+        ZoneInfo("Asia/Tashkent")
+    ).weekday()
+
+    # 0 = Monday
+    # 5 = Saturday
+    # 6 = Sunday
+
+    # =========================
     # TRADING
-    lines.append("• Trading checklistga qaradingmi? ☑️")
+    # =========================
 
+    if today not in [5, 6]:
+
+        lines.append(
+            "• Trading checklistga qaradingmi? ☑️"
+        )
+
+    # =========================
     # SPORT
-    lines.append("• Sport bilan shug‘ullandingmi? ☑️")
+    # =========================
 
+    lines.append(
+        "• Sport bilan shug‘ullandingmi? ☑️"
+    )
+
+    # =========================
     # RUSS
+    # =========================
+
     if not user_state["russ"]:
-        lines.append("• Russ tili - dars qildingmi? ☑️")
 
+        lines.append(
+            "• Russ tili - dars qildingmi? ☑️"
+        )
+
+    # =========================
     # KITOB
+    # =========================
+
     if not user_state["kitob"]:
-        lines.append("• Kitob oqidingmi? ☑️")
 
+        lines.append(
+            "• Kitob oqidingmi? ☑️"
+        )
+
+    # =========================
     # SOZ
+    # =========================
+
     if not user_state["soz"]:
-        lines.append("• Rus tilida yangi so'zlar yodladingmi? ☑️")
 
+        lines.append(
+            "• Rus tilida yangi so'zlar yodladingmi? ☑️"
+        )
+
+    # =========================
     # SIRLY
-    lines.append("• Sirlyda bollardan habar oldingmi? ☑️")
+    # =========================
 
+    lines.append(
+        "• Sirlyda bollardan habar oldingmi? ☑️"
+    )
+
+    # =========================
     # EXTRA TASKS
+    # =========================
+
     if extra_tasks:
 
-        lines.append("\nQo‘shimcha vazifalar:\n")
+        lines.append(
+            "\nQo‘shimcha vazifalar:\n"
+        )
 
         for task in extra_tasks:
-            lines.append(f"• {task} ☑️")
+
+            lines.append(
+                f"• {task} ☑️"
+            )
 
     return "\n\n".join(lines)
 
@@ -127,15 +182,31 @@ def build_buttons():
 
     buttons = []
 
-    # TRADING
-    buttons.append([
-        InlineKeyboardButton(
-            "Trading bajarildi ✅",
-            callback_data="trading"
-        )
-    ])
+    # =========================
+    # TODAY
+    # =========================
 
+    today = datetime.now(
+        ZoneInfo("Asia/Tashkent")
+    ).weekday()
+
+    # =========================
+    # TRADING
+    # =========================
+
+    if today not in [5, 6]:
+
+        buttons.append([
+            InlineKeyboardButton(
+                "Trading bajarildi ✅",
+                callback_data="trading"
+            )
+        ])
+
+    # =========================
     # SPORT
+    # =========================
+
     buttons.append([
         InlineKeyboardButton(
             "Sport bajarildi ✅",
@@ -143,7 +214,10 @@ def build_buttons():
         )
     ])
 
+    # =========================
     # RUSS
+    # =========================
+
     if not user_state["russ"]:
 
         buttons.append([
@@ -153,7 +227,10 @@ def build_buttons():
             )
         ])
 
+    # =========================
     # KITOB
+    # =========================
+
     if not user_state["kitob"]:
 
         buttons.append([
@@ -163,7 +240,10 @@ def build_buttons():
             )
         ])
 
+    # =========================
     # SOZ
+    # =========================
+
     if not user_state["soz"]:
 
         buttons.append([
@@ -173,7 +253,10 @@ def build_buttons():
             )
         ])
 
+    # =========================
     # SIRLY
+    # =========================
+
     buttons.append([
         InlineKeyboardButton(
             "Sirlydan habar olindi ✅",
@@ -181,7 +264,10 @@ def build_buttons():
         )
     ])
 
+    # =========================
     # EXTRA TASKS
+    # =========================
+
     for index, task in enumerate(extra_tasks):
 
         buttons.append([
@@ -197,7 +283,9 @@ def build_buttons():
 # SEND REMINDER
 # =========================
 
-async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
+async def send_reminder(
+    context: ContextTypes.DEFAULT_TYPE
+):
 
     global last_reminder_message_id
 
@@ -205,10 +293,12 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
     if last_reminder_message_id:
 
         try:
+
             await context.bot.delete_message(
                 chat_id=CHAT_ID,
                 message_id=last_reminder_message_id
             )
+
         except:
             pass
 
@@ -222,13 +312,18 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
         reply_markup=keyboard
     )
 
-    last_reminder_message_id = sent_message.message_id
+    last_reminder_message_id = (
+        sent_message.message_id
+    )
 
 # =========================
 # BUTTON HANDLER
 # =========================
 
-async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def buttons(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
 
     global last_reminder_message_id
     global extra_tasks
@@ -243,20 +338,29 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # DELETE REMINDER
     try:
+
         await query.message.delete()
+
     except:
         pass
 
     last_reminder_message_id = None
 
+    # =========================
     # EXTRA TASK COMPLETE
+    # =========================
+
     if data.startswith("task_"):
 
-        index = int(data.split("_")[1])
+        index = int(
+            data.split("_")[1]
+        )
 
         if index < len(extra_tasks):
 
-            completed_task = extra_tasks.pop(index)
+            completed_task = (
+                extra_tasks.pop(index)
+            )
 
             await query.message.chat.send_message(
                 f"{completed_task} ✅ {time_now}"
@@ -264,7 +368,10 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
 
+    # =========================
     # MAIN TASKS
+    # =========================
+
     if data == "trading":
 
         await query.message.chat.send_message(
@@ -311,14 +418,20 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # MESSAGE HANDLER
 # =========================
 
-async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def messages(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
 
     global waiting_for_task
     global extra_tasks
 
     text = update.message.text
 
+    # =========================
     # AKTUAL CHECKLIST
+    # =========================
+
     if text == "📋 Aktual checklist":
 
         checklist_text = build_message()
@@ -330,7 +443,10 @@ async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
 
+    # =========================
     # ADD TASK
+    # =========================
+
     if text == "➕ Vazifa qo‘shish":
 
         waiting_for_task = True
@@ -341,7 +457,10 @@ async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
 
+    # =========================
     # NEW TASK
+    # =========================
+
     if waiting_for_task:
 
         extra_tasks.append(text)
@@ -356,7 +475,10 @@ async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # START
 # =========================
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
 
     global last_reminder_message_id
 
@@ -366,6 +488,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     old_jobs = context.job_queue.jobs()
 
     for job in old_jobs:
+
         job.schedule_removal()
 
     # =========================
@@ -378,12 +501,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # :00
         context.job_queue.run_daily(
             send_reminder,
+
             time=datetime.strptime(
                 f"{hour}:00",
                 "%H:%M"
             ).time().replace(
-                tzinfo=ZoneInfo("Asia/Tashkent")
+                tzinfo=ZoneInfo(
+                    "Asia/Tashkent"
+                )
             ),
+
             name=f"reminder_{hour}_00"
         )
 
@@ -392,21 +519,29 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             context.job_queue.run_daily(
                 send_reminder,
+
                 time=datetime.strptime(
                     f"{hour}:30",
                     "%H:%M"
                 ).time().replace(
-                    tzinfo=ZoneInfo("Asia/Tashkent")
+                    tzinfo=ZoneInfo(
+                        "Asia/Tashkent"
+                    )
                 ),
+
                 name=f"reminder_{hour}_30"
             )
 
+    # =========================
     # MENU
+    # =========================
+
     keyboard = ReplyKeyboardMarkup(
         [
             ["📋 Aktual checklist"],
             ["➕ Vazifa qo‘shish"]
         ],
+
         resize_keyboard=True
     )
 
@@ -419,11 +554,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # STOP
 # =========================
 
-async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def stop(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
 
     jobs = context.job_queue.jobs()
 
     for job in jobs:
+
         job.schedule_removal()
 
     await update.message.reply_text(
@@ -436,7 +575,11 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
 
-    app = Application.builder().token(TOKEN).build()
+    app = (
+        Application.builder()
+        .token(TOKEN)
+        .build()
+    )
 
     app.add_handler(
         CommandHandler("start", start)
@@ -466,4 +609,5 @@ def main():
 # =========================
 
 if __name__ == "__main__":
+
     main ()
