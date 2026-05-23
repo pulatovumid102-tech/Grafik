@@ -677,8 +677,12 @@ async def messages(
     # AKTUAL CHECKLIST
     if "Aktual checklist" in text:
 
+        text_msg = build_message(user_id) + "
+
+⏱ Xabar 10 soniyada o'chiriladi"
+
         sent = await update.message.reply_text(
-            build_message(user_id),
+            text_msg,
             reply_markup=build_buttons(user_id)
         )
 
