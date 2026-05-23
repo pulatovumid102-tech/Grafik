@@ -1,5 +1,6 @@
 import logging
 import json
+import os
 
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -27,18 +28,6 @@ from telegram.ext import (
 TOKEN = "8780693245:AAGEbojMC_6WodZtHRvYG52EVTic8BB2x7c"
 
 # =========================
-# CHAT ID
-# =========================
-
-CHAT_ID = 1645167548
-
-# =========================
-# TASK FILE
-# =========================
-
-TASKS_FILE = "tasks.json"
-
-# =========================
 # LOGGING
 # =========================
 
@@ -48,80 +37,79 @@ logging.basicConfig(
 )
 
 # =========================
-# SETTINGS
+# TASKS FOLDER
 # =========================
 
-settings = {
-    "start_hour": 6,
-    "end_hour": 21,
-    "interval": 30,
-}
+TASKS_FOLDER = "user_tasks"
+
+os.makedirs(TASKS_FOLDER, exist_ok=True)
 
 # =========================
-# USER STATE
+# USER DATA (per user)
 # =========================
 
-user_state = {
-    "russ": False,
-    "kitob": False,
-    "soz": False,
-}
+user_data = {}
+
+def get_user(user_id):
+
+    if user_id not in user_data:
+
+        user_data[user_id] = {
+            "extra_tasks": load_tasks(user_id),
+            "user_state": {
+                "russ": False,
+                "kitob": False,
+                "soz": False,
+            },
+            "last_reminder_message_id": None,
+            "waiting_for_task": False,
+            "settings": {
+                "start_hour": 6,
+                "end_hour": 21,
+                "interval": 30,
+            },
+        }
+
+    return user_data[user_id]
 
 # =========================
 # LOAD TASKS
 # =========================
 
-def load_tasks():
+def load_tasks(user_id):
+
+    path = os.path.join(
+        TASKS_FOLDER,
+        f"tasks_{user_id}.json"
+    )
 
     try:
 
-        with open(TASKS_FILE, "r") as file:
-
+        with open(path, "r") as file:
             return json.load(file)
 
     except:
-
         return []
 
 # =========================
 # SAVE TASKS
 # =========================
 
-def save_tasks():
+def save_tasks(user_id, tasks):
 
-    with open(TASKS_FILE, "w") as file:
+    path = os.path.join(
+        TASKS_FOLDER,
+        f"tasks_{user_id}.json"
+    )
+
+    with open(path, "w") as file:
 
         json.dump(
-            extra_tasks,
+            tasks,
             file,
             ensure_ascii=False,
             indent=4
         )
-
-# =========================
-# EXTRA TASKS
-# =========================
-
-extra_tasks = load_tasks()
-
-# =========================
-# WAITING TASK
-# =========================
-
-waiting_for_task = False
-
-# =========================
-# SETTINGS STATE
-# =========================
-
-waiting_for_start_hour = False
-waiting_for_end_hour = False
-
-# =========================
-# LAST REMINDER
-# =========================
-
-last_reminder_message_id = None
 
 # =========================
 # TIME
@@ -134,33 +122,44 @@ def get_time():
     ).strftime("%H:%M")
 
 # =========================
-# RESET USER STATE (KUNLIK)
+# RESET USER STATE (kunlik)
 # =========================
 
 async def reset_user_state(
     context: ContextTypes.DEFAULT_TYPE
 ):
 
-    user_state["russ"] = False
-    user_state["kitob"] = False
-    user_state["soz"] = False
+    user_id = context.job.data
 
-    logging.info("user_state reset qilindi (yangi kun)")
+    u = get_user(user_id)
+
+    u["user_state"]["russ"] = False
+    u["user_state"]["kitob"] = False
+    u["user_state"]["soz"] = False
+
+    logging.info(
+        f"user_state reset qilindi: {user_id}"
+    )
 
 # =========================
 # REBUILD JOBS
 # =========================
 
-def rebuild_jobs(context):
+def rebuild_jobs(context, user_id):
 
+    # Faqat shu userni joblarini o'chir
     jobs = context.job_queue.jobs()
 
     for job in jobs:
-        job.schedule_removal()
 
-    start_hour = settings["start_hour"]
-    end_hour = settings["end_hour"]
-    interval = settings["interval"]
+        if job.data == user_id:
+            job.schedule_removal()
+
+    u = get_user(user_id)
+
+    start_hour = u["settings"]["start_hour"]
+    end_hour = u["settings"]["end_hour"]
+    interval = u["settings"]["interval"]
 
     for hour in range(start_hour, end_hour + 1):
 
@@ -181,15 +180,14 @@ def rebuild_jobs(context):
                     tzinfo=ZoneInfo("Asia/Tashkent")
                 ),
 
-                name=f"reminder_{hour}_{minute}"
+                name=f"reminder_{user_id}_{hour}_{minute}",
+                data=user_id,
+                chat_id=user_id,
             )
 
             minute += interval
 
-    # ===========================
-    # RESET JOB: har kuni 00:00
-    # ===========================
-
+    # Reset job: har kuni 00:00
     context.job_queue.run_daily(
         reset_user_state,
 
@@ -200,14 +198,18 @@ def rebuild_jobs(context):
             tzinfo=ZoneInfo("Asia/Tashkent")
         ),
 
-        name="reset_user_state"
+        name=f"reset_{user_id}",
+        data=user_id,
+        chat_id=user_id,
     )
 
 # =========================
 # BUILD MESSAGE
 # =========================
 
-def build_message():
+def build_message(user_id):
+
+    u = get_user(user_id)
 
     lines = []
 
@@ -230,21 +232,21 @@ def build_message():
     )
 
     # RUSS
-    if not user_state["russ"]:
+    if not u["user_state"]["russ"]:
 
         lines.append(
             "• Russ tili - dars qildingmi? ☑️"
         )
 
     # KITOB
-    if not user_state["kitob"]:
+    if not u["user_state"]["kitob"]:
 
         lines.append(
             "• Kitob oqidingmi? ☑️"
         )
 
     # SOZ
-    if not user_state["soz"]:
+    if not u["user_state"]["soz"]:
 
         lines.append(
             "• Rus tilida yangi so'zlar yodladingmi? ☑️"
@@ -256,25 +258,27 @@ def build_message():
     )
 
     # EXTRA TASKS
-    if extra_tasks:
+    if u["extra_tasks"]:
 
         lines.append(
             "\nQo'shimcha vazifalar:\n"
         )
 
-        for task in extra_tasks:
+        for task in u["extra_tasks"]:
 
             lines.append(
                 f"• {task} ☑️"
             )
 
-    return "\n\n".join(lines)
+    return "\n".join(lines)
 
 # =========================
 # BUILD BUTTONS
 # =========================
 
-def build_buttons():
+def build_buttons(user_id):
+
+    u = get_user(user_id)
 
     buttons = []
 
@@ -301,7 +305,7 @@ def build_buttons():
     ])
 
     # RUSS
-    if not user_state["russ"]:
+    if not u["user_state"]["russ"]:
 
         buttons.append([
             InlineKeyboardButton(
@@ -311,7 +315,7 @@ def build_buttons():
         ])
 
     # KITOB
-    if not user_state["kitob"]:
+    if not u["user_state"]["kitob"]:
 
         buttons.append([
             InlineKeyboardButton(
@@ -321,7 +325,7 @@ def build_buttons():
         ])
 
     # SOZ
-    if not user_state["soz"]:
+    if not u["user_state"]["soz"]:
 
         buttons.append([
             InlineKeyboardButton(
@@ -339,7 +343,7 @@ def build_buttons():
     ])
 
     # EXTRA TASKS
-    for index, task in enumerate(extra_tasks):
+    for index, task in enumerate(u["extra_tasks"]):
 
         buttons.append([
             InlineKeyboardButton(
@@ -358,31 +362,34 @@ async def send_reminder(
     context: ContextTypes.DEFAULT_TYPE
 ):
 
-    global last_reminder_message_id
+    user_id = context.job.data
 
-    if last_reminder_message_id:
+    u = get_user(user_id)
+
+    # Eski xabarni o'chir
+    if u["last_reminder_message_id"]:
 
         try:
 
             await context.bot.delete_message(
-                chat_id=CHAT_ID,
-                message_id=last_reminder_message_id
+                chat_id=user_id,
+                message_id=u["last_reminder_message_id"]
             )
 
         except:
             pass
 
-    text = build_message()
+    text = build_message(user_id)
 
-    keyboard = build_buttons()
+    keyboard = build_buttons(user_id)
 
     sent_message = await context.bot.send_message(
-        chat_id=CHAT_ID,
+        chat_id=user_id,
         text=text,
         reply_markup=keyboard
     )
 
-    last_reminder_message_id = (
+    u["last_reminder_message_id"] = (
         sent_message.message_id
     )
 
@@ -390,7 +397,9 @@ async def send_reminder(
 # SETTINGS MENU
 # =========================
 
-async def settings_menu(update, context):
+async def settings_menu(update, context, user_id):
+
+    u = get_user(user_id)
 
     keyboard = InlineKeyboardMarkup([
         [
@@ -407,17 +416,25 @@ async def settings_menu(update, context):
         ]
     ])
 
+    text = (
+        f"⚙️ Sozlamalar\n\n"
+        f"Joriy holat:\n"
+        f"⏰ {u['settings']['start_hour']}:00 → "
+        f"{u['settings']['end_hour']}:00\n"
+        f"🔁 Har {u['settings']['interval']} daqiqa"
+    )
+
     if hasattr(update, "message") and update.message:
 
         await update.message.reply_text(
-            "⚙️ Sozlamalar",
+            text,
             reply_markup=keyboard
         )
 
     else:
 
         await update.callback_query.message.reply_text(
-            "⚙️ Sozlamalar",
+            text,
             reply_markup=keyboard
         )
 
@@ -430,12 +447,13 @@ async def buttons(
     context: ContextTypes.DEFAULT_TYPE
 ):
 
-    global last_reminder_message_id
-    global extra_tasks
-
     query = update.callback_query
 
     await query.answer()
+
+    user_id = query.from_user.id
+
+    u = get_user(user_id)
 
     data = query.data
 
@@ -464,7 +482,7 @@ async def buttons(
 
         start_hour = int(data.split("_")[1])
 
-        settings["start_hour"] = start_hour
+        u["settings"]["start_hour"] = start_hour
 
         keyboard = InlineKeyboardMarkup([
             [
@@ -486,15 +504,15 @@ async def buttons(
 
         end_hour = int(data.split("_")[1])
 
-        settings["end_hour"] = end_hour
+        u["settings"]["end_hour"] = end_hour
 
-        rebuild_jobs(context)
+        rebuild_jobs(context, user_id)
 
         await query.message.reply_text(
             f"✅ O'zgartirish qabul qilindi\n\n"
             f"Ish vaqti:\n"
-            f"{settings['start_hour']}:00 → "
-            f"{settings['end_hour']}:00"
+            f"{u['settings']['start_hour']}:00 → "
+            f"{u['settings']['end_hour']}:00"
         )
 
         return
@@ -525,9 +543,9 @@ async def buttons(
 
         interval = int(data.split("_")[1])
 
-        settings["interval"] = interval
+        u["settings"]["interval"] = interval
 
-        rebuild_jobs(context)
+        rebuild_jobs(context, user_id)
 
         await query.message.reply_text(
             f"✅ O'zgartirish qabul qilindi\n\n"
@@ -545,22 +563,18 @@ async def buttons(
     except:
         pass
 
-    last_reminder_message_id = None
+    u["last_reminder_message_id"] = None
 
     # EXTRA TASK COMPLETE
     if data.startswith("task_"):
 
-        index = int(
-            data.split("_")[1]
-        )
+        index = int(data.split("_")[1])
 
-        if index < len(extra_tasks):
+        if index < len(u["extra_tasks"]):
 
-            completed_task = (
-                extra_tasks.pop(index)
-            )
+            completed_task = u["extra_tasks"].pop(index)
 
-            save_tasks()
+            save_tasks(user_id, u["extra_tasks"])
 
             await query.message.chat.send_message(
                 f"{completed_task} ✅ {time_now}"
@@ -583,7 +597,7 @@ async def buttons(
 
     elif data == "russ":
 
-        user_state["russ"] = True
+        u["user_state"]["russ"] = True
 
         await query.message.chat.send_message(
             f"Russ tili bajarildi ✅ {time_now}"
@@ -591,7 +605,7 @@ async def buttons(
 
     elif data == "kitob":
 
-        user_state["kitob"] = True
+        u["user_state"]["kitob"] = True
 
         await query.message.chat.send_message(
             f"Kitob oqildi ✅ {time_now}"
@@ -599,7 +613,7 @@ async def buttons(
 
     elif data == "soz":
 
-        user_state["soz"] = True
+        u["user_state"]["soz"] = True
 
         await query.message.chat.send_message(
             f"So'zlar yodlandi ✅ {time_now}"
@@ -620,19 +634,18 @@ async def messages(
     context: ContextTypes.DEFAULT_TYPE
 ):
 
-    global waiting_for_task
-    global extra_tasks
+    user_id = update.message.from_user.id
+
+    u = get_user(user_id)
 
     text = update.message.text
 
     # AKTUAL CHECKLIST
     if "Aktual checklist" in text:
 
-        checklist_text = build_message()
-
         await update.message.reply_text(
-            checklist_text,
-            reply_markup=build_buttons()
+            build_message(user_id),
+            reply_markup=build_buttons(user_id)
         )
 
         return
@@ -640,7 +653,7 @@ async def messages(
     # ADD TASK
     if "Vazifa qo'shish" in text:
 
-        waiting_for_task = True
+        u["waiting_for_task"] = True
 
         await update.message.reply_text(
             "Yangi vazifani yuboring ✍️"
@@ -651,7 +664,7 @@ async def messages(
     # SETTINGS
     if "Sozlamalar" in text:
 
-        await settings_menu(update, context)
+        await settings_menu(update, context, user_id)
 
         return
 
@@ -661,10 +674,10 @@ async def messages(
         await update.message.reply_text(
             f"ℹ️ Bot haqida\n\n"
             f"⏰ Ish vaqti: "
-            f"{settings['start_hour']}:00 - "
-            f"{settings['end_hour']}:00\n"
+            f"{u['settings']['start_hour']}:00 - "
+            f"{u['settings']['end_hour']}:00\n"
             f"🔁 Interval: har "
-            f"{settings['interval']} daqiqa\n\n"
+            f"{u['settings']['interval']} daqiqa\n\n"
             f"Bot belgilangan vaqtlarda "
             f"checklist yuboradi."
         )
@@ -672,17 +685,19 @@ async def messages(
         return
 
     # NEW TASK
-    if waiting_for_task:
+    if u["waiting_for_task"]:
 
-        extra_tasks.append(text)
+        u["extra_tasks"].append(text)
 
-        save_tasks()
+        save_tasks(user_id, u["extra_tasks"])
 
-        waiting_for_task = False
+        u["waiting_for_task"] = False
 
         await update.message.reply_text(
             f"Vazifa qo'shildi ✅\n\n• {text}"
         )
+
+        return
 
 # =========================
 # START
@@ -693,11 +708,13 @@ async def start(
     context: ContextTypes.DEFAULT_TYPE
 ):
 
-    global last_reminder_message_id
+    user_id = update.message.from_user.id
 
-    last_reminder_message_id = None
+    u = get_user(user_id)
 
-    rebuild_jobs(context)
+    u["last_reminder_message_id"] = None
+
+    rebuild_jobs(context, user_id)
 
     keyboard = ReplyKeyboardMarkup(
         [
@@ -712,10 +729,10 @@ async def start(
     await update.message.reply_text(
         f"Bot ishga tushdi ✅\n\n"
         f"⏰ Ish vaqti: "
-        f"{settings['start_hour']}:00 - "
-        f"{settings['end_hour']}:00\n"
+        f"{u['settings']['start_hour']}:00 - "
+        f"{u['settings']['end_hour']}:00\n"
         f"🔁 Interval: har "
-        f"{settings['interval']} daqiqa\n\n"
+        f"{u['settings']['interval']} daqiqa\n\n"
         f"⚙️ Sozlamalar orqali:\n"
         f"• ish vaqtini\n"
         f"• intervalni\n"
@@ -732,11 +749,14 @@ async def stop(
     context: ContextTypes.DEFAULT_TYPE
 ):
 
+    user_id = update.message.from_user.id
+
     jobs = context.job_queue.jobs()
 
     for job in jobs:
 
-        job.schedule_removal()
+        if job.data == user_id:
+            job.schedule_removal()
 
     await update.message.reply_text(
         "Bot to'xtatildi 🛑"
