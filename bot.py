@@ -813,9 +813,8 @@ async def stop(
             job.schedule_removal()
 
     await update.message.reply_text(
-        "🛑 Bot checklist yuborishni to'xtatdi
-"
-        "▶️ Qayta boshlash uchun /start bosing"
+        "\U0001f6d1 Bot checklist yuborishni to\'xtatdi\n"
+        "\u25b6\ufe0f Qayta boshlash uchun /start bosing"
     )
 
 # =========================
