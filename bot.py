@@ -63,6 +63,8 @@ def get_user(user_id):
             },
             "last_reminder_message_id": None,
             "waiting_for_task": False,
+            "settings_msg_ids": [],
+            "settings_chat_id": None,
             "settings": {
                 "start_hour": 6,
                 "end_hour": 21,
@@ -426,14 +428,9 @@ async def settings_menu(update, context, user_id):
             reply_markup=keyboard
         )
 
-        context.job_queue.run_once(
-            lambda ctx: ctx.bot.delete_message(
-                chat_id=sent.chat_id,
-                message_id=sent.message_id
-            ),
-            when=5,
-            data=None,
-        )
+        u = get_user(update.message.from_user.id)
+        u["settings_msg_ids"] = [sent.message_id]
+        u["settings_chat_id"] = sent.chat_id
 
     else:
 
@@ -442,14 +439,9 @@ async def settings_menu(update, context, user_id):
             reply_markup=keyboard
         )
 
-        context.job_queue.run_once(
-            lambda ctx: ctx.bot.delete_message(
-                chat_id=sent.chat_id,
-                message_id=sent.message_id
-            ),
-            when=5,
-            data=None,
-        )
+        u = get_user(update.callback_query.from_user.id)
+        u["settings_msg_ids"] = [sent.message_id]
+        u["settings_chat_id"] = sent.chat_id
 
 # =========================
 # BUTTON HANDLER
@@ -488,14 +480,7 @@ async def buttons(
             reply_markup=keyboard
         )
 
-        context.job_queue.run_once(
-            lambda ctx: ctx.bot.delete_message(
-                chat_id=sent.chat_id,
-                message_id=sent.message_id
-            ),
-            when=5,
-            data=None,
-        )
+        u["settings_msg_ids"].append(sent.message_id)
 
         return
 
@@ -519,14 +504,7 @@ async def buttons(
             reply_markup=keyboard
         )
 
-        context.job_queue.run_once(
-            lambda ctx: ctx.bot.delete_message(
-                chat_id=sent.chat_id,
-                message_id=sent.message_id
-            ),
-            when=5,
-            data=None,
-        )
+        u["settings_msg_ids"].append(sent.message_id)
 
         return
 
@@ -543,18 +521,21 @@ async def buttons(
             f"✅ O'zgartirish qabul qilindi\n\n"
             f"Ish vaqti:\n"
             f"{u['settings']['start_hour']}:00 → "
-            f"{u['settings']['end_hour']}:00\n\n"
-            f"Sozlamalar bo'limi xabarlari 5 soniyadan o'chiriladi"
+            f"{u['settings']['end_hour']}:00"
         )
 
-        context.job_queue.run_once(
-            lambda ctx: ctx.bot.delete_message(
-                chat_id=sent.chat_id,
-                message_id=sent.message_id
-            ),
-            when=5,
-            data=None,
-        )
+        u["settings_msg_ids"].append(sent.message_id)
+        chat_id = u.get("settings_chat_id", user_id)
+        msg_ids = u.get("settings_msg_ids", [])
+
+        async def delete_all(ctx):
+            for mid in msg_ids:
+                try:
+                    await ctx.bot.delete_message(chat_id=chat_id, message_id=mid)
+                except:
+                    pass
+
+        context.job_queue.run_once(delete_all, when=5, data=None)
 
         return
 
@@ -577,14 +558,7 @@ async def buttons(
             reply_markup=keyboard
         )
 
-        context.job_queue.run_once(
-            lambda ctx: ctx.bot.delete_message(
-                chat_id=sent.chat_id,
-                message_id=sent.message_id
-            ),
-            when=5,
-            data=None,
-        )
+        u["settings_msg_ids"].append(sent.message_id)
 
         return
 
@@ -599,18 +573,21 @@ async def buttons(
 
         sent = await query.message.reply_text(
             f"✅ O'zgartirish qabul qilindi\n\n"
-            f"Har {interval} minutda reminder yuboriladi\n\n"
-            f"Sozlamalar bo'limi xabarlari 5 soniyadan o'chiriladi"
+            f"Har {interval} minutda reminder yuboriladi"
         )
 
-        context.job_queue.run_once(
-            lambda ctx: ctx.bot.delete_message(
-                chat_id=sent.chat_id,
-                message_id=sent.message_id
-            ),
-            when=5,
-            data=None,
-        )
+        u["settings_msg_ids"].append(sent.message_id)
+        chat_id = u.get("settings_chat_id", user_id)
+        msg_ids = u.get("settings_msg_ids", [])
+
+        async def delete_all(ctx):
+            for mid in msg_ids:
+                try:
+                    await ctx.bot.delete_message(chat_id=chat_id, message_id=mid)
+                except:
+                    pass
+
+        context.job_queue.run_once(delete_all, when=5, data=None)
 
         return
 
