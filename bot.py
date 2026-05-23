@@ -60,7 +60,6 @@ def get_user(user_id):
                 "sport": False,
                 "russ": False,
                 "kitob": False,
-                "soz": False,
             },
             "last_reminder_message_id": None,
             "waiting_for_task": False,
@@ -137,7 +136,6 @@ async def reset_user_state(
     u["user_state"]["sport"] = False
     u["user_state"]["russ"] = False
     u["user_state"]["kitob"] = False
-    u["user_state"]["soz"] = False
 
     logging.info(
         f"user_state reset qilindi: {user_id}"
@@ -213,72 +211,74 @@ def build_message(user_id):
 
     u = get_user(user_id)
 
-    lines = []
-
-    # TAKRORLANUVCHI VAZIFALAR (har doim ko'rinadi)
-    lines.append("🔁 Takrorlanuvchi vazifalar:\n")
-
     today = datetime.now(
         ZoneInfo("Asia/Tashkent")
     ).weekday()
 
-    # TRADING — har doim (dushanbadan jumagacha)
+    # TAKRORLANUVCHI
+    takror_items = []
     if today not in [5, 6]:
+        takror_items.append("Trading checklistga qaradingmi?")
+    takror_items.append("Sirlyda bollardan habar oldingmi?")
 
-        lines.append(
-            "• Trading checklistga qaradingmi? ☑️"
-        )
+    # KUNLIK
+    kunlik_all = [
+        ("sport", "Sport bilan shug'ullandingmi?"),
+        ("russ",  "Russ tili dars qildingmi?"),
+        ("kitob", "Kitob oqidingmi?"),
+    ]
 
-    # SIRLY — har doim
-    lines.append(
-        "• Sirlyda bollardan habar oldingmi? ☑️"
+    kunlik_items = [
+        label for key, label in kunlik_all
+        if not u["user_state"][key]
+    ]
+
+    done_count = sum(
+        1 for key, _ in kunlik_all
+        if u["user_state"][key]
     )
 
-    # KUNLIK VAZIFALAR (bajarilsa yakunlanadi)
-    kunlik_lines = []
+    # PROGRESS
+    total = len(kunlik_all) + len(u["extra_tasks"])
+    done  = done_count
 
-    # SPORT
-    if not u["user_state"]["sport"]:
-        kunlik_lines.append(
-            "• Sport bilan shug'ullandingmi? ☑️"
-        )
-
-    # RUSS
-    if not u["user_state"]["russ"]:
-        kunlik_lines.append(
-            "• Russ tili - dars qildingmi? ☑️"
-        )
-
-    # KITOB
-    if not u["user_state"]["kitob"]:
-        kunlik_lines.append(
-            "• Kitob oqidingmi? ☑️"
-        )
-
-    # SOZ
-    if not u["user_state"]["soz"]:
-        kunlik_lines.append(
-            "• Rus tilida yangi so'zlar yodladingmi? ☑️"
-        )
-
-    if kunlik_lines:
-        lines.append("\n✅ Kunlik vazifalar:\n")
-        lines.extend(kunlik_lines)
+    if total > 0:
+        percent = int((done / total) * 100)
+        filled  = int((done / total) * 10)
+        bar     = "█" * filled + "░" * (10 - filled)
     else:
-        lines.append("\n✅ Kunlik vazifalar: barchasi bajarildi! 🎉")
+        percent = 0
+        bar     = "░" * 10
 
-    # EXTRA TASKS
+    # BUILD TEXT
+    lines = []
+
+    lines.append("📋 CHECKLIST")
+    lines.append("━━━━━━━━━━━━━━")
+    lines.append("• Takrorlanuvchi")
+    lines.append("")
+    for i, item in enumerate(takror_items, 1):
+        lines.append(f"{i}\ufe0f\u20e3 {item}")
+
+    lines.append("━━━━━━━━━━━━━━")
+    lines.append("• Kunlik vazifalar")
+    lines.append("")
+    if kunlik_items:
+        for i, item in enumerate(kunlik_items, 1):
+            lines.append(f"{i}\ufe0f\u20e3 {item}")
+    else:
+        lines.append("✅ Barchasi bajarildi!")
+
     if u["extra_tasks"]:
+        lines.append("━━━━━━━━━━━━━━")
+        lines.append("📌 Qo'shimcha vazifalar")
+        lines.append("")
+        for i, task in enumerate(u["extra_tasks"], 1):
+            lines.append(f"{i}\ufe0f\u20e3 {task}")
 
-        lines.append(
-            "\nQo'shimcha vazifalar:\n"
-        )
-
-        for task in u["extra_tasks"]:
-
-            lines.append(
-                f"• {task} ☑️"
-            )
+    lines.append("━━━━━━━━━━━━━━")
+    lines.append(f"• Bugungi progress: {done}/{total}")
+    lines.append(f"{bar} {percent}%")
 
     return "\n".join(lines)
 
@@ -345,16 +345,6 @@ def build_buttons(user_id):
             InlineKeyboardButton(
                 "Kitob oqildi ✅",
                 callback_data="kitob"
-            )
-        ])
-
-    # SOZ
-    if not u["user_state"]["soz"]:
-
-        buttons.append([
-            InlineKeyboardButton(
-                "So'zlar yodlandi ✅",
-                callback_data="soz"
             )
         ])
 
@@ -627,14 +617,6 @@ async def buttons(
 
         await query.message.chat.send_message(
             f"Kitob oqildi ✅ {time_now}"
-        )
-
-    elif data == "soz":
-
-        u["user_state"]["soz"] = True
-
-        await query.message.chat.send_message(
-            f"So'zlar yodlandi ✅ {time_now}"
         )
 
     elif data == "sirly":
