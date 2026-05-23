@@ -521,21 +521,23 @@ async def buttons(
             f"✅ O'zgartirish qabul qilindi\n\n"
             f"Ish vaqti:\n"
             f"{u['settings']['start_hour']}:00 → "
-            f"{u['settings']['end_hour']}:00"
+            f"{u['settings']['end_hour']}:00\n\n"
+            f"⏱ Yuborilgan xabarlar 5 soniyada o'chiriladi"
         )
 
         u["settings_msg_ids"].append(sent.message_id)
-        chat_id = u.get("settings_chat_id", user_id)
-        msg_ids = u.get("settings_msg_ids", [])
 
-        async def delete_all(ctx):
-            for mid in msg_ids:
+        _chat_id = u.get("settings_chat_id", user_id)
+        _msg_ids = list(u["settings_msg_ids"])
+
+        async def delete_all_end(ctx):
+            for mid in _msg_ids:
                 try:
-                    await ctx.bot.delete_message(chat_id=chat_id, message_id=mid)
+                    await ctx.bot.delete_message(chat_id=_chat_id, message_id=mid)
                 except:
                     pass
 
-        context.job_queue.run_once(delete_all, when=5, data=None)
+        context.job_queue.run_once(delete_all_end, when=5, data=None)
 
         return
 
@@ -573,21 +575,23 @@ async def buttons(
 
         sent = await query.message.reply_text(
             f"✅ O'zgartirish qabul qilindi\n\n"
-            f"Har {interval} minutda reminder yuboriladi"
+            f"Har {interval} minutda reminder yuboriladi\n\n"
+            f"⏱ Yuborilgan xabarlar 5 soniyada o'chiriladi"
         )
 
         u["settings_msg_ids"].append(sent.message_id)
-        chat_id = u.get("settings_chat_id", user_id)
-        msg_ids = u.get("settings_msg_ids", [])
 
-        async def delete_all(ctx):
-            for mid in msg_ids:
+        _chat_id = u.get("settings_chat_id", user_id)
+        _msg_ids = list(u["settings_msg_ids"])
+
+        async def delete_all_interval(ctx):
+            for mid in _msg_ids:
                 try:
-                    await ctx.bot.delete_message(chat_id=chat_id, message_id=mid)
+                    await ctx.bot.delete_message(chat_id=_chat_id, message_id=mid)
                 except:
                     pass
 
-        context.job_queue.run_once(delete_all, when=5, data=None)
+        context.job_queue.run_once(delete_all_interval, when=5, data=None)
 
         return
 
