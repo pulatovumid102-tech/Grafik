@@ -250,21 +250,21 @@ def build_message(user_id):
 
     lines.append("📋 CHECKLIST")
     lines.append("━━━━━━━━━━━━━━")
-    lines.append("Takrorlanuvchi vazifalar")
+    lines.append("• Takrorlanuvchi")
     lines.append("")
     for i, item in enumerate(takror_items, 1):
-        lines.append(f"{i}. {item}")
+        lines.append(f"{i}\ufe0f\u20e3 {item}")
 
     if kunlik_items:
         lines.append("━━━━━━━━━━━━━━")
-        lines.append("Kunlik vazifalar")
+        lines.append("• Kunlik vazifalar")
         lines.append("")
         for i, item in enumerate(kunlik_items, 1):
             lines.append(f"{i}. {item}")
 
     if u["extra_tasks"]:
         lines.append("━━━━━━━━━━━━━━")
-        lines.append("Qo'shimcha vazifalar")
+        lines.append("• Qo'shimcha vazifalar")
         lines.append("")
         for i, task in enumerate(u["extra_tasks"], 1):
             lines.append(f"{i}. {task}")
@@ -814,7 +814,8 @@ async def stop(
 
     await update.message.reply_text(
         "🛑 Bot checklist yuborishni to'xtatdi
-▶️ Qayta boshlash uchun /start bosing"
+"
+        "▶️ Qayta boshlash uchun /start bosing"
     )
 
 # =========================
