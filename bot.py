@@ -731,7 +731,7 @@ async def buttons(
             save_user_data(user_id)
 
             sent = await query.message.chat.send_message(
-                f"{removed['label']} o'chirildi ✅"
+                f"{removed['label']} o'chirildi ✅\n\n⏱ Xabar 5 soniyada o'chiriladi"
             )
 
             u["settings_msg_ids"].append(sent.message_id)
@@ -759,7 +759,7 @@ async def buttons(
             save_user_data(user_id)
 
             sent = await query.message.chat.send_message(
-                f"{removed['label']} o'chirildi ✅"
+                f"{removed['label']} o'chirildi ✅\n\n⏱ Xabar 5 soniyada o'chiriladi"
             )
 
             u["settings_msg_ids"].append(sent.message_id)
