@@ -54,15 +54,18 @@ def get_user(user_id):
 
     if user_id not in user_data:
 
+        default_data = load_user_data(user_id)
         user_data[user_id] = {
-            "extra_tasks": load_tasks(user_id),
-            "user_state": {
-                "sport": False,
-                "russ": False,
-                "kitob": False,
-            },
+            "extra_tasks": default_data["extra_tasks"],
+            "takror_tasks": default_data["takror_tasks"],
+            "kunlik_tasks": default_data["kunlik_tasks"],
+            "user_state": {},
             "last_reminder_message_id": None,
             "waiting_for_task": False,
+            "waiting_for_takror_task": False,
+            "waiting_for_kunlik_task": False,
+            "editing_takror_index": None,
+            "editing_kunlik_index": None,
             "settings_msg_ids": [],
             "settings_chat_id": None,
             "settings": {
@@ -71,43 +74,78 @@ def get_user(user_id):
                 "interval": 30,
             },
         }
+        # user_state kunlik_tasks dan dinamik yasaladi
+        for task in user_data[user_id]["kunlik_tasks"]:
+            user_data[user_id]["user_state"][task["key"]] = False
 
     return user_data[user_id]
 
 # =========================
-# LOAD TASKS
+# DEFAULT TAKROR TASKS
 # =========================
 
-def load_tasks(user_id):
+DEFAULT_TAKROR = [
+    {"key": "trading", "label": "Trading - grafikga qara", "weekdays_only": True},
+    {"key": "sirly",   "label": "Sirly - hammasi yaxshimi tekshir", "weekdays_only": False},
+]
+
+DEFAULT_KUNLIK = [
+    {"key": "sport", "label": "Sport"},
+    {"key": "russ",  "label": "Til"},
+    {"key": "kitob", "label": "Kitob"},
+]
+
+# =========================
+# LOAD USER DATA
+# =========================
+
+def load_user_data(user_id):
 
     path = os.path.join(
         TASKS_FOLDER,
-        f"tasks_{user_id}.json"
+        f"data_{user_id}.json"
     )
 
     try:
 
         with open(path, "r") as file:
-            return json.load(file)
+            data = json.load(file)
+            if "takror_tasks" not in data:
+                data["takror_tasks"] = DEFAULT_TAKROR[:]
+            if "kunlik_tasks" not in data:
+                data["kunlik_tasks"] = DEFAULT_KUNLIK[:]
+            if "extra_tasks" not in data:
+                data["extra_tasks"] = []
+            return data
 
     except:
-        return []
+        return {
+            "extra_tasks": [],
+            "takror_tasks": DEFAULT_TAKROR[:],
+            "kunlik_tasks": DEFAULT_KUNLIK[:],
+        }
 
 # =========================
-# SAVE TASKS
+# SAVE USER DATA
 # =========================
 
-def save_tasks(user_id, tasks):
+def save_user_data(user_id):
+
+    u = get_user(user_id)
 
     path = os.path.join(
         TASKS_FOLDER,
-        f"tasks_{user_id}.json"
+        f"data_{user_id}.json"
     )
 
     with open(path, "w") as file:
 
         json.dump(
-            tasks,
+            {
+                "extra_tasks": u["extra_tasks"],
+                "takror_tasks": u["takror_tasks"],
+                "kunlik_tasks": u["kunlik_tasks"],
+            },
             file,
             ensure_ascii=False,
             indent=4
@@ -135,9 +173,8 @@ async def reset_user_state(
 
     u = get_user(user_id)
 
-    u["user_state"]["sport"] = False
-    u["user_state"]["russ"] = False
-    u["user_state"]["kitob"] = False
+    for task in u["kunlik_tasks"]:
+        u["user_state"][task["key"]] = False
 
     logging.info(
         f"user_state reset qilindi: {user_id}"
@@ -217,33 +254,18 @@ def build_message(user_id):
         ZoneInfo("Asia/Tashkent")
     ).weekday()
 
-    # TAKRORLANUVCHI
+    # TAKRORLANUVCHI — dinamik
     takror_items = []
-    if today not in [5, 6]:
-        takror_items.append("Trading - grafikga qara")
-    takror_items.append("Sirly - hammasi yaxshimi tekshir")
+    for t in u["takror_tasks"]:
+        if t.get("weekdays_only") and today in [5, 6]:
+            continue
+        takror_items.append(t["label"])
 
-    # KUNLIK
-    kunlik_all = [
-        ("sport", "Sport"),
-        ("russ",  "Til"),
-        ("kitob", "Kitob"),
-    ]
-
+    # KUNLIK — dinamik
     kunlik_items = [
-        label for key, label in kunlik_all
-        if not u["user_state"][key]
+        t["label"] for t in u["kunlik_tasks"]
+        if not u["user_state"].get(t["key"], False)
     ]
-
-    done_count = sum(
-        1 for key, _ in kunlik_all
-        if u["user_state"][key]
-    )
-
-    # PROGRESS (faqat kunlik vazifalar)
-    total   = len(kunlik_all)
-    done    = done_count
-    percent = int((done / total) * 100) if total > 0 else 0
 
     # BUILD TEXT
     lines = []
@@ -288,56 +310,25 @@ def build_buttons(user_id):
     ).weekday()
 
     # TAKRORLANUVCHI — har doim ko'rinadi
-
-    # TRADING
-    if today not in [5, 6]:
-
+    for t in u["takror_tasks"]:
+        if t.get("weekdays_only") and today in [5, 6]:
+            continue
         buttons.append([
             InlineKeyboardButton(
-                "Trading - grafikga qaradim ✅",
-                callback_data="trading"
+                f"{t['label']} ✅",
+                callback_data=f"takror_{t['key']}"
             )
         ])
-
-    # SIRLY — har doim
-    buttons.append([
-        InlineKeyboardButton(
-            "Sirlydan habar olindi ✅",
-            callback_data="sirly"
-        )
-    ])
 
     # KUNLIK — bajarilsa yashirinadi
-
-    # SPORT
-    if not u["user_state"]["sport"]:
-
-        buttons.append([
-            InlineKeyboardButton(
-                "Sport bilan shug'ullandim ✅",
-                callback_data="sport"
-            )
-        ])
-
-    # RUSS
-    if not u["user_state"]["russ"]:
-
-        buttons.append([
-            InlineKeyboardButton(
-                "Til o'rgandim ✅",
-                callback_data="russ"
-            )
-        ])
-
-    # KITOB
-    if not u["user_state"]["kitob"]:
-
-        buttons.append([
-            InlineKeyboardButton(
-                "Kitob o'qidim ✅",
-                callback_data="kitob"
-            )
-        ])
+    for t in u["kunlik_tasks"]:
+        if not u["user_state"].get(t["key"], False):
+            buttons.append([
+                InlineKeyboardButton(
+                    f"{t['label']} ✅",
+                    callback_data=f"kunlik_{t['key']}"
+                )
+            ])
 
     # EXTRA TASKS
     for index, task in enumerate(u["extra_tasks"]):
@@ -409,6 +400,12 @@ async def settings_menu(update, context, user_id):
             InlineKeyboardButton(
                 "🔔 Xabar oralig'i",
                 callback_data="settings_interval"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                "📝 Vazifalar",
+                callback_data="settings_tasks"
             )
         ]
     ])
@@ -595,6 +592,238 @@ async def buttons(
 
         return
 
+    # VAZIFALAR MENYUSI
+    if data == "settings_tasks":
+
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔁 Takrorlanuvchi vazifalar", callback_data="tasks_takror")],
+            [InlineKeyboardButton("✅ Kunlik vazifalar", callback_data="tasks_kunlik")],
+        ])
+
+        sent = await query.message.reply_text(
+            "📝 Vazifalar",
+            reply_markup=keyboard
+        )
+
+        u["settings_msg_ids"].append(sent.message_id)
+
+        return
+
+    # TAKRORLANUVCHI VAZIFALAR MENYUSI
+    if data == "tasks_takror":
+
+        lines = ["\U0001f501 Takrorlanuvchi vazifalar:\n"]
+        for i, t in enumerate(u["takror_tasks"], 1):
+            lines.append(f"{i}. {t['label']}")
+
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("➕ Qo'shish", callback_data="takror_add")],
+            [InlineKeyboardButton("🗑 O'chirish", callback_data="takror_delete")],
+            [InlineKeyboardButton("✏️ Nomini o'zgartirish", callback_data="takror_edit")],
+        ])
+
+        sent = await query.message.reply_text(
+            "\n".join(lines),
+            reply_markup=keyboard
+        )
+
+        u["settings_msg_ids"].append(sent.message_id)
+
+        return
+
+    # KUNLIK VAZIFALAR MENYUSI
+    if data == "tasks_kunlik":
+
+        lines = ["\u2705 Kunlik vazifalar:\n"]
+        for i, t in enumerate(u["kunlik_tasks"], 1):
+            lines.append(f"{i}. {t['label']}")
+
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("➕ Qo'shish", callback_data="kunlik_add")],
+            [InlineKeyboardButton("🗑 O'chirish", callback_data="kunlik_delete")],
+            [InlineKeyboardButton("✏️ Nomini o'zgartirish", callback_data="kunlik_edit")],
+        ])
+
+        sent = await query.message.reply_text(
+            "\n".join(lines),
+            reply_markup=keyboard
+        )
+
+        u["settings_msg_ids"].append(sent.message_id)
+
+        return
+
+    # TAKRORLANUVCHI — QO'SHISH
+    if data == "takror_add":
+
+        u["waiting_for_takror_task"] = True
+
+        sent = await query.message.reply_text(
+            "Yangi takrorlanuvchi vazifa nomini yuboring ✍️"
+        )
+
+        u["settings_msg_ids"].append(sent.message_id)
+
+        return
+
+    # KUNLIK — QO'SHISH
+    if data == "kunlik_add":
+
+        u["waiting_for_kunlik_task"] = True
+
+        sent = await query.message.reply_text(
+            "Yangi kunlik vazifa nomini yuboring ✍️"
+        )
+
+        u["settings_msg_ids"].append(sent.message_id)
+
+        return
+
+    # TAKRORLANUVCHI — O'CHIRISH (ro'yxat)
+    if data == "takror_delete":
+
+        if not u["takror_tasks"]:
+            await query.message.reply_text("Vazifalar yo'q")
+            return
+
+        buttons_list = [
+            [InlineKeyboardButton(f"{t['label']} ❌", callback_data=f"takror_del_{i}")]
+            for i, t in enumerate(u["takror_tasks"])
+        ]
+
+        sent = await query.message.reply_text(
+            "Qaysi vazifani o'chirish kerak?",
+            reply_markup=InlineKeyboardMarkup(buttons_list)
+        )
+
+        u["settings_msg_ids"].append(sent.message_id)
+
+        return
+
+    # KUNLIK — O'CHIRISH (ro'yxat)
+    if data == "kunlik_delete":
+
+        if not u["kunlik_tasks"]:
+            await query.message.reply_text("Vazifalar yo'q")
+            return
+
+        buttons_list = [
+            [InlineKeyboardButton(f"{t['label']} ❌", callback_data=f"kunlik_del_{i}")]
+            for i, t in enumerate(u["kunlik_tasks"])
+        ]
+
+        sent = await query.message.reply_text(
+            "Qaysi vazifani o'chirish kerak?",
+            reply_markup=InlineKeyboardMarkup(buttons_list)
+        )
+
+        u["settings_msg_ids"].append(sent.message_id)
+
+        return
+
+    # TAKRORLANUVCHI — O'CHIRISH (tasdiqlash)
+    if data.startswith("takror_del_"):
+
+        index = int(data.split("_")[2])
+
+        if index < len(u["takror_tasks"]):
+            removed = u["takror_tasks"].pop(index)
+            save_user_data(user_id)
+
+            await query.message.chat.send_message(
+                f"{removed['label']} o'chirildi ✅"
+            )
+
+        return
+
+    # KUNLIK — O'CHIRISH (tasdiqlash)
+    if data.startswith("kunlik_del_"):
+
+        index = int(data.split("_")[2])
+
+        if index < len(u["kunlik_tasks"]):
+            removed = u["kunlik_tasks"].pop(index)
+            u["user_state"].pop(removed["key"], None)
+            save_user_data(user_id)
+
+            await query.message.chat.send_message(
+                f"{removed['label']} o'chirildi ✅"
+            )
+
+        return
+
+    # TAKRORLANUVCHI — NOMINI O'ZGARTIRISH (ro'yxat)
+    if data == "takror_edit":
+
+        if not u["takror_tasks"]:
+            await query.message.reply_text("Vazifalar yo'q")
+            return
+
+        buttons_list = [
+            [InlineKeyboardButton(t["label"], callback_data=f"takror_edt_{i}")]
+            for i, t in enumerate(u["takror_tasks"])
+        ]
+
+        sent = await query.message.reply_text(
+            "Qaysi vazifani o'zgartirish kerak?",
+            reply_markup=InlineKeyboardMarkup(buttons_list)
+        )
+
+        u["settings_msg_ids"].append(sent.message_id)
+
+        return
+
+    # KUNLIK — NOMINI O'ZGARTIRISH (ro'yxat)
+    if data == "kunlik_edit":
+
+        if not u["kunlik_tasks"]:
+            await query.message.reply_text("Vazifalar yo'q")
+            return
+
+        buttons_list = [
+            [InlineKeyboardButton(t["label"], callback_data=f"kunlik_edt_{i}")]
+            for i, t in enumerate(u["kunlik_tasks"])
+        ]
+
+        sent = await query.message.reply_text(
+            "Qaysi vazifani o'zgartirish kerak?",
+            reply_markup=InlineKeyboardMarkup(buttons_list)
+        )
+
+        u["settings_msg_ids"].append(sent.message_id)
+
+        return
+
+    # TAKRORLANUVCHI — NOMINI O'ZGARTIRISH (tanlandi)
+    if data.startswith("takror_edt_"):
+
+        index = int(data.split("_")[2])
+
+        u["editing_takror_index"] = index
+
+        sent = await query.message.reply_text(
+            "Yangi nomini yuboring ✍️"
+        )
+
+        u["settings_msg_ids"].append(sent.message_id)
+
+        return
+
+    # KUNLIK — NOMINI O'ZGARTIRISH (tanlandi)
+    if data.startswith("kunlik_edt_"):
+
+        index = int(data.split("_")[2])
+
+        u["editing_kunlik_index"] = index
+
+        sent = await query.message.reply_text(
+            "Yangi nomini yuboring ✍️"
+        )
+
+        u["settings_msg_ids"].append(sent.message_id)
+
+        return
+
     # DELETE REMINDER
     try:
 
@@ -622,42 +851,31 @@ async def buttons(
 
         return
 
-    # MAIN TASKS
-    if data == "trading":
+    # TAKRORLANUVCHI TASK BOSILDI
+    if data.startswith("takror_"):
 
-        await query.message.chat.send_message(
-            f"Trading checklistga qaraldi ✅ {time_now}"
-        )
+        key = data[len("takror_"):]
 
-    elif data == "sport":
+        task = next((t for t in u["takror_tasks"] if t["key"] == key), None)
 
-        u["user_state"]["sport"] = True
+        if task:
+            await query.message.chat.send_message(
+                f"{task['label']} ✅ {time_now}"
+            )
 
-        await query.message.chat.send_message(
-            f"Sport bajarildi ✅ {time_now}"
-        )
+    # KUNLIK TASK BOSILDI
+    elif data.startswith("kunlik_"):
 
-    elif data == "russ":
+        key = data[len("kunlik_"):]
 
-        u["user_state"]["russ"] = True
+        task = next((t for t in u["kunlik_tasks"] if t["key"] == key), None)
 
-        await query.message.chat.send_message(
-            f"Russ tili bajarildi ✅ {time_now}"
-        )
+        if task:
+            u["user_state"][key] = True
 
-    elif data == "kitob":
-
-        u["user_state"]["kitob"] = True
-
-        await query.message.chat.send_message(
-            f"Kitob oqildi ✅ {time_now}"
-        )
-
-    elif data == "sirly":
-
-        await query.message.chat.send_message(
-            f"Sirlyda hammasi yaxshi ✅ {time_now}"
-        )
+            await query.message.chat.send_message(
+                f"{task['label']} bajarildi ✅ {time_now}"
+            )
 
 # =========================
 # MESSAGE HANDLER
@@ -704,7 +922,76 @@ async def messages(
 
         return
 
-    # ADD TASK
+    # TAKRORLANUVCHI VAZIFA QO'SHISH
+    if u["waiting_for_takror_task"]:
+
+        import re
+        key = "takror_" + re.sub(r"\W+", "_", text.lower())[:20]
+
+        u["takror_tasks"].append({"key": key, "label": text, "weekdays_only": False})
+        save_user_data(user_id)
+        u["waiting_for_takror_task"] = False
+
+        await update.message.reply_text(
+            f"Takrorlanuvchi vazifa qo'shildi ✅\n\n• {text}"
+        )
+
+        return
+
+    # KUNLIK VAZIFA QO'SHISH
+    if u["waiting_for_kunlik_task"]:
+
+        import re
+        key = "kunlik_" + re.sub(r"\W+", "_", text.lower())[:20]
+
+        u["kunlik_tasks"].append({"key": key, "label": text})
+        u["user_state"][key] = False
+        save_user_data(user_id)
+        u["waiting_for_kunlik_task"] = False
+
+        await update.message.reply_text(
+            f"Kunlik vazifa qo'shildi ✅\n\n• {text}"
+        )
+
+        return
+
+    # TAKRORLANUVCHI NOMINI O'ZGARTIRISH
+    if u["editing_takror_index"] is not None:
+
+        index = u["editing_takror_index"]
+
+        if index < len(u["takror_tasks"]):
+            old_label = u["takror_tasks"][index]["label"]
+            u["takror_tasks"][index]["label"] = text
+            save_user_data(user_id)
+
+            await update.message.reply_text(
+                f"Nom o'zgartirildi ✅\n\n{old_label} → {text}"
+            )
+
+        u["editing_takror_index"] = None
+
+        return
+
+    # KUNLIK NOMINI O'ZGARTIRISH
+    if u["editing_kunlik_index"] is not None:
+
+        index = u["editing_kunlik_index"]
+
+        if index < len(u["kunlik_tasks"]):
+            old_label = u["kunlik_tasks"][index]["label"]
+            u["kunlik_tasks"][index]["label"] = text
+            save_user_data(user_id)
+
+            await update.message.reply_text(
+                f"Nom o'zgartirildi ✅\n\n{old_label} → {text}"
+            )
+
+        u["editing_kunlik_index"] = None
+
+        return
+
+    # ADD TASK (qo'shimcha)
     if "Vazifa qo'shish" in text:
 
         u["waiting_for_task"] = True
