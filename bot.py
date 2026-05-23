@@ -218,8 +218,8 @@ def build_message(user_id):
     # TAKRORLANUVCHI
     takror_items = []
     if today not in [5, 6]:
-        takror_items.append("Trading checklistga qaradingmi?")
-    takror_items.append("Sirlyda bollardan habar oldingmi?")
+        takror_items.append("Trading - grafikga qara")
+    takror_items.append("Sirly - hammasini yaxshimi tekshir")
 
     # KUNLIK
     kunlik_all = [
@@ -295,7 +295,7 @@ def build_buttons(user_id):
 
         buttons.append([
             InlineKeyboardButton(
-                "Trading bajarildi ✅",
+                "Trading - grafikga qaradim ✅",
                 callback_data="trading"
             )
         ])
