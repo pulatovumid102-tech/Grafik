@@ -730,9 +730,21 @@ async def buttons(
             removed = u["takror_tasks"].pop(index)
             save_user_data(user_id)
 
-            await query.message.chat.send_message(
+            sent = await query.message.chat.send_message(
                 f"{removed['label']} o'chirildi ✅"
             )
+
+            u["settings_msg_ids"].append(sent.message_id)
+            _msg_ids = list(u["settings_msg_ids"])
+
+            async def _del_takror_del(ctx):
+                for mid in _msg_ids:
+                    try:
+                        await ctx.bot.delete_message(chat_id=user_id, message_id=mid)
+                    except:
+                        pass
+
+            context.job_queue.run_once(_del_takror_del, when=5, data=None)
 
         return
 
@@ -746,9 +758,21 @@ async def buttons(
             u["user_state"].pop(removed["key"], None)
             save_user_data(user_id)
 
-            await query.message.chat.send_message(
+            sent = await query.message.chat.send_message(
                 f"{removed['label']} o'chirildi ✅"
             )
+
+            u["settings_msg_ids"].append(sent.message_id)
+            _msg_ids = list(u["settings_msg_ids"])
+
+            async def _del_kunlik_del(ctx):
+                for mid in _msg_ids:
+                    try:
+                        await ctx.bot.delete_message(chat_id=user_id, message_id=mid)
+                    except:
+                        pass
+
+            context.job_queue.run_once(_del_kunlik_del, when=5, data=None)
 
         return
 
@@ -1068,16 +1092,39 @@ async def messages(
     # BOT HAQIDA
     if "Bot haqida" in text:
 
-        await update.message.reply_text(
-            f"ℹ️ Bot haqida\n\n"
-            f"⏰ Ish vaqti: "
+        takror_count = len(u["takror_tasks"])
+        kunlik_count = len(u["kunlik_tasks"])
+        extra_count  = len(u["extra_tasks"])
+
+        sent = await update.message.reply_text(
+            f"\u2139\ufe0f Bot haqida\n\n"
+            f"\u23f0 Ish vaqti: "
             f"{u['settings']['start_hour']}:00 - "
             f"{u['settings']['end_hour']}:00\n"
-            f"🔁 Interval: har "
+            f"\U0001f501 Interval: har "
             f"{u['settings']['interval']} daqiqa\n\n"
-            f"Bot belgilangan vaqtlarda "
-            f"checklist yuboradi."
+            f"\U0001f4cb Vazifalar soni:\n"
+            f"\u2022 Takrorlanuvchi: {takror_count} ta\n"
+            f"\u2022 Kunlik: {kunlik_count} ta\n"
+            f"\u2022 Qo'shimcha: {extra_count} ta\n\n"
+            f"\u2699\ufe0f Sozlamalar orqali:\n"
+            f"\u2022 Ish vaqtini o'zgartirish\n"
+            f"\u2022 Xabar oralig'ini o'zgartirish\n"
+            f"\u2022 Takrorlanuvchi vazifalarni boshqarish\n"
+            f"\u2022 Kunlik vazifalarni boshqarish\n\n"
+            f"\u23f1 Xabar 120 soniyada o'chiriladi"
         )
+
+        _cid = sent.chat_id
+        _mid = sent.message_id
+
+        async def _del_about(ctx):
+            try:
+                await ctx.bot.delete_message(chat_id=_cid, message_id=_mid)
+            except:
+                pass
+
+        context.job_queue.run_once(_del_about, when=120, data=None)
 
         return
 
