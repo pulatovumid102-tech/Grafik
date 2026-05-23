@@ -251,7 +251,7 @@ def build_message(user_id):
     lines.append("• Takrorlanuvchi")
     lines.append("")
     for i, item in enumerate(takror_items, 1):
-        lines.append(f"{i}\ufe0f\u20e3 {item}")
+        lines.append(f"{i}. {item}")
 
     if kunlik_items:
         lines.append("━━━━━━━━━━━━━━")
