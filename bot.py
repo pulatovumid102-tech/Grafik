@@ -57,6 +57,7 @@ def get_user(user_id):
         user_data[user_id] = {
             "extra_tasks": load_tasks(user_id),
             "user_state": {
+                "sport": False,
                 "russ": False,
                 "kitob": False,
                 "soz": False,
@@ -133,6 +134,7 @@ async def reset_user_state(
 
     u = get_user(user_id)
 
+    u["user_state"]["sport"] = False
     u["user_state"]["russ"] = False
     u["user_state"]["kitob"] = False
     u["user_state"]["soz"] = False
@@ -213,49 +215,57 @@ def build_message(user_id):
 
     lines = []
 
-    lines.append("Doimiy vazifalar:\n")
+    # TAKRORLANUVCHI VAZIFALAR (har doim ko'rinadi)
+    lines.append("🔁 Takrorlanuvchi vazifalar:\n")
 
     today = datetime.now(
         ZoneInfo("Asia/Tashkent")
     ).weekday()
 
-    # TRADING
+    # TRADING — har doim (dushanbadan jumagacha)
     if today not in [5, 6]:
 
         lines.append(
             "• Trading checklistga qaradingmi? ☑️"
         )
 
-    # SPORT
+    # SIRLY — har doim
     lines.append(
-        "• Sport bilan shug'ullandingmi? ☑️"
+        "• Sirlyda bollardan habar oldingmi? ☑️"
     )
+
+    # KUNLIK VAZIFALAR (bajarilsa yakunlanadi)
+    kunlik_lines = []
+
+    # SPORT
+    if not u["user_state"]["sport"]:
+        kunlik_lines.append(
+            "• Sport bilan shug'ullandingmi? ☑️"
+        )
 
     # RUSS
     if not u["user_state"]["russ"]:
-
-        lines.append(
+        kunlik_lines.append(
             "• Russ tili - dars qildingmi? ☑️"
         )
 
     # KITOB
     if not u["user_state"]["kitob"]:
-
-        lines.append(
+        kunlik_lines.append(
             "• Kitob oqidingmi? ☑️"
         )
 
     # SOZ
     if not u["user_state"]["soz"]:
-
-        lines.append(
+        kunlik_lines.append(
             "• Rus tilida yangi so'zlar yodladingmi? ☑️"
         )
 
-    # SIRLY
-    lines.append(
-        "• Sirlyda bollardan habar oldingmi? ☑️"
-    )
+    if kunlik_lines:
+        lines.append("\n✅ Kunlik vazifalar:\n")
+        lines.extend(kunlik_lines)
+    else:
+        lines.append("\n✅ Kunlik vazifalar: barchasi bajarildi! 🎉")
 
     # EXTRA TASKS
     if u["extra_tasks"]:
@@ -286,6 +296,8 @@ def build_buttons(user_id):
         ZoneInfo("Asia/Tashkent")
     ).weekday()
 
+    # TAKRORLANUVCHI — har doim ko'rinadi
+
     # TRADING
     if today not in [5, 6]:
 
@@ -296,13 +308,25 @@ def build_buttons(user_id):
             )
         ])
 
-    # SPORT
+    # SIRLY — har doim
     buttons.append([
         InlineKeyboardButton(
-            "Sport bajarildi ✅",
-            callback_data="sport"
+            "Sirlydan habar olindi ✅",
+            callback_data="sirly"
         )
     ])
+
+    # KUNLIK — bajarilsa yashirinadi
+
+    # SPORT
+    if not u["user_state"]["sport"]:
+
+        buttons.append([
+            InlineKeyboardButton(
+                "Sport bajarildi ✅",
+                callback_data="sport"
+            )
+        ])
 
     # RUSS
     if not u["user_state"]["russ"]:
@@ -333,14 +357,6 @@ def build_buttons(user_id):
                 callback_data="soz"
             )
         ])
-
-    # SIRLY
-    buttons.append([
-        InlineKeyboardButton(
-            "Sirlydan habar olindi ✅",
-            callback_data="sirly"
-        )
-    ])
 
     # EXTRA TASKS
     for index, task in enumerate(u["extra_tasks"]):
@@ -590,6 +606,8 @@ async def buttons(
         )
 
     elif data == "sport":
+
+        u["user_state"]["sport"] = True
 
         await query.message.chat.send_message(
             f"Sport bajarildi ✅ {time_now}"
