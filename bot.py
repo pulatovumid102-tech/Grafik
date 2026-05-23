@@ -134,6 +134,20 @@ def get_time():
     ).strftime("%H:%M")
 
 # =========================
+# RESET USER STATE (KUNLIK)
+# =========================
+
+async def reset_user_state(
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    user_state["russ"] = False
+    user_state["kitob"] = False
+    user_state["soz"] = False
+
+    logging.info("user_state reset qilindi (yangi kun)")
+
+# =========================
 # REBUILD JOBS
 # =========================
 
@@ -172,6 +186,23 @@ def rebuild_jobs(context):
 
             minute += interval
 
+    # ===========================
+    # RESET JOB: har kuni 00:00
+    # ===========================
+
+    context.job_queue.run_daily(
+        reset_user_state,
+
+        time=datetime.strptime(
+            "00:00",
+            "%H:%M"
+        ).time().replace(
+            tzinfo=ZoneInfo("Asia/Tashkent")
+        ),
+
+        name="reset_user_state"
+    )
+
 # =========================
 # BUILD MESSAGE
 # =========================
@@ -195,7 +226,7 @@ def build_message():
 
     # SPORT
     lines.append(
-        "• Sport bilan shug‘ullandingmi? ☑️"
+        "• Sport bilan shug'ullandingmi? ☑️"
     )
 
     # RUSS
@@ -228,7 +259,7 @@ def build_message():
     if extra_tasks:
 
         lines.append(
-            "\nQo‘shimcha vazifalar:\n"
+            "\nQo'shimcha vazifalar:\n"
         )
 
         for task in extra_tasks:
@@ -370,7 +401,7 @@ async def settings_menu(update, context):
         ],
         [
             InlineKeyboardButton(
-                "🔔 Xabar oralig‘i",
+                "🔔 Xabar oralig'i",
                 callback_data="settings_interval"
             )
         ]
@@ -460,7 +491,7 @@ async def buttons(
         rebuild_jobs(context)
 
         await query.message.reply_text(
-            f"✅ O‘zgartirish qabul qilindi\n\n"
+            f"✅ O'zgartirish qabul qilindi\n\n"
             f"Ish vaqti:\n"
             f"{settings['start_hour']}:00 → "
             f"{settings['end_hour']}:00"
@@ -483,7 +514,7 @@ async def buttons(
         ])
 
         await query.message.reply_text(
-            "Xabar oralig‘ini tanlang",
+            "Xabar oralig'ini tanlang",
             reply_markup=keyboard
         )
 
@@ -499,7 +530,7 @@ async def buttons(
         rebuild_jobs(context)
 
         await query.message.reply_text(
-            f"✅ O‘zgartirish qabul qilindi\n\n"
+            f"✅ O'zgartirish qabul qilindi\n\n"
             f"Har {interval} minutda "
             f"reminder yuboriladi"
         )
@@ -607,7 +638,7 @@ async def messages(
         return
 
     # ADD TASK
-    if "Vazifa qo‘shish" in text:
+    if "Vazifa qo'shish" in text:
 
         waiting_for_task = True
 
@@ -650,7 +681,7 @@ async def messages(
         waiting_for_task = False
 
         await update.message.reply_text(
-            f"Vazifa qo‘shildi ✅\n\n• {text}"
+            f"Vazifa qo'shildi ✅\n\n• {text}"
         )
 
 # =========================
@@ -671,7 +702,7 @@ async def start(
     keyboard = ReplyKeyboardMarkup(
         [
             ["📋 Aktual checklist"],
-            ["➕ Vazifa qo‘shish"],
+            ["➕ Vazifa qo'shish"],
             ["⚙️ Sozlamalar"],
             ["ℹ️ Bot haqida"]
         ],
@@ -688,7 +719,7 @@ async def start(
         f"⚙️ Sozlamalar orqali:\n"
         f"• ish vaqtini\n"
         f"• intervalni\n"
-        f"o‘zgartirishingiz mumkin.",
+        f"o'zgartirishingiz mumkin.",
         reply_markup=keyboard
     )
 
@@ -708,7 +739,7 @@ async def stop(
         job.schedule_removal()
 
     await update.message.reply_text(
-        "Bot to‘xtatildi 🛑"
+        "Bot to'xtatildi 🛑"
     )
 
 # =========================
