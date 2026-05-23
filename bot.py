@@ -596,7 +596,7 @@ async def messages(
         return
 
     # SETTINGS
-    if text == "⚙️ Sozlamalar":
+    if "Sozlamalar" in text:
 
         await settings_menu(update, context)
 
