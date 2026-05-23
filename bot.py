@@ -238,17 +238,10 @@ def build_message(user_id):
         if u["user_state"][key]
     )
 
-    # PROGRESS
-    total = len(kunlik_all) + len(u["extra_tasks"])
-    done  = done_count
-
-    if total > 0:
-        percent = int((done / total) * 100)
-        filled  = int((done / total) * 10)
-        bar     = "█" * filled + "░" * (10 - filled)
-    else:
-        percent = 0
-        bar     = "░" * 10
+    # PROGRESS (faqat kunlik vazifalar)
+    total   = len(kunlik_all)
+    done    = done_count
+    percent = int((done / total) * 100) if total > 0 else 0
 
     # BUILD TEXT
     lines = []
@@ -277,8 +270,7 @@ def build_message(user_id):
             lines.append(f"{i}\ufe0f\u20e3 {task}")
 
     lines.append("━━━━━━━━━━━━━━")
-    lines.append(f"• Bugungi progress: {done}/{total}")
-    lines.append(f"{bar} {percent}%")
+    lines.append(f"• Bugungi progress:  {percent}%")
 
     return "\n".join(lines)
 
