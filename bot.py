@@ -250,7 +250,7 @@ def build_message(user_id):
 
     lines.append("📋 CHECKLIST")
     lines.append("━━━━━━━━━━━━━━")
-    lines.append("Takrorlanuvchi")
+    lines.append("Takrorlanuvchi vazifalar")
     lines.append("")
     for i, item in enumerate(takror_items, 1):
         lines.append(f"{i}. {item}")
