@@ -253,21 +253,19 @@ def build_message(user_id):
     for i, item in enumerate(takror_items, 1):
         lines.append(f"{i}\ufe0f\u20e3 {item}")
 
-    lines.append("━━━━━━━━━━━━━━")
-    lines.append("• Kunlik vazifalar")
-    lines.append("")
     if kunlik_items:
+        lines.append("━━━━━━━━━━━━━━")
+        lines.append("• Kunlik vazifalar")
+        lines.append("")
         for i, item in enumerate(kunlik_items, 1):
-            lines.append(f"{i}\ufe0f\u20e3 {item}")
-    else:
-        lines.append("✅ Barchasi bajarildi!")
+            lines.append(f"{i}. {item}")
 
     if u["extra_tasks"]:
         lines.append("━━━━━━━━━━━━━━")
-        lines.append("📌 Qo'shimcha vazifalar")
+        lines.append("• Qo'shimcha vazifalar")
         lines.append("")
         for i, task in enumerate(u["extra_tasks"], 1):
-            lines.append(f"{i}\ufe0f\u20e3 {task}")
+            lines.append(f"{i}. {task}")
 
 
 
