@@ -936,16 +936,19 @@ async def messages(
             f"Takrorlanuvchi vazifa qo'shildi \u2705\n\n\u2022 {text}\n\n\u23f1 Xabar 5 soniyada o'chiriladi"
         )
 
-        _cid = sent.chat_id
-        _mid = sent.message_id
+        u["settings_msg_ids"].append(sent.message_id)
 
-        async def _del(ctx):
-            try:
-                await ctx.bot.delete_message(chat_id=_cid, message_id=_mid)
-            except:
-                pass
+        _chat_id = u.get("settings_chat_id", user_id)
+        _msg_ids = list(u["settings_msg_ids"])
 
-        context.job_queue.run_once(_del, when=5, data=None)
+        async def _del_takror_add(ctx):
+            for mid in _msg_ids:
+                try:
+                    await ctx.bot.delete_message(chat_id=_chat_id, message_id=mid)
+                except:
+                    pass
+
+        context.job_queue.run_once(_del_takror_add, when=5, data=None)
 
         return
 
@@ -964,16 +967,19 @@ async def messages(
             f"Kunlik vazifa qo'shildi \u2705\n\n\u2022 {text}\n\n\u23f1 Xabar 5 soniyada o'chiriladi"
         )
 
-        _cid = sent.chat_id
-        _mid = sent.message_id
+        u["settings_msg_ids"].append(sent.message_id)
 
-        async def _del(ctx):
-            try:
-                await ctx.bot.delete_message(chat_id=_cid, message_id=_mid)
-            except:
-                pass
+        _chat_id = u.get("settings_chat_id", user_id)
+        _msg_ids = list(u["settings_msg_ids"])
 
-        context.job_queue.run_once(_del, when=5, data=None)
+        async def _del_kunlik_add(ctx):
+            for mid in _msg_ids:
+                try:
+                    await ctx.bot.delete_message(chat_id=_chat_id, message_id=mid)
+                except:
+                    pass
+
+        context.job_queue.run_once(_del_kunlik_add, when=5, data=None)
 
         return
 
@@ -991,14 +997,17 @@ async def messages(
                 f"Nom o'zgartirildi \u2705\n\n{old_label} \u2192 {text}\n\n\u23f1 Xabar 5 soniyada o'chiriladi"
             )
 
-            _cid = sent.chat_id
-            _mid = sent.message_id
+            u["settings_msg_ids"].append(sent.message_id)
+
+            _chat_id = u.get("settings_chat_id", user_id)
+            _msg_ids = list(u["settings_msg_ids"])
 
             async def _del_te(ctx):
-                try:
-                    await ctx.bot.delete_message(chat_id=_cid, message_id=_mid)
-                except:
-                    pass
+                for mid in _msg_ids:
+                    try:
+                        await ctx.bot.delete_message(chat_id=_chat_id, message_id=mid)
+                    except:
+                        pass
 
             context.job_queue.run_once(_del_te, when=5, data=None)
 
@@ -1020,14 +1029,17 @@ async def messages(
                 f"Nom o'zgartirildi \u2705\n\n{old_label} \u2192 {text}\n\n\u23f1 Xabar 5 soniyada o'chiriladi"
             )
 
-            _cid = sent.chat_id
-            _mid = sent.message_id
+            u["settings_msg_ids"].append(sent.message_id)
+
+            _chat_id = u.get("settings_chat_id", user_id)
+            _msg_ids = list(u["settings_msg_ids"])
 
             async def _del_ke(ctx):
-                try:
-                    await ctx.bot.delete_message(chat_id=_cid, message_id=_mid)
-                except:
-                    pass
+                for mid in _msg_ids:
+                    try:
+                        await ctx.bot.delete_message(chat_id=_chat_id, message_id=mid)
+                    except:
+                        pass
 
             context.job_queue.run_once(_del_ke, when=5, data=None)
 
