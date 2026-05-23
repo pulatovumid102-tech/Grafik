@@ -300,7 +300,7 @@ def build_buttons(user_id):
     # SIRLY — har doim
     buttons.append([
         InlineKeyboardButton(
-            "Sirlydan habar olindi ✅",
+            "Sirlydan habar oldim ✅",
             callback_data="sirly"
         )
     ])
@@ -581,7 +581,7 @@ async def buttons(
     if data == "trading":
 
         await query.message.chat.send_message(
-            f"Trading checklistga qaraldi ✅ {time_now}"
+            f"Trading grafikga qaraldi ✅ {time_now}"
         )
 
     elif data == "sport":
@@ -597,7 +597,7 @@ async def buttons(
         u["user_state"]["russ"] = True
 
         await query.message.chat.send_message(
-            f"Russ tili bajarildi ✅ {time_now}"
+            f"Til o'rganildi ✅ {time_now}"
         )
 
     elif data == "kitob":
@@ -605,13 +605,13 @@ async def buttons(
         u["user_state"]["kitob"] = True
 
         await query.message.chat.send_message(
-            f"Kitob oqildi ✅ {time_now}"
+            f"Kitob o'qildi ✅ {time_now}"
         )
 
     elif data == "sirly":
 
         await query.message.chat.send_message(
-            f"Sirlyda hammasi yaxshi ✅ {time_now}"
+            f"Sirlydan xabar olindi ✅ {time_now}"
         )
 
 # =========================
@@ -683,7 +683,7 @@ async def messages(
         u["waiting_for_task"] = False
 
         await update.message.reply_text(
-            f"Vazifa qo'shildi ✅\n\n• {text}"
+            f"Vazifa qo'shildi, ko'rish uchun aktual cheklistga bosing ✅\n\n• {text}"
         )
 
         return
