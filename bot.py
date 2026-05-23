@@ -677,7 +677,7 @@ async def messages(
     # AKTUAL CHECKLIST
     if "Aktual checklist" in text:
 
-        text_msg = build_message(user_id) + "\n\n⏱ Xabar 10 soniyada o'chiriladi"
+        text_msg = build_message(user_id) + "\n\n⏱ Xabar 60 soniyada o'chiriladi"
 
         sent = await update.message.reply_text(
             text_msg,
@@ -698,7 +698,7 @@ async def messages(
 
         context.job_queue.run_once(
             delete_checklist,
-            when=10,
+            when=60,
             data=None,
         )
 
