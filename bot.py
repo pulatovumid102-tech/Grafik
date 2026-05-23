@@ -932,9 +932,20 @@ async def messages(
         save_user_data(user_id)
         u["waiting_for_takror_task"] = False
 
-        await update.message.reply_text(
-            f"Takrorlanuvchi vazifa qo'shildi ✅\n\n• {text}"
+        sent = await update.message.reply_text(
+            f"Takrorlanuvchi vazifa qo'shildi \u2705\n\n\u2022 {text}\n\n\u23f1 Xabar 5 soniyada o'chiriladi"
         )
+
+        _cid = sent.chat_id
+        _mid = sent.message_id
+
+        async def _del(ctx):
+            try:
+                await ctx.bot.delete_message(chat_id=_cid, message_id=_mid)
+            except:
+                pass
+
+        context.job_queue.run_once(_del, when=5, data=None)
 
         return
 
@@ -949,9 +960,20 @@ async def messages(
         save_user_data(user_id)
         u["waiting_for_kunlik_task"] = False
 
-        await update.message.reply_text(
-            f"Kunlik vazifa qo'shildi ✅\n\n• {text}"
+        sent = await update.message.reply_text(
+            f"Kunlik vazifa qo'shildi \u2705\n\n\u2022 {text}\n\n\u23f1 Xabar 5 soniyada o'chiriladi"
         )
+
+        _cid = sent.chat_id
+        _mid = sent.message_id
+
+        async def _del(ctx):
+            try:
+                await ctx.bot.delete_message(chat_id=_cid, message_id=_mid)
+            except:
+                pass
+
+        context.job_queue.run_once(_del, when=5, data=None)
 
         return
 
@@ -965,9 +987,20 @@ async def messages(
             u["takror_tasks"][index]["label"] = text
             save_user_data(user_id)
 
-            await update.message.reply_text(
-                f"Nom o'zgartirildi ✅\n\n{old_label} → {text}"
+            sent = await update.message.reply_text(
+                f"Nom o'zgartirildi \u2705\n\n{old_label} \u2192 {text}\n\n\u23f1 Xabar 5 soniyada o'chiriladi"
             )
+
+            _cid = sent.chat_id
+            _mid = sent.message_id
+
+            async def _del_te(ctx):
+                try:
+                    await ctx.bot.delete_message(chat_id=_cid, message_id=_mid)
+                except:
+                    pass
+
+            context.job_queue.run_once(_del_te, when=5, data=None)
 
         u["editing_takror_index"] = None
 
@@ -983,9 +1016,20 @@ async def messages(
             u["kunlik_tasks"][index]["label"] = text
             save_user_data(user_id)
 
-            await update.message.reply_text(
-                f"Nom o'zgartirildi ✅\n\n{old_label} → {text}"
+            sent = await update.message.reply_text(
+                f"Nom o'zgartirildi \u2705\n\n{old_label} \u2192 {text}\n\n\u23f1 Xabar 5 soniyada o'chiriladi"
             )
+
+            _cid = sent.chat_id
+            _mid = sent.message_id
+
+            async def _del_ke(ctx):
+                try:
+                    await ctx.bot.delete_message(chat_id=_cid, message_id=_mid)
+                except:
+                    pass
+
+            context.job_queue.run_once(_del_ke, when=5, data=None)
 
         u["editing_kunlik_index"] = None
 
