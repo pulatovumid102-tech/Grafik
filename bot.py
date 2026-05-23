@@ -683,7 +683,7 @@ async def messages(
         u["waiting_for_task"] = False
 
         await update.message.reply_text(
-            f"Vazifa qo'shildi, ko'rish uchun 📋 Aktual cheklistga bosing.\n\n• {text}"
+            f"Vazifa ro'yxatga qo'shildi ☑️\n\n• {text}"
         )
 
         return
