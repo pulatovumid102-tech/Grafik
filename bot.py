@@ -1,4 +1,5 @@
 import logging
+import json
 
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -32,6 +33,12 @@ TOKEN = "8780693245:AAGEbojMC_6WodZtHRvYG52EVTic8BB2x7c"
 CHAT_ID = 1645167548
 
 # =========================
+# TASK FILE
+# =========================
+
+TASKS_FILE = "tasks.json"
+
+# =========================
 # LOGGING
 # =========================
 
@@ -61,10 +68,41 @@ user_state = {
 }
 
 # =========================
+# LOAD TASKS
+# =========================
+
+def load_tasks():
+
+    try:
+
+        with open(TASKS_FILE, "r") as file:
+
+            return json.load(file)
+
+    except:
+
+        return []
+
+# =========================
+# SAVE TASKS
+# =========================
+
+def save_tasks():
+
+    with open(TASKS_FILE, "w") as file:
+
+        json.dump(
+            extra_tasks,
+            file,
+            ensure_ascii=False,
+            indent=4
+        )
+
+# =========================
 # EXTRA TASKS
 # =========================
 
-extra_tasks = []
+extra_tasks = load_tasks()
 
 # =========================
 # WAITING TASK
@@ -363,8 +401,6 @@ async def buttons(
 
     global last_reminder_message_id
     global extra_tasks
-    global waiting_for_start_hour
-    global waiting_for_end_hour
 
     query = update.callback_query
 
@@ -376,8 +412,6 @@ async def buttons(
 
     # SETTINGS TIME
     if data == "settings_time":
-
-        waiting_for_start_hour = True
 
         keyboard = InlineKeyboardMarkup([
             [
@@ -400,9 +434,6 @@ async def buttons(
         start_hour = int(data.split("_")[1])
 
         settings["start_hour"] = start_hour
-
-        waiting_for_start_hour = False
-        waiting_for_end_hour = True
 
         keyboard = InlineKeyboardMarkup([
             [
@@ -469,7 +500,8 @@ async def buttons(
 
         await query.message.reply_text(
             f"✅ O‘zgartirish qabul qilindi\n\n"
-            f"Har {interval} minutda reminder yuboriladi"
+            f"Har {interval} minutda "
+            f"reminder yuboriladi"
         )
 
         return
@@ -496,6 +528,8 @@ async def buttons(
             completed_task = (
                 extra_tasks.pop(index)
             )
+
+            save_tasks()
 
             await query.message.chat.send_message(
                 f"{completed_task} ✅ {time_now}"
@@ -611,6 +645,8 @@ async def messages(
 
         extra_tasks.append(text)
 
+        save_tasks()
+
         waiting_for_task = False
 
         await update.message.reply_text(
@@ -632,7 +668,6 @@ async def start(
 
     rebuild_jobs(context)
 
-    # MENU
     keyboard = ReplyKeyboardMarkup(
         [
             ["📋 Aktual checklist"],
@@ -645,8 +680,6 @@ async def start(
 
     await update.message.reply_text(
         f"Bot ishga tushdi ✅\n\n"
-        f"Bot sizga belgilangan vaqtlarda "
-        f"checklist yuboradi.\n\n"
         f"⏰ Ish vaqti: "
         f"{settings['start_hour']}:00 - "
         f"{settings['end_hour']}:00\n"
