@@ -251,7 +251,7 @@ def build_message(user_id):
     lines.append("• Takrorlanuvchi")
     lines.append("")
     for i, item in enumerate(takror_items, 1):
-        lines.append(f"{i}. {item}")
+        lines.append(f"{i}\ufe0f\u20e3 {item}")
 
     if kunlik_items:
         lines.append("━━━━━━━━━━━━━━")
@@ -300,7 +300,7 @@ def build_buttons(user_id):
     # SIRLY — har doim
     buttons.append([
         InlineKeyboardButton(
-            "Sirlydan habar oldim ✅",
+            "Sirlydan habar olindi ✅",
             callback_data="sirly"
         )
     ])
@@ -421,16 +421,34 @@ async def settings_menu(update, context, user_id):
 
     if hasattr(update, "message") and update.message:
 
-        await update.message.reply_text(
+        sent = await update.message.reply_text(
             text,
             reply_markup=keyboard
         )
 
+        context.job_queue.run_once(
+            lambda ctx: ctx.bot.delete_message(
+                chat_id=sent.chat_id,
+                message_id=sent.message_id
+            ),
+            when=5,
+            data=None,
+        )
+
     else:
 
-        await update.callback_query.message.reply_text(
+        sent = await update.callback_query.message.reply_text(
             text,
             reply_markup=keyboard
+        )
+
+        context.job_queue.run_once(
+            lambda ctx: ctx.bot.delete_message(
+                chat_id=sent.chat_id,
+                message_id=sent.message_id
+            ),
+            when=5,
+            data=None,
         )
 
 # =========================
@@ -465,9 +483,18 @@ async def buttons(
             ]
         ])
 
-        await query.message.reply_text(
+        sent = await query.message.reply_text(
             "Start vaqtni tanlang",
             reply_markup=keyboard
+        )
+
+        context.job_queue.run_once(
+            lambda ctx: ctx.bot.delete_message(
+                chat_id=sent.chat_id,
+                message_id=sent.message_id
+            ),
+            when=5,
+            data=None,
         )
 
         return
@@ -487,9 +514,18 @@ async def buttons(
             ]
         ])
 
-        await query.message.reply_text(
+        sent = await query.message.reply_text(
             "Tugash vaqtni tanlang",
             reply_markup=keyboard
+        )
+
+        context.job_queue.run_once(
+            lambda ctx: ctx.bot.delete_message(
+                chat_id=sent.chat_id,
+                message_id=sent.message_id
+            ),
+            when=5,
+            data=None,
         )
 
         return
@@ -503,11 +539,21 @@ async def buttons(
 
         rebuild_jobs(context, user_id)
 
-        await query.message.reply_text(
+        sent = await query.message.reply_text(
             f"✅ O'zgartirish qabul qilindi\n\n"
             f"Ish vaqti:\n"
             f"{u['settings']['start_hour']}:00 → "
-            f"{u['settings']['end_hour']}:00"
+            f"{u['settings']['end_hour']}:00\n\n"
+            f"Sozlamalar bo'limi xabarlari 5 soniyadan o'chiriladi"
+        )
+
+        context.job_queue.run_once(
+            lambda ctx: ctx.bot.delete_message(
+                chat_id=sent.chat_id,
+                message_id=sent.message_id
+            ),
+            when=5,
+            data=None,
         )
 
         return
@@ -526,9 +572,18 @@ async def buttons(
             ]
         ])
 
-        await query.message.reply_text(
+        sent = await query.message.reply_text(
             "Xabar oralig'ini tanlang",
             reply_markup=keyboard
+        )
+
+        context.job_queue.run_once(
+            lambda ctx: ctx.bot.delete_message(
+                chat_id=sent.chat_id,
+                message_id=sent.message_id
+            ),
+            when=5,
+            data=None,
         )
 
         return
@@ -542,10 +597,19 @@ async def buttons(
 
         rebuild_jobs(context, user_id)
 
-        await query.message.reply_text(
+        sent = await query.message.reply_text(
             f"✅ O'zgartirish qabul qilindi\n\n"
-            f"Har {interval} minutda "
-            f"reminder yuboriladi"
+            f"Har {interval} minutda reminder yuboriladi\n\n"
+            f"Sozlamalar bo'limi xabarlari 5 soniyadan o'chiriladi"
+        )
+
+        context.job_queue.run_once(
+            lambda ctx: ctx.bot.delete_message(
+                chat_id=sent.chat_id,
+                message_id=sent.message_id
+            ),
+            when=5,
+            data=None,
         )
 
         return
@@ -581,7 +645,7 @@ async def buttons(
     if data == "trading":
 
         await query.message.chat.send_message(
-            f"Trading grafikga qaraldi ✅ {time_now}"
+            f"Trading checklistga qaraldi ✅ {time_now}"
         )
 
     elif data == "sport":
@@ -597,7 +661,7 @@ async def buttons(
         u["user_state"]["russ"] = True
 
         await query.message.chat.send_message(
-            f"Til o'rganildi ✅ {time_now}"
+            f"Russ tili bajarildi ✅ {time_now}"
         )
 
     elif data == "kitob":
@@ -605,13 +669,13 @@ async def buttons(
         u["user_state"]["kitob"] = True
 
         await query.message.chat.send_message(
-            f"Kitob o'qildi ✅ {time_now}"
+            f"Kitob oqildi ✅ {time_now}"
         )
 
     elif data == "sirly":
 
         await query.message.chat.send_message(
-            f"Sirlydan xabar olindi ✅ {time_now}"
+            f"Sirlyda hammasi yaxshi ✅ {time_now}"
         )
 
 # =========================
@@ -683,7 +747,7 @@ async def messages(
         u["waiting_for_task"] = False
 
         await update.message.reply_text(
-            f"Vazifa ro'yxatga qo'shildi ☑️\n\n• {text}"
+            f"Vazifa qo'shildi ✅\n\n• {text}"
         )
 
         return
@@ -702,9 +766,6 @@ async def start(
     u = get_user(user_id)
 
     u["last_reminder_message_id"] = None
-    u["user_state"]["sport"] = False
-    u["user_state"]["russ"] = False
-    u["user_state"]["kitob"] = False
 
     rebuild_jobs(context, user_id)
 
