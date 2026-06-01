@@ -212,7 +212,7 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbynSz19zzMzyiyAXAFupp_PL5KNx-sbdCeddfficVVDYJ4mAZa4BsypkBt3aJeVMkAvKQ/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx13zQYbDVVVhkOu4Gjr5sM8GkASyqTf5GjxBAi-9r2V50LPrgXmW26LYUANB-24qimLQ/exec';
 const instruments = ['XAUUSD','DJ30','NASDAQ','SPX500','EURUSD','GBPUSD','AUDUSD','NZDUSD','USDCHF','USDCAD','USDJPY','EURGBP','EURCAD','EURJPY','EURAUD','EURCHF','GBPJPY','GBPAUD','AUDCAD','AUDJPY','CADCHF','CADJPY','NZDJPY','CHFJPY'];
 const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const openedSlots = [null, null];
@@ -561,51 +561,57 @@ function saveState() {
   } catch(e) {}
 }
 
-async function loadState() {
+function loadState() {
   try {
-    const resp = await fetch(SCRIPT_URL + '?action=loadstate');
-    const text = await resp.text();
-    if (!text || text === '{}') return;
-    const state = JSON.parse(text);
-    if (state.date) {
-      document.getElementById('datepicker').value = state.date;
-      setDate(state.date);
-    }
-    if (state.openedSlots) state.openedSlots.forEach((v,i) => openedSlots[i] = v);
-    if (state.lsState) state.lsState.forEach((v,i) => lsState[i] = v);
-    if (state.checkboxes) {
-      Object.keys(state.checkboxes).forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.checked = state.checkboxes[id];
-      });
-    }
-    if (state.times) state.times.forEach((v,i) => {
-      const el = document.getElementById('time'+(i+1));
-      if (el) el.value = v;
-    });
-    if (state.closes) state.closes.forEach((v,i) => {
-      const el = document.getElementById('close'+(i+1));
-      if (el) el.value = v;
-    });
-    openedSlots.forEach(num => {
-      if (num !== null) {
-        const rows = document.querySelectorAll('#inst-body tr');
-        if (rows[num-1]) {
-          const cb = rows[num-1].querySelector('input[type=checkbox]');
-          if (cb) cb.checked = true;
+    const script = document.createElement('script');
+    window._stateCallback = function(data) {
+      try {
+        if (!data || data === '{}') return;
+        const state = typeof data === 'string' ? JSON.parse(data) : data;
+        if (state.date) {
+          document.getElementById('datepicker').value = state.date;
+          setDate(state.date);
         }
-      }
-    });
-    if (state.numCells) {
-      document.querySelectorAll('.num-cell').forEach(el => {
-        if (state.numCells.includes(el.textContent.trim())) {
-          el.classList.add('selected');
+        if (state.openedSlots) state.openedSlots.forEach((v,i) => openedSlots[i] = v);
+        if (state.lsState) state.lsState.forEach((v,i) => lsState[i] = v);
+        if (state.checkboxes) {
+          Object.keys(state.checkboxes).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.checked = state.checkboxes[id];
+          });
         }
-      });
-    }
-    updateSlots();
-    updateTrades();
-    updateBadge();
+        if (state.times) state.times.forEach((v,i) => {
+          const el = document.getElementById('time'+(i+1));
+          if (el) el.value = v;
+        });
+        if (state.closes) state.closes.forEach((v,i) => {
+          const el = document.getElementById('close'+(i+1));
+          if (el) el.value = v;
+        });
+        openedSlots.forEach(num => {
+          if (num !== null) {
+            const rows = document.querySelectorAll('#inst-body tr');
+            if (rows[num-1]) {
+              const cb = rows[num-1].querySelector('input[type=checkbox]');
+              if (cb) cb.checked = true;
+            }
+          }
+        });
+        if (state.numCells) {
+          document.querySelectorAll('.num-cell').forEach(el => {
+            if (state.numCells.includes(el.textContent.trim())) {
+              el.classList.add('selected');
+            }
+          });
+        }
+        updateSlots();
+        updateTrades();
+        updateBadge();
+      } catch(err) {}
+      document.body.removeChild(script);
+    };
+    script.src = SCRIPT_URL + '?action=loadstate&callback=_stateCallback';
+    document.body.appendChild(script);
   } catch(e) {}
 }
 
