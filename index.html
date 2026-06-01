@@ -8,35 +8,29 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: var(--tg-theme-bg-color, #f3efe8); color: var(--tg-theme-text-color, #1a1a1a); font-size: 14px; min-height: 100vh; }
 :root { --acc: var(--tg-theme-button-color, #336659); --acc-text: var(--tg-theme-button-text-color, #ffffff); --hint: var(--tg-theme-hint-color, #7a7a72); --secondary-bg: var(--tg-theme-secondary-bg-color, #ffffff); --border: rgba(0,0,0,0.08); }
-
 .page { display: none; padding: 16px; }
 .page.active { display: block; }
-
 .page-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
 .back-btn { background: transparent; border: none; font-size: 13px; color: var(--acc); cursor: pointer; font-family: inherit; font-weight: 500; padding: 0; }
 .page-title { font-size: 16px; font-weight: 600; }
 .clear-btn { margin-left: auto; background: transparent; border: none; color: var(--hint); font-size: 13px; cursor: pointer; font-family: inherit; }
-
 .home-header { padding: 24px 16px 20px; }
 .home-title { font-size: 30px; font-weight: 700; letter-spacing: -1px; }
 .home-date { font-size: 13px; color: var(--hint); margin-top: 3px; }
-
 .menu-list { display: flex; flex-direction: column; gap: 8px; }
 .menu-item { background: var(--secondary-bg); border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
-.menu-item:active { opacity: 0.8; }
+.menu-item:active { opacity: 0.7; }
 .menu-name { font-size: 15px; font-weight: 600; }
 .menu-desc { font-size: 12px; color: var(--hint); margin-top: 2px; }
 .menu-arrow { font-size: 20px; color: var(--hint); }
-.menu-badge { background: var(--acc); color: var(--secondary-bg); border-radius: 20px; padding: 3px 10px; font-size: 12px; font-weight: 600; }
-
+.menu-badge { background: var(--acc); color: var(--acc-text); border-radius: 20px; padding: 3px 10px; font-size: 12px; font-weight: 600; }
 .instr-table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--secondary-bg); border-radius: 12px; overflow: hidden; }
-.instr-table th { background: var(--acc); color: var(--secondary-bg); font-weight: 500; padding: 10px 12px; text-align: center; }
+.instr-table th { background: var(--acc); color: var(--acc-text); font-weight: 500; padding: 10px 12px; text-align: center; }
 .instr-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); text-align: center; }
 .instr-table tr:last-child td { border-bottom: none; }
 .num-cell { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; user-select: none; border: 1.5px solid transparent; }
 .num-cell.selected { border-color: var(--acc); color: var(--acc); font-weight: 600; }
 input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--acc); }
-
 .setup-card { background: var(--secondary-bg); border-radius: 12px; overflow: hidden; }
 .setup-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .setup-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
@@ -45,26 +39,25 @@ input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; accent-color:
 .setup-table td.cb { width: 40px; text-align: center; }
 .uline { width: 40px; border-bottom: 1.5px solid var(--acc); display: inline-block; min-height: 16px; vertical-align: bottom; text-align: center; font-size: 13px; font-weight: 600; color: var(--acc); }
 .no-lbl { color: var(--hint); font-size: 13px; margin-right: 4px; }
-input[type=text].time-inp { border: none; outline: none; background: transparent; font-size: 13px; font-family: inherit; color: inherit; width: 50px; border-bottom: 1px solid var(--border); padding: 1px 0; text-align: center; }
-input[type=datetime-local] { border: none; outline: none; background: transparent; font-size: 11px; font-family: inherit; color: inherit; width: 100%; cursor: pointer; padding: 0; }
+input[type=text].time-inp { border: none; outline: none; background: transparent; font-size: 13px; font-family: inherit; width: 50px; border-bottom: 1px solid var(--border); padding: 1px 0; text-align: center; }
+input[type=datetime-local] { border: none; outline: none; background: transparent; font-size: 11px; font-family: inherit; width: 100%; cursor: pointer; padding: 0; }
 .spacer-row td { height: 8px; border: none !important; background: transparent; }
-
 .save-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .journal-title-sm { font-size: 14px; font-weight: 600; }
-.save-btn { background: var(--acc); color: var(--secondary-bg); border: none; border-radius: 8px; padding: 9px 16px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
+.save-btn { background: var(--acc); color: var(--acc-text); border: none; border-radius: 8px; padding: 9px 16px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
 .save-btn:disabled { opacity: 0.5; }
 .gear-btn { background: transparent; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13px; cursor: pointer; color: var(--hint); font-family: inherit; }
 .save-status { font-size: 11px; color: var(--hint); margin-bottom: 8px; text-align: right; }
 .journal-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .journal-table { border-collapse: collapse; font-size: 12px; min-width: 520px; width: 100%; background: var(--secondary-bg); border-radius: 12px; overflow: hidden; }
-.journal-table th { background: var(--acc); color: var(--secondary-bg); font-weight: 500; padding: 8px 10px; text-align: left; white-space: nowrap; }
+.journal-table th { background: var(--acc); color: var(--acc-text); font-weight: 500; padding: 8px 10px; text-align: left; white-space: nowrap; }
 .journal-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
 .journal-table tr:last-child td { border-bottom: none; }
 .journal-table td:first-child { text-align: center; width: 28px; }
 .long-badge { color: var(--acc); font-weight: 600; }
-.short-badge { color: #7a1a1a; font-weight: 600; }
+.short-badge { color: #c0392b; font-weight: 600; }
 .empty-msg { text-align: center; color: var(--hint); font-size: 13px; padding: 24px; }
-.delete-row-btn { background: transparent; color: #7a1a1a; border: 1px solid #7a1a1a; border-radius: 4px; padding: 2px 7px; font-size: 11px; cursor: pointer; display: none; }
+.delete-row-btn { background: transparent; color: #c0392b; border: 1px solid #c0392b; border-radius: 4px; padding: 2px 7px; font-size: 11px; cursor: pointer; display: none; }
 .delete-mode .delete-row-btn { display: inline-block; }
 </style>
 </head>
@@ -76,25 +69,16 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
     <div class="home-date" id="home-date"></div>
   </div>
   <div class="menu-list">
-    <div class="menu-item" data-page="page-checklist">
-      <div>
-        <div class="menu-name">Instrumentlar</div>
-        <div class="menu-desc">Savdo instrumentlari ro'yxati</div>
-      </div>
+    <div class="menu-item" id="nav-checklist">
+      <div><div class="menu-name">Instrumentlar</div><div class="menu-desc">Savdo instrumentlari ro'yxati</div></div>
       <span class="menu-arrow">›</span>
     </div>
-    <div class="menu-item" data-page="page-setup">
-      <div>
-        <div class="menu-name">Setup</div>
-        <div class="menu-desc">Trend, RSI, MA va vaqt</div>
-      </div>
+    <div class="menu-item" id="nav-setup">
+      <div><div class="menu-name">Setup</div><div class="menu-desc">Trend, RSI, MA va vaqt</div></div>
       <span class="menu-arrow">›</span>
     </div>
-    <div class="menu-item" data-page="page-journal">
-      <div>
-        <div class="menu-name">Bitimlar jurnali</div>
-        <div class="menu-desc">Ochilgan bitimlar va saqlash</div>
-      </div>
+    <div class="menu-item" id="nav-journal">
+      <div><div class="menu-name">Bitimlar jurnali</div><div class="menu-desc">Ochilgan bitimlar va saqlash</div></div>
       <span id="journal-badge" class="menu-arrow">›</span>
     </div>
   </div>
@@ -102,9 +86,9 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
 
 <div class="page" id="page-checklist">
   <div class="page-header">
-    <button class="back-btn" data-back="true">← Orqaga</button>
+    <button class="back-btn" id="back-from-checklist">← Orqaga</button>
     <span class="page-title">Instrumentlar</span>
-    <button class="clear-btn" onclick="clearAll()">Tozalash</button>
+    <button class="clear-btn" id="clear-btn-1">Tozalash</button>
   </div>
   <table class="instr-table">
     <thead><tr><th>№</th><th>Instrument</th><th>Opened</th></tr></thead>
@@ -114,9 +98,9 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
 
 <div class="page" id="page-setup">
   <div class="page-header">
-    <button class="back-btn" data-back="true">← Orqaga</button>
+    <button class="back-btn" id="back-from-setup">← Orqaga</button>
     <span class="page-title">Setup</span>
-    <button class="clear-btn" onclick="clearAll()">Tozalash</button>
+    <button class="clear-btn" id="clear-btn-2">Tozalash</button>
   </div>
   <div class="setup-card">
     <table class="setup-table">
@@ -126,31 +110,31 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
           <td class="cb"><span class="no-lbl">№</span><span class="uline" id="slot1"></span></td>
           <td class="cb"><span class="uline" id="slot2"></span></td>
         </tr>
-        <tr><td class="lbl">UPTREND</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
-        <tr><td class="lbl">DOWNTREND</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
-        <tr><td class="lbl">M5</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
-        <tr><td class="lbl">M15</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
-        <tr><td class="lbl">RSI 70/30</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
-        <tr><td class="lbl">RSI DIVERGENCE</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
-        <tr><td class="lbl">MA H1</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
-        <tr><td class="lbl">MA H4</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
-        <tr><td class="lbl">MA D1</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
+        <tr><td class="lbl">UPTREND</td><td class="cb"><input type="checkbox" id="up1"></td><td class="cb"><input type="checkbox" id="up2"></td></tr>
+        <tr><td class="lbl">DOWNTREND</td><td class="cb"><input type="checkbox" id="dn1"></td><td class="cb"><input type="checkbox" id="dn2"></td></tr>
+        <tr><td class="lbl">M5</td><td class="cb"><input type="checkbox" id="m5_1"></td><td class="cb"><input type="checkbox" id="m5_2"></td></tr>
+        <tr><td class="lbl">M15</td><td class="cb"><input type="checkbox" id="m15_1"></td><td class="cb"><input type="checkbox" id="m15_2"></td></tr>
+        <tr><td class="lbl">RSI 70/30</td><td class="cb"><input type="checkbox" id="rsi1"></td><td class="cb"><input type="checkbox" id="rsi2"></td></tr>
+        <tr><td class="lbl">RSI DIVERGENCE</td><td class="cb"><input type="checkbox" id="rsid1"></td><td class="cb"><input type="checkbox" id="rsid2"></td></tr>
+        <tr><td class="lbl">MA H1</td><td class="cb"><input type="checkbox" id="mah1_1"></td><td class="cb"><input type="checkbox" id="mah1_2"></td></tr>
+        <tr><td class="lbl">MA H4</td><td class="cb"><input type="checkbox" id="mah4_1"></td><td class="cb"><input type="checkbox" id="mah4_2"></td></tr>
+        <tr><td class="lbl">MA D1</td><td class="cb"><input type="checkbox" id="mad1_1"></td><td class="cb"><input type="checkbox" id="mad1_2"></td></tr>
         <tr class="spacer-row"><td colspan="3"></td></tr>
         <tr>
           <td class="lbl">Time:</td>
-          <td class="cb"><input type="text" class="time-inp" id="time1" placeholder="12:38" maxlength="5" oninput="updateTrades()"></td>
-          <td class="cb"><input type="text" class="time-inp" id="time2" placeholder="12:38" maxlength="5" oninput="updateTrades()"></td>
+          <td class="cb"><input type="text" class="time-inp" id="time1" placeholder="12:38" maxlength="5"></td>
+          <td class="cb"><input type="text" class="time-inp" id="time2" placeholder="12:38" maxlength="5"></td>
         </tr>
-        <tr><td class="lbl">LONG</td><td class="cb"><input type="checkbox" id="long1" onchange="updateLS(0,'LONG',this)"></td><td class="cb"><input type="checkbox" id="long2" onchange="updateLS(1,'LONG',this)"></td></tr>
-        <tr><td class="lbl">SHORT</td><td class="cb"><input type="checkbox" id="short1" onchange="updateLS(0,'SHORT',this)"></td><td class="cb"><input type="checkbox" id="short2" onchange="updateLS(1,'SHORT',this)"></td></tr>
-        <tr><td class="lbl">SL</td><td class="cb"><input type="checkbox" id="sl1" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="sl2" onchange="updateTrades()"></td></tr>
-        <tr><td class="lbl">RR 1:1</td><td class="cb"><input type="checkbox" id="rr11_1" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="rr11_2" onchange="updateTrades()"></td></tr>
-        <tr><td class="lbl">RR 1:2</td><td class="cb"><input type="checkbox" id="rr12_1" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="rr12_2" onchange="updateTrades()"></td></tr>
-        <tr><td class="lbl">RR 1:3</td><td class="cb"><input type="checkbox" id="rr13_1" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="rr13_2" onchange="updateTrades()"></td></tr>
+        <tr><td class="lbl">LONG</td><td class="cb"><input type="checkbox" id="long1"></td><td class="cb"><input type="checkbox" id="long2"></td></tr>
+        <tr><td class="lbl">SHORT</td><td class="cb"><input type="checkbox" id="short1"></td><td class="cb"><input type="checkbox" id="short2"></td></tr>
+        <tr><td class="lbl">SL</td><td class="cb"><input type="checkbox" id="sl1"></td><td class="cb"><input type="checkbox" id="sl2"></td></tr>
+        <tr><td class="lbl">RR 1:1</td><td class="cb"><input type="checkbox" id="rr11_1"></td><td class="cb"><input type="checkbox" id="rr11_2"></td></tr>
+        <tr><td class="lbl">RR 1:2</td><td class="cb"><input type="checkbox" id="rr12_1"></td><td class="cb"><input type="checkbox" id="rr12_2"></td></tr>
+        <tr><td class="lbl">RR 1:3</td><td class="cb"><input type="checkbox" id="rr13_1"></td><td class="cb"><input type="checkbox" id="rr13_2"></td></tr>
         <tr>
           <td class="lbl">CLOSE:</td>
-          <td style="padding:4px 8px;"><input type="datetime-local" id="close1" onchange="updateTrades()"></td>
-          <td style="padding:4px 8px;"><input type="datetime-local" id="close2" onchange="updateTrades()"></td>
+          <td style="padding:4px 8px;"><input type="datetime-local" id="close1"></td>
+          <td style="padding:4px 8px;"><input type="datetime-local" id="close2"></td>
         </tr>
       </tbody>
     </table>
@@ -159,25 +143,21 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
 
 <div class="page" id="page-journal">
   <div class="page-header">
-    <button class="back-btn" data-back="true">← Orqaga</button>
+    <button class="back-btn" id="back-from-journal">← Orqaga</button>
     <span class="page-title">Bitimlar jurnali</span>
   </div>
   <div class="save-row">
     <div class="journal-title-sm">Ochilgan bitimlar</div>
     <div style="display:flex;gap:8px;">
-      <button class="save-btn" id="save-btn" onclick="saveToSheets()">Sheetsga saqlash</button>
-      <button class="gear-btn" onclick="toggleDeleteMode()" id="gear-btn">Ochirish</button>
+      <button class="save-btn" id="save-btn">Sheetsga saqlash</button>
+      <button class="gear-btn" id="gear-btn">Ochirish</button>
     </div>
   </div>
   <div class="save-status" id="save-status"></div>
   <div class="journal-wrap">
     <table class="journal-table">
-      <thead>
-        <tr><th>№</th><th>Sana</th><th>Kun</th><th>Instrument</th><th>L/S</th><th>Vaqt</th><th>SL</th><th>RR1</th><th>RR2</th><th>RR3</th><th>Close</th><th></th></tr>
-      </thead>
-      <tbody id="journal-body">
-        <tr><td colspan="12" class="empty-msg">Hali bitim ochilmagan</td></tr>
-      </tbody>
+      <thead><tr><th>№</th><th>Sana</th><th>Kun</th><th>Instrument</th><th>L/S</th><th>Vaqt</th><th>SL</th><th>RR1</th><th>RR2</th><th>RR3</th><th>Close</th><th></th></tr></thead>
+      <tbody id="journal-body"><tr><td colspan="12" class="empty-msg">Hali bitim ochilmagan</td></tr></tbody>
     </table>
   </div>
 </div>
@@ -187,12 +167,13 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx13zQYbDVVVhkOu4Gjr
 const instruments = ['XAUUSD','DJ30','NASDAQ','SPX500','EURUSD','GBPUSD','AUDUSD','NZDUSD','USDCHF','USDCAD','USDJPY','EURGBP','EURCAD','EURJPY','EURAUD','EURCHF','GBPJPY','GBPAUD','AUDCAD','AUDJPY','CADCHF','CADJPY','NZDJPY','CHFJPY'];
 const openedSlots = [null, null];
 const lsState = ['', ''];
-const savedTradeIds = {};
-// Har bir slot uchun snapshot: {sana, kun, instrument, ls, vaqt, sl, rr11, rr12, rr13, close}
 const tradeSnapshots = [null, null];
+const savedTradeIds = {};
 let alertInterval = null;
 let lastAlertMinute = -1;
 let deleteMode = false;
+
+const setupIds = ['up1','up2','dn1','dn2','m5_1','m5_2','m15_1','m15_2','rsi1','rsi2','rsid1','rsid2','mah1_1','mah1_2','mah4_1','mah4_2','mad1_1','mad1_2','long1','long2','short1','short2','sl1','sl2','rr11_1','rr11_2','rr12_1','rr12_2','rr13_1','rr13_2'];
 
 function goTo(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -206,8 +187,10 @@ function buildTable() {
   instruments.forEach((name, i) => {
     const num = i + 1;
     const tr = document.createElement('tr');
-    tr.innerHTML = '<td><span class="num-cell" onclick="toggleNum(this)">' + num + '</span></td><td style="text-align:left">' + name + '</td><td><input type="checkbox" onchange="toggleOpened(this,' + num + ')"></td>';
+    tr.innerHTML = '<td><span class="num-cell" id="nc'+num+'">' + num + '</span></td><td style="text-align:left">' + name + '</td><td><input type="checkbox" id="opened'+num+'"></td>';
     tbody.appendChild(tr);
+    document.getElementById('nc'+num).addEventListener('click', function() { toggleNum(this); });
+    document.getElementById('opened'+num).addEventListener('change', function() { toggleOpened(this, num); });
   });
 }
 
@@ -221,11 +204,7 @@ function toggleOpened(cb, num) {
       const instrName = instruments[num-1];
       const now = new Date();
       const t = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
-      // Snapshot yarat
-      tradeSnapshots[emptySlot] = {
-        sana: getDateStr(), kun: getDayStr(), instrument: instrName,
-        ls: '—', vaqt: t, sl: '—', rr11: '—', rr12: '—', rr13: '—', close: '—'
-      };
+      tradeSnapshots[emptySlot] = { sana: getDateStr(), kun: getDayStr(), instrument: instrName, ls: '—', vaqt: t, sl: '—', rr11: '—', rr12: '—', rr13: '—', close: '—' };
       sendTelegramMessage('Bitim ochildi!\n\n• ' + instrName + '\n\n' + t);
       document.querySelectorAll('.num-cell.selected').forEach(el => {
         if (el.closest('tr').querySelector('td:nth-child(2)').textContent.trim() === instrName) el.classList.remove('selected');
@@ -239,10 +218,12 @@ function toggleOpened(cb, num) {
   updateSlots(); updateTrades(); updateBadge();
 }
 
-function updateLS(slotIdx, type, cb) {
-  if (cb.checked) {
+function setupLS(slotIdx, type) {
+  const cb = document.getElementById((type === 'LONG' ? 'long' : 'short') + (slotIdx+1));
+  const other = document.getElementById((type === 'LONG' ? 'short' : 'long') + (slotIdx+1));
+  if (cb && cb.checked) {
     lsState[slotIdx] = type;
-    document.getElementById((type === 'LONG' ? 'short' : 'long') + (slotIdx+1)).checked = false;
+    if (other) other.checked = false;
     if (tradeSnapshots[slotIdx]) tradeSnapshots[slotIdx].ls = type;
   } else {
     lsState[slotIdx] = '';
@@ -266,28 +247,17 @@ function getDateStr() {
   const now = new Date();
   return String(now.getDate()).padStart(2,'0') + '.' + String(now.getMonth()+1).padStart(2,'0');
 }
-
 function getDayStr() { return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date().getDay()]; }
 
-function getCloseStr(idx) {
-  const el = document.getElementById('close'+(idx+1));
-  if (!el.value) return '—';
-  const dt = new Date(el.value);
-  return String(dt.getDate()).padStart(2,'0') + '.' + String(dt.getMonth()+1).padStart(2,'0') + ' ' + String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
-}
-
-function cbCheck(id) { const el = document.getElementById(id); return el && el.checked ? '✓' : '—'; }
-
-function updateSnapshotFromUI(slotIdx) {
-  if (!tradeSnapshots[slotIdx]) return;
-  const s = tradeSnapshots[slotIdx];
-  const t = document.getElementById('time'+(slotIdx+1));
-  if (t && t.value) s.vaqt = t.value;
-  s.sl = document.getElementById('sl'+(slotIdx+1)) && document.getElementById('sl'+(slotIdx+1)).checked ? '✓' : s.sl === '✓' ? '✓' : '—';
-  s.rr11 = document.getElementById('rr11_'+(slotIdx+1)) && document.getElementById('rr11_'+(slotIdx+1)).checked ? '✓' : s.rr11 === '✓' ? '✓' : '—';
-  s.rr12 = document.getElementById('rr12_'+(slotIdx+1)) && document.getElementById('rr12_'+(slotIdx+1)).checked ? '✓' : s.rr12 === '✓' ? '✓' : '—';
-  s.rr13 = document.getElementById('rr13_'+(slotIdx+1)) && document.getElementById('rr13_'+(slotIdx+1)).checked ? '✓' : s.rr13 === '✓' ? '✓' : '—';
-  const cl = document.getElementById('close'+(slotIdx+1));
+function updateSnapshotFromUI(i) {
+  if (!tradeSnapshots[i]) return;
+  const s = tradeSnapshots[i];
+  const t = document.getElementById('time'+(i+1)); if (t && t.value) s.vaqt = t.value;
+  const sl = document.getElementById('sl'+(i+1)); if (sl && sl.checked) s.sl = '✓';
+  const r11 = document.getElementById('rr11_'+(i+1)); if (r11 && r11.checked) s.rr11 = '✓';
+  const r12 = document.getElementById('rr12_'+(i+1)); if (r12 && r12.checked) s.rr12 = '✓';
+  const r13 = document.getElementById('rr13_'+(i+1)); if (r13 && r13.checked) s.rr13 = '✓';
+  const cl = document.getElementById('close'+(i+1));
   if (cl && cl.value) {
     const dt = new Date(cl.value);
     s.close = String(dt.getDate()).padStart(2,'0') + '.' + String(dt.getMonth()+1).padStart(2,'0') + ' ' + String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
@@ -297,10 +267,7 @@ function updateSnapshotFromUI(slotIdx) {
 function getTradeRows() {
   const rows = [];
   openedSlots.forEach((num, i) => {
-    if (num !== null && tradeSnapshots[i]) {
-      updateSnapshotFromUI(i);
-      rows.push(Object.assign({}, tradeSnapshots[i]));
-    }
+    if (num !== null && tradeSnapshots[i]) { updateSnapshotFromUI(i); rows.push(Object.assign({}, tradeSnapshots[i])); }
   });
   return rows;
 }
@@ -311,8 +278,13 @@ function updateTrades() {
   if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="12" class="empty-msg">Hali bitim ochilmagan</td></tr>'; saveState(); return; }
   tbody.innerHTML = rows.map((r, i) => {
     const slotIdx = openedSlots.findIndex(s => s !== null && instruments[s-1] === r.instrument);
-    return '<tr><td>' + (i+1) + '</td><td>' + r.sana + '</td><td>' + r.kun + '</td><td>' + r.instrument + '</td><td class="' + (r.ls==='LONG'?'long-badge':r.ls==='SHORT'?'short-badge':'') + '">' + r.ls + '</td><td>' + r.vaqt + '</td><td style="text-align:center">' + r.sl + '</td><td style="text-align:center">' + r.rr11 + '</td><td style="text-align:center">' + r.rr12 + '</td><td style="text-align:center">' + r.rr13 + '</td><td>' + r.close + '</td><td><button class="delete-row-btn" onclick="deleteTradeRow(' + slotIdx + ')">x</button></td></tr>';
+    return '<tr><td>'+(i+1)+'</td><td>'+r.sana+'</td><td>'+r.kun+'</td><td>'+r.instrument+'</td><td class="'+(r.ls==='LONG'?'long-badge':r.ls==='SHORT'?'short-badge':'')+'">'+(r.ls||'—')+'</td><td>'+r.vaqt+'</td><td style="text-align:center">'+r.sl+'</td><td style="text-align:center">'+r.rr11+'</td><td style="text-align:center">'+r.rr12+'</td><td style="text-align:center">'+r.rr13+'</td><td>'+r.close+'</td><td><button class="delete-row-btn" id="delbtn'+slotIdx+'">x</button></td></tr>';
   }).join('');
+  rows.forEach((r, i) => {
+    const slotIdx = openedSlots.findIndex(s => s !== null && instruments[s-1] === r.instrument);
+    const btn = document.getElementById('delbtn'+slotIdx);
+    if (btn) btn.addEventListener('click', function() { deleteTradeRow(slotIdx); });
+  });
   saveState();
 }
 
@@ -329,8 +301,7 @@ async function saveToSheets() {
       const params = savedTradeIds[key]
         ? new URLSearchParams({ action:'update', tradeId:savedTradeIds[key], sl:row.sl, rr11:row.rr11, rr12:row.rr12, rr13:row.rr13, close:row.close })
         : new URLSearchParams({ action:'save', sana:row.sana, kun:row.kun, instrument:row.instrument, ls:row.ls, vaqt:row.vaqt, sl:row.sl, rr11:row.rr11, rr12:row.rr12, rr13:row.rr13, close:row.close });
-      const img = new Image();
-      img.src = SCRIPT_URL + '?' + params.toString();
+      const img = new Image(); img.src = SCRIPT_URL + '?' + params.toString();
       await new Promise(resolve => setTimeout(resolve, 1500));
       if (!savedTradeIds[key]) savedTradeIds[key] = i + 1;
       saved++;
@@ -341,8 +312,7 @@ async function saveToSheets() {
 }
 
 function sendTelegramMessage(text) {
-  const img = new Image();
-  img.src = SCRIPT_URL + '?action=alert&text=' + encodeURIComponent(text);
+  const img = new Image(); img.src = SCRIPT_URL + '?action=alert&text=' + encodeURIComponent(text);
 }
 
 function sendTelegramAlert(instrs) {
@@ -375,31 +345,30 @@ function startAlertSystem() {
 function stopAlertSystem() { if (alertInterval) { clearInterval(alertInterval); alertInterval = null; } lastAlertMinute = -1; }
 function updateAlertInterval() { getWatchedInstruments().length > 0 ? startAlertSystem() : stopAlertSystem(); }
 
-window.clearAll = function() {
-  const ids = ['sl1','sl2','rr11_1','rr11_2','rr12_1','rr12_2','rr13_1','rr13_2','long1','long2','short1','short2','rr13_1','rr13_2'];
-  ids.forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
+function clearAll() {
+  setupIds.forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
   document.querySelectorAll('.num-cell.selected').forEach(el => el.classList.remove('selected'));
   document.querySelectorAll('.time-inp').forEach(el => el.value = '');
   document.querySelectorAll('input[type=datetime-local]').forEach(el => el.value = '');
+  instruments.forEach((n, i) => { const cb = document.getElementById('opened'+(i+1)); if (cb) cb.checked = false; });
+  openedSlots[0] = null; openedSlots[1] = null;
   lsState[0] = ''; lsState[1] = '';
-  updateSlots();
-  updateTrades();
-  updateBadge();
-  updateAlertInterval();
-  saveState();
-};
+  tradeSnapshots[0] = null; tradeSnapshots[1] = null;
+  updateSlots(); updateTrades(); updateBadge(); updateAlertInterval();
+}
 
 function toggleDeleteMode() {
   deleteMode = !deleteMode;
   const wrap = document.getElementById('journal-body').closest('table');
   const btn = document.getElementById('gear-btn');
-  if (deleteMode) { wrap.classList.add('delete-mode'); btn.style.color = '#7a1a1a'; btn.style.borderColor = '#7a1a1a'; }
+  if (deleteMode) { wrap.classList.add('delete-mode'); btn.style.color = '#c0392b'; btn.style.borderColor = '#c0392b'; }
   else { wrap.classList.remove('delete-mode'); btn.style.color = ''; btn.style.borderColor = ''; }
   updateTrades();
 }
 
 function deleteTradeRow(idx) {
   openedSlots[idx] = null; lsState[idx] = ''; tradeSnapshots[idx] = null;
+  const num = openedSlots[idx];
   document.querySelectorAll('#inst-body input[type=checkbox]').forEach((cb, i) => { if (openedSlots.every(s => s !== i+1)) cb.checked = false; });
   updateSlots(); updateTrades(); updateBadge();
 }
@@ -407,11 +376,10 @@ function deleteTradeRow(idx) {
 function saveState() {
   try {
     const state = { openedSlots, lsState, tradeSnapshots, checkboxes: {}, numCells: [], times: [], closes: [] };
-    ['sl1','sl2','rr11_1','rr11_2','rr12_1','rr12_2','rr13_1','rr13_2','long1','long2','short1','short2'].forEach(id => { const el = document.getElementById(id); if (el) state.checkboxes[id] = el.checked; });
+    setupIds.forEach(id => { const el = document.getElementById(id); if (el) state.checkboxes[id] = el.checked; });
     document.querySelectorAll('.num-cell.selected').forEach(el => state.numCells.push(el.textContent.trim()));
     [1,2].forEach(i => { const t = document.getElementById('time'+i); state.times.push(t ? t.value : ''); const c = document.getElementById('close'+i); state.closes.push(c ? c.value : ''); });
-    const img = new Image();
-    img.src = SCRIPT_URL + '?action=savestate&data=' + encodeURIComponent(JSON.stringify(state));
+    const img = new Image(); img.src = SCRIPT_URL + '?action=savestate&data=' + encodeURIComponent(JSON.stringify(state));
   } catch(e) {}
 }
 
@@ -427,8 +395,10 @@ function loadState() {
       if (state.checkboxes) Object.keys(state.checkboxes).forEach(id => { const el = document.getElementById(id); if (el) el.checked = state.checkboxes[id]; });
       if (state.times) state.times.forEach((v,i) => { const el = document.getElementById('time'+(i+1)); if (el) el.value = v; });
       if (state.closes) state.closes.forEach((v,i) => { const el = document.getElementById('close'+(i+1)); if (el) el.value = v; });
-      openedSlots.forEach(num => { if (num !== null) { const rows = document.querySelectorAll('#inst-body tr'); if (rows[num-1]) { const cb = rows[num-1].querySelector('input[type=checkbox]'); if (cb) cb.checked = true; } } });
-      if (state.numCells) document.querySelectorAll('.num-cell').forEach(el => { if (state.numCells.includes(el.textContent.trim())) el.classList.add('selected'); });
+      openedSlots.forEach(num => {
+        if (num !== null) { const cb = document.getElementById('opened'+num); if (cb) cb.checked = true; }
+      });
+      if (state.numCells) state.numCells.forEach(n => { const el = document.getElementById('nc'+n); if (el) el.classList.add('selected'); });
       updateSlots(); updateTrades(); updateBadge();
     } catch(err) {}
     try { document.body.removeChild(script); } catch(e) {}
@@ -437,18 +407,39 @@ function loadState() {
   document.body.appendChild(script);
 }
 
+// Long/Short listeners
+[1,2].forEach(i => {
+  const l = document.getElementById('long'+i);
+  const s = document.getElementById('short'+i);
+  if (l) l.addEventListener('change', function() { if (this.checked) { lsState[i-1]='LONG'; s.checked=false; if(tradeSnapshots[i-1]) tradeSnapshots[i-1].ls='LONG'; } else { lsState[i-1]=''; if(tradeSnapshots[i-1]) tradeSnapshots[i-1].ls='—'; } updateTrades(); });
+  if (s) s.addEventListener('change', function() { if (this.checked) { lsState[i-1]='SHORT'; l.checked=false; if(tradeSnapshots[i-1]) tradeSnapshots[i-1].ls='SHORT'; } else { lsState[i-1]=''; if(tradeSnapshots[i-1]) tradeSnapshots[i-1].ls='—'; } updateTrades(); });
+  const sl = document.getElementById('sl'+i); if (sl) sl.addEventListener('change', updateTrades);
+  const r11 = document.getElementById('rr11_'+i); if (r11) r11.addEventListener('change', updateTrades);
+  const r12 = document.getElementById('rr12_'+i); if (r12) r12.addEventListener('change', updateTrades);
+  const r13 = document.getElementById('rr13_'+i); if (r13) r13.addEventListener('change', updateTrades);
+  const t = document.getElementById('time'+i); if (t) t.addEventListener('input', updateTrades);
+  const cl = document.getElementById('close'+i); if (cl) cl.addEventListener('change', updateTrades);
+});
+
+// Navigation
+document.getElementById('nav-checklist').addEventListener('click', () => goTo('page-checklist'));
+document.getElementById('nav-setup').addEventListener('click', () => goTo('page-setup'));
+document.getElementById('nav-journal').addEventListener('click', () => goTo('page-journal'));
+document.getElementById('back-from-checklist').addEventListener('click', () => goTo('page-home'));
+document.getElementById('back-from-setup').addEventListener('click', () => goTo('page-home'));
+document.getElementById('back-from-journal').addEventListener('click', () => goTo('page-home'));
+document.getElementById('clear-btn-1').addEventListener('click', clearAll);
+document.getElementById('clear-btn-2').addEventListener('click', clearAll);
+document.getElementById('save-btn').addEventListener('click', saveToSheets);
+document.getElementById('gear-btn').addEventListener('click', toggleDeleteMode);
+
+// Home date
 const now = new Date();
 const dayNames = ['Yakshanba','Dushanba','Seshanba','Chorshanba','Payshanba','Juma','Shanba'];
 document.getElementById('home-date').textContent = dayNames[now.getDay()] + ', ' + String(now.getDate()).padStart(2,'0') + '.' + String(now.getMonth()+1).padStart(2,'0') + '.' + now.getFullYear();
 
 buildTable();
 setTimeout(() => { loadState(); }, 100);
-
-document.querySelectorAll('[data-page]').forEach(el => { el.addEventListener('click', function(e) { e.preventDefault(); goTo(this.getAttribute('data-page')); }); });
-document.querySelectorAll('[data-back]').forEach(el => { el.addEventListener('click', function(e) { e.preventDefault(); goTo('page-home'); }); });
-document.querySelectorAll('[data-action="clear"]').forEach(el => { el.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); clearAll(); }); });
-document.getElementById('save-btn').addEventListener('click', function(e) { e.preventDefault(); saveToSheets(); });
-document.getElementById('gear-btn').addEventListener('click', function(e) { e.preventDefault(); toggleDeleteMode(); });
 </script>
 </body>
 </html>
