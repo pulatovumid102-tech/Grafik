@@ -624,10 +624,11 @@ function setDate(val) {
 const today = new Date();
 const todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
 const dp = document.getElementById('datepicker');
-dp.value = todayStr; setDate(todayStr);
-dp.addEventListener('change', () => setDate(dp.value));
+dp.value = todayStr;
+setDate(todayStr);
+dp.addEventListener('change', () => { setDate(dp.value); saveState(); });
 buildTable();
-loadState();
+setTimeout(() => { loadState(); }, 100);
 
 // Navigation setup
 document.querySelectorAll('[data-page]').forEach(el => {
