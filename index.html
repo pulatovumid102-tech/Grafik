@@ -2,71 +2,52 @@
 <html lang="uz">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Forex Checklist</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
-    background: #f9f9f7;
-    color: #1a1a1a;
-    min-height: 100vh;
-    padding: 2rem;
-  }
-  .wrap { max-width: 1100px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 2rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #e8e8e5; }
-  .title { font-size: 24px; font-weight: 600; letter-spacing: -0.5px; }
-  .date-wrap { display: flex; align-items: center; gap: 10px; }
-  input[type=date] { background: #f3f3f0; border: 1px solid #e0e0dc; border-radius: 8px; padding: 7px 12px; font-size: 14px; font-weight: 500; color: #1a1a1a; font-family: inherit; outline: none; cursor: pointer; }
-  .day-badge { background: #f3f3f0; border: 1px solid #e0e0dc; border-radius: 8px; padding: 7px 16px; font-size: 14px; font-weight: 500; color: #555; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: #f5f5f3; color: #1a1a1a; padding: 10px; font-size: 13px; }
+.wrap { width: 100%; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #e0e0dc; }
+.title { font-size: 17px; font-weight: 700; }
+.date-wrap { display: flex; align-items: center; gap: 5px; }
+input[type=date] { background: #ebebea; border: none; border-radius: 7px; padding: 5px 7px; font-size: 12px; font-weight: 500; color: #1a1a1a; font-family: inherit; outline: none; }
+.day-badge { background: #ebebea; border-radius: 7px; padding: 5px 9px; font-size: 12px; font-weight: 500; color: #555; }
 
-  .main { display: flex; gap: 2rem; align-items: flex-start; }
+.main { display: flex; gap: 8px; align-items: flex-start; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.left { flex-shrink: 0; }
+.left table { border-collapse: collapse; font-size: 12px; }
+.left th { background: #ebebea; color: #888; font-weight: 500; padding: 6px 8px; text-align: center; border: 0.5px solid #ddd; }
+.left td { padding: 4px 8px; border: 0.5px solid #ddd; text-align: center; height: 30px; }
+.num-cell { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; user-select: none; border: 1.5px solid transparent; }
+.num-cell.selected { border-color: #1a1a1a; }
+input[type=checkbox] { width: 17px; height: 17px; cursor: pointer; accent-color: #1a1a1a; }
 
-  /* LEFT TABLE */
-  .left table { border-collapse: collapse; font-size: 13px; }
-  .left th { background: #f3f3f0; color: #888; font-weight: 500; padding: 9px 16px; text-align: center; border: 1px solid #e0e0dc; }
-  .left td { padding: 7px 16px; border: 1px solid #e0e0dc; color: #1a1a1a; text-align: center; height: 36px; }
-  .num-cell { width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; user-select: none; border: 1.5px solid transparent; transition: border-color 0.15s; }
-  .num-cell.selected { border-color: #1a1a1a; }
-  .num-cell:hover { background: #f3f3f0; }
-  input[type=checkbox] { width: 15px; height: 15px; cursor: pointer; accent-color: #1a1a1a; }
+.right { flex-shrink: 0; }
+.right table { border-collapse: collapse; font-size: 12px; }
+.right td { padding: 4px 7px; border: 0.5px solid #ddd; height: 30px; vertical-align: middle; }
+.right td.label { font-style: italic; color: #888; width: 100px; }
+.right td.cb { width: 34px; text-align: center; }
+.right td.close-td { padding: 2px 5px; }
+.uline { width: 34px; border-bottom: 1px solid #aaa; display: inline-block; min-height: 14px; vertical-align: bottom; text-align: center; font-size: 12px; font-weight: 500; }
+.no-lbl { color: #888; font-size: 12px; margin-right: 2px; }
+input[type=text].time-inp { border: none; outline: none; background: transparent; font-size: 12px; font-family: inherit; color: #1a1a1a; width: 46px; border-bottom: 1px solid #ccc; padding: 1px 0; }
+input[type=datetime-local] { border: none; outline: none; background: transparent; font-size: 10px; font-family: inherit; color: #1a1a1a; width: 100%; cursor: pointer; padding: 0; }
 
-  /* RIGHT TABLE */
-  .right { flex: 1; min-width: 340px; }
-  .right table { border-collapse: collapse; font-size: 13px; width: 100%; }
-  .right td { padding: 7px 12px; border: 1px solid #e0e0dc; color: #1a1a1a; height: 36px; vertical-align: middle; }
-  .right td.label { font-style: italic; color: #888; width: 130px; }
-  .right td.cb { width: 38px; text-align: center; }
-  .right td.close-td { padding: 4px 8px; }
-  .uline { width: 48px; border-bottom: 1px solid #999; display: inline-block; min-height: 16px; vertical-align: bottom; text-align: center; font-size: 13px; font-weight: 500; }
-  .no-lbl { color: #888; font-size: 13px; margin-right: 3px; }
-  input[type=time] { border: none; outline: none; background: transparent; font-size: 12px; font-family: inherit; color: #1a1a1a; width: 80px; cursor: pointer; padding: 0; }
-  input[type=datetime-local] { border: none; outline: none; background: transparent; font-size: 11px; font-family: inherit; color: #1a1a1a; width: 100%; cursor: pointer; padding: 0; }
-
-  /* SESSION */
-  .session-box { margin-top: 1rem; border: 1px solid #e0e0dc; border-radius: 8px; padding: 12px 14px; }
-  .session-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .session-item { display: flex; align-items: center; gap: 6px; font-size: 13px; font-style: italic; color: #888; }
-  .divider-row { margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0dc; display: flex; gap: 12px; align-items: center; }
-  .slash { font-size: 18px; font-weight: 500; color: #888; }
-  .book-item { display: flex; align-items: center; gap: 6px; font-size: 13px; font-style: italic; color: #888; }
-
-  /* JOURNAL */
-  .journal-section { margin-top: 2rem; border-top: 1px solid #e8e8e5; padding-top: 1.25rem; }
-  .journal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .journal-title { font-size: 15px; font-weight: 600; }
-  .save-btn { background: #1a1a1a; color: #fff; border: none; border-radius: 8px; padding: 9px 20px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
-  .save-btn:hover { opacity: 0.75; }
-  .save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .save-status { font-size: 12px; color: #888; margin-top: 4px; text-align: right; }
-  .journal-wrap { overflow-x: auto; }
-  .journal-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 750px; }
-  .journal-table th { background: #f3f3f0; color: #888; font-weight: 500; padding: 9px 12px; text-align: left; border: 1px solid #e0e0dc; white-space: nowrap; }
-  .journal-table td { padding: 9px 12px; border: 1px solid #e0e0dc; color: #1a1a1a; vertical-align: middle; white-space: nowrap; }
-  .journal-table td:first-child { text-align: center; width: 36px; }
-  .long-badge { color: #16a34a; font-weight: 600; }
-  .short-badge { color: #dc2626; font-weight: 600; }
-  .empty-msg { text-align: center; color: #bbb; font-size: 13px; padding: 20px; }
+.journal-section { margin-top: 14px; border-top: 1px solid #e0e0dc; padding-top: 12px; }
+.journal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.journal-title { font-size: 14px; font-weight: 600; }
+.save-btn { background: #1a1a1a; color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
+.save-btn:disabled { opacity: 0.4; }
+.save-status { font-size: 11px; color: #888; margin-top: 4px; text-align: right; }
+.journal-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.journal-table { border-collapse: collapse; font-size: 12px; min-width: 560px; width: 100%; }
+.journal-table th { background: #ebebea; color: #888; font-weight: 500; padding: 6px 8px; text-align: left; border: 0.5px solid #ddd; white-space: nowrap; }
+.journal-table td { padding: 6px 8px; border: 0.5px solid #ddd; white-space: nowrap; }
+.journal-table td:first-child { text-align: center; width: 28px; }
+.long-badge { color: #16a34a; font-weight: 600; }
+.short-badge { color: #dc2626; font-weight: 600; }
+.empty-msg { text-align: center; color: #bbb; font-size: 12px; padding: 14px; }
 </style>
 </head>
 <body>
@@ -82,18 +63,15 @@
   <div class="main">
     <div class="left">
       <table>
-        <thead>
-          <tr><th>№</th><th>Instrument</th><th>Opened</th></tr>
-        </thead>
+        <thead><tr><th>№</th><th>Instrument</th><th>Opened</th></tr></thead>
         <tbody id="inst-body"></tbody>
       </table>
     </div>
-
     <div class="right">
       <table>
         <tbody>
           <tr>
-            <td class="label" style="font-style:normal; font-weight:600;">Setup:</td>
+            <td class="label" style="font-style:normal;font-weight:600;">Setup:</td>
             <td class="cb"><span class="no-lbl">№</span><span class="uline" id="slot1"></span></td>
             <td class="cb"><span class="uline" id="slot2"></span></td>
             <td class="cb"><span class="uline" id="slot3"></span></td>
@@ -107,12 +85,12 @@
           <tr><td class="label">MA H1</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
           <tr><td class="label">MA H4</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
           <tr><td class="label">MA D1</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
-          <tr><td colspan="4" style="height:12px; border:none; background:transparent;"></td></tr>
+          <tr><td colspan="4" style="height:10px;border:none;background:transparent;"></td></tr>
           <tr>
             <td class="label">Time:</td>
-            <td class="cb"><input type="text" id="time1" placeholder="12:38" maxlength="5" style="border:none;outline:none;background:transparent;font-size:13px;font-family:inherit;color:#1a1a1a;width:60px;border-bottom:1px solid #ccc;padding:2px 0;" oninput="updateTrades()"></td>
-            <td class="cb"><input type="text" id="time2" placeholder="12:38" maxlength="5" style="border:none;outline:none;background:transparent;font-size:13px;font-family:inherit;color:#1a1a1a;width:60px;border-bottom:1px solid #ccc;padding:2px 0;" oninput="updateTrades()"></td>
-            <td class="cb"><input type="text" id="time3" placeholder="12:38" maxlength="5" style="border:none;outline:none;background:transparent;font-size:13px;font-family:inherit;color:#1a1a1a;width:60px;border-bottom:1px solid #ccc;padding:2px 0;" oninput="updateTrades()"></td>
+            <td class="cb"><input type="text" class="time-inp" id="time1" placeholder="12:38" maxlength="5" oninput="updateTrades()"></td>
+            <td class="cb"><input type="text" class="time-inp" id="time2" placeholder="12:38" maxlength="5" oninput="updateTrades()"></td>
+            <td class="cb"><input type="text" class="time-inp" id="time3" placeholder="12:38" maxlength="5" oninput="updateTrades()"></td>
           </tr>
           <tr><td class="label">LONG</td><td class="cb"><input type="checkbox" id="long1" onchange="updateLS(0,'LONG',this)"></td><td class="cb"><input type="checkbox" id="long2" onchange="updateLS(1,'LONG',this)"></td><td class="cb"><input type="checkbox" id="long3" onchange="updateLS(2,'LONG',this)"></td></tr>
           <tr><td class="label">SHORT</td><td class="cb"><input type="checkbox" id="short1" onchange="updateLS(0,'SHORT',this)"></td><td class="cb"><input type="checkbox" id="short2" onchange="updateLS(1,'SHORT',this)"></td><td class="cb"><input type="checkbox" id="short3" onchange="updateLS(2,'SHORT',this)"></td></tr>
@@ -128,30 +106,6 @@
           </tr>
         </tbody>
       </table>
-
-      <div class="session-box">
-        <div class="session-grid">
-          <div class="session-item">07:00 <input type="checkbox"></div>
-          <div class="session-item">08:00 <input type="checkbox"></div>
-          <div class="session-item">09:00 <input type="checkbox"></div>
-          <div class="session-item">10:00 <input type="checkbox"></div>
-          <div class="session-item">11:00 <input type="checkbox"></div>
-          <div class="session-item">12:00 <input type="checkbox"></div>
-          <div class="session-item">13:00 <input type="checkbox"></div>
-          <div class="session-item">14:00 <input type="checkbox"></div>
-          <div class="session-item">15:00 <input type="checkbox"></div>
-          <div class="session-item">16:00 <input type="checkbox"></div>
-          <div class="session-item">17:00 <input type="checkbox"></div>
-          <div class="session-item">18:00 <input type="checkbox"></div>
-          <div class="session-item">19:00 <input type="checkbox"></div>
-          <div class="session-item">20:00 <input type="checkbox"></div>
-        </div>
-        <div class="divider-row">
-          <span class="slash">//</span>
-          <div class="book-item">Book <input type="checkbox"></div>
-          <div class="book-item">Lesson <input type="checkbox"></div>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -164,7 +118,7 @@
     <div class="journal-wrap">
       <table class="journal-table">
         <thead>
-          <tr><th>№</th><th>Sana</th><th>Instrument</th><th>Long/Short</th><th>Vaqt</th><th>SL</th><th>RR 1:1</th><th>RR 1:2</th><th>RR 1:3</th><th>Close</th></tr>
+          <tr><th>№</th><th>Sana</th><th>Instrument</th><th>L/S</th><th>Vaqt</th><th>SL</th><th>RR1</th><th>RR2</th><th>RR3</th><th>Close</th></tr>
         </thead>
         <tbody id="journal-body">
           <tr><td colspan="10" class="empty-msg">Hali bitim ochilmagan</td></tr>
@@ -180,6 +134,7 @@ const instruments = ['XAUUSD','DJ30','NASDAQ','SPX500','EURUSD','GBPUSD','AUDUSD
 const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const openedSlots = [null, null, null];
 const lsState = ['', '', ''];
+const savedTradeIds = {};
 
 function buildTable() {
   const tbody = document.getElementById('inst-body');
@@ -212,9 +167,7 @@ function updateLS(slotIdx, type, cb) {
     lsState[slotIdx] = type;
     const otherId = type === 'LONG' ? `short${slotIdx+1}` : `long${slotIdx+1}`;
     document.getElementById(otherId).checked = false;
-  } else {
-    lsState[slotIdx] = '';
-  }
+  } else { lsState[slotIdx] = ''; }
   updateTrades();
 }
 
@@ -276,9 +229,7 @@ function updateTrades() {
   }
   tbody.innerHTML = rows.map((r, i) => `
     <tr>
-      <td>${i+1}</td>
-      <td>${r.sana}</td>
-      <td>${r.instrument}</td>
+      <td>${i+1}</td><td>${r.sana}</td><td>${r.instrument}</td>
       <td class="${r.ls==='LONG'?'long-badge':r.ls==='SHORT'?'short-badge':''}">${r.ls}</td>
       <td>${r.vaqt}</td>
       <td style="text-align:center">${r.sl}</td>
@@ -286,71 +237,34 @@ function updateTrades() {
       <td style="text-align:center">${r.rr12}</td>
       <td style="text-align:center">${r.rr13}</td>
       <td>${r.close}</td>
-    </tr>
-  `).join('');
+    </tr>`).join('');
 }
-
-// Сақланган битимларни кузатиш: {instrument+sana: tradeId}
-const savedTradeIds = {};
 
 async function saveToSheets() {
   const rows = getTradeRows();
-  if (rows.length === 0) {
-    document.getElementById('save-status').textContent = 'Saqlash uchun bitim yoq!';
-    return;
-  }
+  if (rows.length === 0) { document.getElementById('save-status').textContent = 'Saqlash uchun bitim yoq!'; return; }
   const btn = document.getElementById('save-btn');
   const status = document.getElementById('save-status');
-  btn.disabled = true;
-  btn.textContent = 'Saqlanmoqda...';
-  status.textContent = '';
-
+  btn.disabled = true; btn.textContent = 'Saqlanmoqda...'; status.textContent = '';
   let saved = 0;
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const key = row.instrument + '_' + row.sana;
-
     try {
       let params;
       if (savedTradeIds[key]) {
-        // Мавжуд битимни янгила
-        params = new URLSearchParams({
-          action: 'update',
-          tradeId: savedTradeIds[key],
-          sl: row.sl,
-          rr11: row.rr11,
-          rr12: row.rr12,
-          rr13: row.rr13,
-          close: row.close
-        });
+        params = new URLSearchParams({ action:'update', tradeId:savedTradeIds[key], sl:row.sl, rr11:row.rr11, rr12:row.rr12, rr13:row.rr13, close:row.close });
       } else {
-        // Янги битим сақла
-        params = new URLSearchParams({
-          action: 'save',
-          sana: row.sana,
-          instrument: row.instrument,
-          ls: row.ls,
-          vaqt: row.vaqt,
-          sl: row.sl,
-          rr11: row.rr11,
-          rr12: row.rr12,
-          rr13: row.rr13,
-          close: row.close
-        });
+        params = new URLSearchParams({ action:'save', sana:row.sana, instrument:row.instrument, ls:row.ls, vaqt:row.vaqt, sl:row.sl, rr11:row.rr11, rr12:row.rr12, rr13:row.rr13, close:row.close });
       }
       const img = new Image();
       img.src = SCRIPT_URL + '?' + params.toString();
       await new Promise(resolve => setTimeout(resolve, 1500));
-
-      if (!savedTradeIds[key]) {
-        savedTradeIds[key] = i + 1;
-      }
+      if (!savedTradeIds[key]) savedTradeIds[key] = i + 1;
       saved++;
     } catch(e) {}
   }
-
-  btn.disabled = false;
-  btn.textContent = 'Sheetsga saqlash';
+  btn.disabled = false; btn.textContent = 'Sheetsga saqlash';
   status.textContent = `✓ ${saved} ta bitim saqlandi — ${new Date().toLocaleTimeString()}`;
 }
 
