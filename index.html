@@ -188,6 +188,8 @@ const instruments = ['XAUUSD','DJ30','NASDAQ','SPX500','EURUSD','GBPUSD','AUDUSD
 const openedSlots = [null, null];
 const lsState = ['', ''];
 const savedTradeIds = {};
+// Har bir slot uchun snapshot: {sana, kun, instrument, ls, vaqt, sl, rr11, rr12, rr13, close}
+const tradeSnapshots = [null, null];
 let alertInterval = null;
 let lastAlertMinute = -1;
 let deleteMode = false;
@@ -219,6 +221,11 @@ function toggleOpened(cb, num) {
       const instrName = instruments[num-1];
       const now = new Date();
       const t = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+      // Snapshot yarat
+      tradeSnapshots[emptySlot] = {
+        sana: getDateStr(), kun: getDayStr(), instrument: instrName,
+        ls: '—', vaqt: t, sl: '—', rr11: '—', rr12: '—', rr13: '—', close: '—'
+      };
       sendTelegramMessage('Bitim ochildi!\n\n• ' + instrName + '\n\n' + t);
       document.querySelectorAll('.num-cell.selected').forEach(el => {
         if (el.closest('tr').querySelector('td:nth-child(2)').textContent.trim() === instrName) el.classList.remove('selected');
@@ -227,7 +234,7 @@ function toggleOpened(cb, num) {
     } else { cb.checked = false; return; }
   } else {
     const idx = openedSlots.indexOf(num);
-    if (idx !== -1) { openedSlots[idx] = null; lsState[idx] = ''; }
+    if (idx !== -1) { openedSlots[idx] = null; lsState[idx] = ''; tradeSnapshots[idx] = null; }
   }
   updateSlots(); updateTrades(); updateBadge();
 }
@@ -236,7 +243,11 @@ function updateLS(slotIdx, type, cb) {
   if (cb.checked) {
     lsState[slotIdx] = type;
     document.getElementById((type === 'LONG' ? 'short' : 'long') + (slotIdx+1)).checked = false;
-  } else { lsState[slotIdx] = ''; }
+    if (tradeSnapshots[slotIdx]) tradeSnapshots[slotIdx].ls = type;
+  } else {
+    lsState[slotIdx] = '';
+    if (tradeSnapshots[slotIdx]) tradeSnapshots[slotIdx].ls = '—';
+  }
   updateTrades();
 }
 
@@ -267,14 +278,29 @@ function getCloseStr(idx) {
 
 function cbCheck(id) { const el = document.getElementById(id); return el && el.checked ? '✓' : '—'; }
 
+function updateSnapshotFromUI(slotIdx) {
+  if (!tradeSnapshots[slotIdx]) return;
+  const s = tradeSnapshots[slotIdx];
+  const t = document.getElementById('time'+(slotIdx+1));
+  if (t && t.value) s.vaqt = t.value;
+  s.sl = document.getElementById('sl'+(slotIdx+1)) && document.getElementById('sl'+(slotIdx+1)).checked ? '✓' : s.sl === '✓' ? '✓' : '—';
+  s.rr11 = document.getElementById('rr11_'+(slotIdx+1)) && document.getElementById('rr11_'+(slotIdx+1)).checked ? '✓' : s.rr11 === '✓' ? '✓' : '—';
+  s.rr12 = document.getElementById('rr12_'+(slotIdx+1)) && document.getElementById('rr12_'+(slotIdx+1)).checked ? '✓' : s.rr12 === '✓' ? '✓' : '—';
+  s.rr13 = document.getElementById('rr13_'+(slotIdx+1)) && document.getElementById('rr13_'+(slotIdx+1)).checked ? '✓' : s.rr13 === '✓' ? '✓' : '—';
+  const cl = document.getElementById('close'+(slotIdx+1));
+  if (cl && cl.value) {
+    const dt = new Date(cl.value);
+    s.close = String(dt.getDate()).padStart(2,'0') + '.' + String(dt.getMonth()+1).padStart(2,'0') + ' ' + String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+  }
+}
+
 function getTradeRows() {
   const rows = [];
   openedSlots.forEach((num, i) => {
-    if (num !== null) rows.push({
-      sana: getDateStr(), kun: getDayStr(), instrument: instruments[num-1],
-      ls: lsState[i] || '—', vaqt: (document.getElementById('time'+(i+1)).value || '').trim() || '—',
-      sl: cbCheck('sl'+(i+1)), rr11: cbCheck('rr11_'+(i+1)), rr12: cbCheck('rr12_'+(i+1)), rr13: cbCheck('rr13_'+(i+1)), close: getCloseStr(i)
-    });
+    if (num !== null && tradeSnapshots[i]) {
+      updateSnapshotFromUI(i);
+      rows.push(Object.assign({}, tradeSnapshots[i]));
+    }
   });
   return rows;
 }
@@ -374,14 +400,14 @@ function toggleDeleteMode() {
 }
 
 function deleteTradeRow(idx) {
-  openedSlots[idx] = null; lsState[idx] = '';
+  openedSlots[idx] = null; lsState[idx] = ''; tradeSnapshots[idx] = null;
   document.querySelectorAll('#inst-body input[type=checkbox]').forEach((cb, i) => { if (openedSlots.every(s => s !== i+1)) cb.checked = false; });
   updateSlots(); updateTrades(); updateBadge();
 }
 
 function saveState() {
   try {
-    const state = { openedSlots, lsState, checkboxes: {}, numCells: [], times: [], closes: [] };
+    const state = { openedSlots, lsState, tradeSnapshots, checkboxes: {}, numCells: [], times: [], closes: [] };
     ['sl1','sl2','rr11_1','rr11_2','rr12_1','rr12_2','rr13_1','rr13_2','long1','long2','short1','short2'].forEach(id => { const el = document.getElementById(id); if (el) state.checkboxes[id] = el.checked; });
     document.querySelectorAll('.num-cell.selected').forEach(el => state.numCells.push(el.textContent.trim()));
     [1,2].forEach(i => { const t = document.getElementById('time'+i); state.times.push(t ? t.value : ''); const c = document.getElementById('close'+i); state.closes.push(c ? c.value : ''); });
@@ -398,6 +424,7 @@ function loadState() {
       const state = typeof data === 'string' ? JSON.parse(data) : data;
       if (state.openedSlots) state.openedSlots.forEach((v,i) => openedSlots[i] = v);
       if (state.lsState) state.lsState.forEach((v,i) => lsState[i] = v);
+      if (state.tradeSnapshots) state.tradeSnapshots.forEach((v,i) => tradeSnapshots[i] = v);
       if (state.checkboxes) Object.keys(state.checkboxes).forEach(id => { const el = document.getElementById(id); if (el) el.checked = state.checkboxes[id]; });
       if (state.times) state.times.forEach((v,i) => { const el = document.getElementById('time'+(i+1)); if (el) el.value = v; });
       if (state.closes) state.closes.forEach((v,i) => { const el = document.getElementById('close'+(i+1)); if (el) el.value = v; });
