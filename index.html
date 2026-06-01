@@ -36,10 +36,10 @@ input[type=date] { background: #ebebea; border: none; border-radius: 8px; paddin
 .menu-arrow { font-size: 18px; color: #ccc; }
 .menu-badge { background: #1a1a1a; color: #fff; border-radius: 20px; padding: 3px 9px; font-size: 12px; font-weight: 600; }
 
-.alert-btn { width: 100%; background: #ff9500; color: #fff; border: none; border-radius: 10px; padding: 13px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 10px; }
-.alert-btn.active { background: #34c759; }
-.alert-btn:disabled { opacity: 0.5; }
-.alert-status { font-size: 12px; color: #888; text-align: center; margin-top: 6px; }
+.clear-btn { background: #ff3b30; color: #fff; border: none; border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; margin-left: auto; }
+.gear-btn { background: #ebebea; border: none; border-radius: 8px; padding: 8px 12px; font-size: 16px; cursor: pointer; }
+.delete-row-btn { background: #ff3b30; color: #fff; border: none; border-radius: 6px; padding: 3px 8px; font-size: 12px; cursor: pointer; display: none; }
+.delete-mode .delete-row-btn { display: inline-block; }
 .instr-table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 .instr-table th { background: #ebebea; color: #888; font-weight: 500; padding: 10px 12px; text-align: center; border-bottom: 0.5px solid #ddd; }
 .instr-table td { padding: 8px 12px; border-bottom: 0.5px solid #f0f0ee; text-align: center; }
@@ -131,6 +131,7 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
   <div class="page-header">
     <button class="back-btn" data-back="true">← Orqaga</button>
     <span class="page-title">📋 Checklist</span>
+    <button class="clear-btn" onclick="clearAll()">🗑 Tozalash</button>
   </div>
   <table class="instr-table">
     <thead><tr><th>№</th><th>Instrument</th><th>Opened</th></tr></thead>
@@ -143,6 +144,7 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
   <div class="page-header">
     <button class="back-btn" data-back="true">← Orqaga</button>
     <span class="page-title">⚙️ Setup</span>
+    <button class="clear-btn" onclick="clearAll()">🗑 Tozalash</button>
   </div>
   <div class="setup-card">
     <table class="setup-table">
@@ -191,7 +193,10 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
   </div>
   <div class="save-row">
     <div class="journal-title-sm">Ochilgan bitimlar</div>
-    <button class="save-btn" id="save-btn" onclick="saveToSheets()">Sheetsga saqlash</button>
+    <div style="display:flex;gap:8px;">
+      <button class="save-btn" id="save-btn" onclick="saveToSheets()">Sheetsga saqlash</button>
+      <button class="gear-btn" onclick="toggleDeleteMode()" id="gear-btn">⚙️</button>
+    </div>
   </div>
   <div class="save-status" id="save-status"></div>
   <div class="journal-wrap">
@@ -253,7 +258,21 @@ function toggleNum(el) {
 function toggleOpened(cb, num) {
   if (cb.checked) {
     const emptySlot = openedSlots.indexOf(null);
-    if (emptySlot !== -1) { openedSlots[emptySlot] = num; }
+    if (emptySlot !== -1) {
+      openedSlots[emptySlot] = num;
+      // Bitim ochildi xabari yuborish va alertni to'xtatish
+      const instrName = instruments[num-1];
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      sendTelegramMessage(`✅ Bitim ochildi!\n\n• ${instrName}\n\n🕐 ${timeStr}`);
+      // Bu instrument uchun doirani olib tashla
+      document.querySelectorAll('.num-cell.selected').forEach(el => {
+        const row = el.closest('tr');
+        const name = row.querySelector('td:nth-child(2)').textContent.trim();
+        if (name === instrName) el.classList.remove('selected');
+      });
+      updateAlertInterval();
+    }
     else { cb.checked = false; return; }
   } else {
     const idx = openedSlots.indexOf(num);
@@ -351,7 +370,9 @@ function updateTrades() {
     tbody.innerHTML = '<tr><td colspan="10" class="empty-msg">Hali bitim ochilmagan</td></tr>';
     return;
   }
-  tbody.innerHTML = rows.map((r, i) => `
+  tbody.innerHTML = rows.map((r, i) => {
+    const slotIdx = openedSlots.findIndex(s => s !== null && instruments[s-1] === r.instrument);
+    return `
     <tr>
       <td>${i+1}</td><td>${r.sana}</td><td>${r.kun}</td><td>${r.instrument}</td>
       <td class="${r.ls==='LONG'?'long-badge':r.ls==='SHORT'?'short-badge':''}">${r.ls}</td>
@@ -361,7 +382,9 @@ function updateTrades() {
       <td style="text-align:center">${r.rr12}</td>
       <td style="text-align:center">${r.rr13}</td>
       <td>${r.close}</td>
-    </tr>`).join('');
+      <td><button class="delete-row-btn" onclick="deleteTradeRow(${slotIdx})">✕</button></td>
+    </tr>`;
+  }).join('');
 }
 
 async function saveToSheets() {
@@ -396,6 +419,7 @@ async function saveToSheets() {
 const BOT_TOKEN = '8780693245:AAGEbojMC_6WodZtHRvYG52EVTic8BB2x7c';
 const CHAT_ID = '1645167548';
 let alertInterval = null;
+let lastAlertMinute = -1;
 
 function getWatchedInstruments() {
   const watched = [];
@@ -407,11 +431,7 @@ function getWatchedInstruments() {
   return watched;
 }
 
-async function sendTelegramAlert(instruments) {
-  const now = new Date();
-  const hour = now.getHours();
-  if (hour < 6 || hour >= 21) return;
-  const text = `Savdoga kirish uchun setup shakllanmoqda, o'tkazib yubormang!\n\n${instruments.map(i => `• ${i}`).join('\n')}\n\n🕐 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+async function sendTelegramMessage(text) {
   try {
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: 'POST',
@@ -421,26 +441,92 @@ async function sendTelegramAlert(instruments) {
   } catch(e) {}
 }
 
+async function sendTelegramAlert(instruments) {
+  const now = new Date();
+  const hour = now.getHours();
+  if (hour < 6 || hour >= 21) return;
+  const text = `Savdoga kirish uchun setup shakllanmoqda, o'tkazib yubormang!\n\n${instruments.map(i => `• ${i}`).join('\n')}\n\n🕐 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  await sendTelegramMessage(text);
+}
+
+function startAlertSystem() {
+  if (alertInterval) return;
+  // Har 1 daqiqada tekshiradi, lekin faqat :00 va :30 da yuboradi
+  alertInterval = setInterval(() => {
+    const now = new Date();
+    const hour = now.getHours();
+    const minute = now.getMinutes();
+    const currentMark = hour * 60 + minute;
+
+    if (hour < 6 || hour >= 21) return;
+    if ((minute === 0 || minute === 30) && currentMark !== lastAlertMinute) {
+      lastAlertMinute = currentMark;
+      const instruments = getWatchedInstruments();
+      if (instruments.length === 0) {
+        stopAlertSystem();
+        return;
+      }
+      sendTelegramAlert(instruments);
+    }
+  }, 60 * 1000);
+}
+
+function stopAlertSystem() {
+  if (alertInterval) {
+    clearInterval(alertInterval);
+    alertInterval = null;
+  }
+  lastAlertMinute = -1;
+}
+
 function updateAlertInterval() {
   const instruments = getWatchedInstruments();
   if (instruments.length > 0) {
-    if (!alertInterval) {
-      alertInterval = setInterval(() => {
-        const current = getWatchedInstruments();
-        if (current.length === 0) {
-          clearInterval(alertInterval);
-          alertInterval = null;
-          return;
-        }
-        sendTelegramAlert(current);
-      }, 30 * 60 * 1000);
-    }
+    startAlertSystem();
   } else {
-    if (alertInterval) {
-      clearInterval(alertInterval);
-      alertInterval = null;
-    }
+    stopAlertSystem();
   }
+}
+
+function clearAll() {
+  document.querySelectorAll('#page-checklist input[type=checkbox], #page-setup input[type=checkbox]').forEach(cb => cb.checked = false);
+  document.querySelectorAll('.num-cell.selected').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('.time-inp').forEach(el => el.value = '');
+  document.querySelectorAll('input[type=datetime-local]').forEach(el => el.value = '');
+  openedSlots.fill(null);
+  lsState.fill('');
+  updateSlots();
+  updateTrades();
+  updateBadge();
+  updateAlertInterval();
+}
+
+let deleteMode = false;
+function toggleDeleteMode() {
+  deleteMode = !deleteMode;
+  const wrap = document.getElementById('journal-body').closest('table');
+  if (deleteMode) {
+    wrap.classList.add('delete-mode');
+    document.getElementById('gear-btn').style.background = '#ff3b30';
+    document.getElementById('gear-btn').style.color = '#fff';
+  } else {
+    wrap.classList.remove('delete-mode');
+    document.getElementById('gear-btn').style.background = '';
+    document.getElementById('gear-btn').style.color = '';
+  }
+  updateTrades();
+}
+
+function deleteTradeRow(idx) {
+  openedSlots[idx] = null;
+  lsState[idx] = '';
+  // Checklist da opened checkbox ni tozala
+  document.querySelectorAll('#inst-body input[type=checkbox]').forEach((cb, i) => {
+    if (openedSlots.every(s => s !== i+1)) cb.checked = false;
+  });
+  updateSlots();
+  updateTrades();
+  updateBadge();
 }
 
 function setDate(val) {
