@@ -375,20 +375,19 @@ function startAlertSystem() {
 function stopAlertSystem() { if (alertInterval) { clearInterval(alertInterval); alertInterval = null; } lastAlertMinute = -1; }
 function updateAlertInterval() { getWatchedInstruments().length > 0 ? startAlertSystem() : stopAlertSystem(); }
 
-function clearAll() {
-  // Faqat Setup checkboxlarini tozala
-  ['sl1','sl2','rr11_1','rr11_2','rr12_1','rr12_2','rr13_1','rr13_2','long1','long2','short1','short2'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.checked = false;
-  });
-  document.querySelectorAll('#page-checklist .num-cell.selected').forEach(el => el.classList.remove('selected'));
+window.clearAll = function() {
+  const ids = ['sl1','sl2','rr11_1','rr11_2','rr12_1','rr12_2','rr13_1','rr13_2','long1','long2','short1','short2','rr13_1','rr13_2'];
+  ids.forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
+  document.querySelectorAll('.num-cell.selected').forEach(el => el.classList.remove('selected'));
   document.querySelectorAll('.time-inp').forEach(el => el.value = '');
   document.querySelectorAll('input[type=datetime-local]').forEach(el => el.value = '');
-  lsState.fill('');
+  lsState[0] = ''; lsState[1] = '';
   updateSlots();
   updateTrades();
   updateBadge();
   updateAlertInterval();
-}
+  saveState();
+};
 
 function toggleDeleteMode() {
   deleteMode = !deleteMode;
@@ -447,6 +446,9 @@ setTimeout(() => { loadState(); }, 100);
 
 document.querySelectorAll('[data-page]').forEach(el => { el.addEventListener('click', function(e) { e.preventDefault(); goTo(this.getAttribute('data-page')); }); });
 document.querySelectorAll('[data-back]').forEach(el => { el.addEventListener('click', function(e) { e.preventDefault(); goTo('page-home'); }); });
+document.querySelectorAll('[data-action="clear"]').forEach(el => { el.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); clearAll(); }); });
+document.getElementById('save-btn').addEventListener('click', function(e) { e.preventDefault(); saveToSheets(); });
+document.getElementById('gear-btn').addEventListener('click', function(e) { e.preventDefault(); toggleDeleteMode(); });
 </script>
 </body>
 </html>
