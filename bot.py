@@ -1,1251 +1,451 @@
-import logging
-import json
-import os
-
-from datetime import datetime
-from zoneinfo import ZoneInfo
-
-from telegram import (
-    Update,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    ReplyKeyboardMarkup,
-)
-
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    CallbackQueryHandler,
-    MessageHandler,
-    ContextTypes,
-    filters,
-)
-
-# =========================
-# TOKEN
-# =========================
-
-TOKEN = "8780693245:AAGEbojMC_6WodZtHRvYG52EVTic8BB2x7c"
-
-# =========================
-# LOGGING
-# =========================
-
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
-)
-
-# =========================
-# TASKS FOLDER
-# =========================
-
-TASKS_FOLDER = "user_tasks"
-
-os.makedirs(TASKS_FOLDER, exist_ok=True)
-
-# =========================
-# USER DATA (per user)
-# =========================
-
-user_data = {}
-
-def get_user(user_id):
-
-    if user_id not in user_data:
-
-        default_data = load_user_data(user_id)
-        user_data[user_id] = {
-            "extra_tasks": default_data["extra_tasks"],
-            "takror_tasks": default_data["takror_tasks"],
-            "kunlik_tasks": default_data["kunlik_tasks"],
-            "user_state": {},
-            "last_reminder_message_id": None,
-            "waiting_for_task": False,
-            "waiting_for_takror_task": False,
-            "waiting_for_kunlik_task": False,
-            "editing_takror_index": None,
-            "editing_kunlik_index": None,
-            "settings_msg_ids": [],
-            "settings_chat_id": None,
-            "settings": {
-                "start_hour": 6,
-                "end_hour": 21,
-                "interval": 30,
-            },
-        }
-        # user_state kunlik_tasks dan dinamik yasaladi
-        for task in user_data[user_id]["kunlik_tasks"]:
-            user_data[user_id]["user_state"][task["key"]] = False
-
-    return user_data[user_id]
-
-# =========================
-# DEFAULT TAKROR TASKS
-# =========================
-
-DEFAULT_TAKROR = [
-    {"key": "trading", "label": "Trading - grafikga qara", "weekdays_only": True},
-    {"key": "sirly",   "label": "Sirly - hammasi yaxshimi tekshir", "weekdays_only": False},
-]
-
-DEFAULT_KUNLIK = [
-    {"key": "sport", "label": "Sport"},
-    {"key": "russ",  "label": "Til"},
-    {"key": "kitob", "label": "Kitob"},
-]
-
-# =========================
-# LOAD USER DATA
-# =========================
-
-def load_user_data(user_id):
-
-    path = os.path.join(
-        TASKS_FOLDER,
-        f"data_{user_id}.json"
-    )
-
-    try:
-
-        with open(path, "r") as file:
-            data = json.load(file)
-            if "takror_tasks" not in data:
-                data["takror_tasks"] = DEFAULT_TAKROR[:]
-            if "kunlik_tasks" not in data:
-                data["kunlik_tasks"] = DEFAULT_KUNLIK[:]
-            if "extra_tasks" not in data:
-                data["extra_tasks"] = []
-            return data
-
-    except:
-        return {
-            "extra_tasks": [],
-            "takror_tasks": DEFAULT_TAKROR[:],
-            "kunlik_tasks": DEFAULT_KUNLIK[:],
-        }
-
-# =========================
-# SAVE USER DATA
-# =========================
-
-def save_user_data(user_id):
-
-    u = get_user(user_id)
-
-    path = os.path.join(
-        TASKS_FOLDER,
-        f"data_{user_id}.json"
-    )
-
-    with open(path, "w") as file:
-
-        json.dump(
-            {
-                "extra_tasks": u["extra_tasks"],
-                "takror_tasks": u["takror_tasks"],
-                "kunlik_tasks": u["kunlik_tasks"],
-            },
-            file,
-            ensure_ascii=False,
-            indent=4
-        )
-
-# =========================
-# TIME
-# =========================
-
-def get_time():
-
-    return datetime.now(
-        ZoneInfo("Asia/Tashkent")
-    ).strftime("%H:%M")
-
-# =========================
-# RESET USER STATE (kunlik)
-# =========================
-
-async def reset_user_state(
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    user_id = context.job.data
-
-    u = get_user(user_id)
-
-    for task in u["kunlik_tasks"]:
-        u["user_state"][task["key"]] = False
-
-    logging.info(
-        f"user_state reset qilindi: {user_id}"
-    )
-
-# =========================
-# REBUILD JOBS
-# =========================
-
-def rebuild_jobs(context, user_id):
-
-    # Faqat shu userni joblarini o'chir
-    jobs = context.job_queue.jobs()
-
-    for job in jobs:
-
-        if job.data == user_id:
-            job.schedule_removal()
-
-    u = get_user(user_id)
-
-    start_hour = u["settings"]["start_hour"]
-    end_hour = u["settings"]["end_hour"]
-    interval = u["settings"]["interval"]
-
-    for hour in range(start_hour, end_hour + 1):
-
-        minute = 0
-
-        while minute < 60:
-
-            if hour == end_hour and minute > 0:
-                break
-
-            context.job_queue.run_daily(
-                send_reminder,
-
-                time=datetime.strptime(
-                    f"{hour}:{minute:02}",
-                    "%H:%M"
-                ).time().replace(
-                    tzinfo=ZoneInfo("Asia/Tashkent")
-                ),
-
-                name=f"reminder_{user_id}_{hour}_{minute}",
-                data=user_id,
-                chat_id=user_id,
-            )
-
-            minute += interval
-
-    # Reset job: har kuni 00:00
-    context.job_queue.run_daily(
-        reset_user_state,
-
-        time=datetime.strptime(
-            "00:00",
-            "%H:%M"
-        ).time().replace(
-            tzinfo=ZoneInfo("Asia/Tashkent")
-        ),
-
-        name=f"reset_{user_id}",
-        data=user_id,
-        chat_id=user_id,
-    )
-
-# =========================
-# BUILD MESSAGE
-# =========================
-
-def build_message(user_id):
-
-    u = get_user(user_id)
-
-    today = datetime.now(
-        ZoneInfo("Asia/Tashkent")
-    ).weekday()
-
-    # TAKRORLANUVCHI — dinamik
-    takror_items = []
-    for t in u["takror_tasks"]:
-        if t.get("weekdays_only") and today in [5, 6]:
-            continue
-        takror_items.append(t["label"])
-
-    # KUNLIK — dinamik
-    kunlik_items = [
-        t["label"] for t in u["kunlik_tasks"]
-        if not u["user_state"].get(t["key"], False)
-    ]
-
-    # BUILD TEXT
-    lines = []
-
-    lines.append("📋 CHECKLIST")
-    lines.append("━━━━━━━━━━━━━━")
-    lines.append("• Takrorlanuvchi")
-    lines.append("")
-    for i, item in enumerate(takror_items, 1):
-        lines.append(f"{i}\ufe0f\u20e3 {item}")
-
-    if kunlik_items:
-        lines.append("━━━━━━━━━━━━━━")
-        lines.append("• Kunlik vazifalar")
-        lines.append("")
-        for i, item in enumerate(kunlik_items, 1):
-            lines.append(f"{i}. {item}")
-
-    if u["extra_tasks"]:
-        lines.append("━━━━━━━━━━━━━━")
-        lines.append("• Qo'shimcha vazifalar")
-        lines.append("")
-        for i, task in enumerate(u["extra_tasks"], 1):
-            lines.append(f"{i}. {task}")
-
-
-
-    return "\n".join(lines)
-
-# =========================
-# BUILD BUTTONS
-# =========================
-
-def build_buttons(user_id):
-
-    u = get_user(user_id)
-
-    buttons = []
-
-    today = datetime.now(
-        ZoneInfo("Asia/Tashkent")
-    ).weekday()
-
-    # TAKRORLANUVCHI — har doim ko'rinadi
-    for t in u["takror_tasks"]:
-        if t.get("weekdays_only") and today in [5, 6]:
-            continue
-        buttons.append([
-            InlineKeyboardButton(
-                f"{t['label']} ✅",
-                callback_data=f"takror_{t['key']}"
-            )
-        ])
-
-    # KUNLIK — bajarilsa yashirinadi
-    for t in u["kunlik_tasks"]:
-        if not u["user_state"].get(t["key"], False):
-            buttons.append([
-                InlineKeyboardButton(
-                    f"{t['label']} ✅",
-                    callback_data=f"kunlik_{t['key']}"
-                )
-            ])
-
-    # EXTRA TASKS
-    for index, task in enumerate(u["extra_tasks"]):
-
-        buttons.append([
-            InlineKeyboardButton(
-                f"{task} ✅",
-                callback_data=f"task_{index}"
-            )
-        ])
-
-    return InlineKeyboardMarkup(buttons)
-
-# =========================
-# SEND REMINDER
-# =========================
-
-async def send_reminder(
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    user_id = context.job.data
-
-    u = get_user(user_id)
-
-    # Eski xabarni o'chir
-    if u["last_reminder_message_id"]:
-
-        try:
-
-            await context.bot.delete_message(
-                chat_id=user_id,
-                message_id=u["last_reminder_message_id"]
-            )
-
-        except:
-            pass
-
-    text = build_message(user_id)
-
-    keyboard = build_buttons(user_id)
-
-    sent_message = await context.bot.send_message(
-        chat_id=user_id,
-        text=text,
-        reply_markup=keyboard
-    )
-
-    u["last_reminder_message_id"] = (
-        sent_message.message_id
-    )
-
-# =========================
-# SETTINGS MENU
-# =========================
-
-async def settings_menu(update, context, user_id):
-
-    u = get_user(user_id)
-
-    keyboard = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton(
-                "⏰ Ish vaqti",
-                callback_data="settings_time"
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                "🔔 Xabar oralig'i",
-                callback_data="settings_interval"
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                "📝 Vazifalar",
-                callback_data="settings_tasks"
-            )
-        ]
-    ])
-
-    text = (
-        f"⚙️ Sozlamalar\n\n"
-        f"Joriy holat:\n"
-        f"⏰ {u['settings']['start_hour']}:00 → "
-        f"{u['settings']['end_hour']}:00\n"
-        f"🔁 Har {u['settings']['interval']} daqiqa"
-    )
-
-    if hasattr(update, "message") and update.message:
-
-        sent = await update.message.reply_text(
-            text,
-            reply_markup=keyboard
-        )
-
-        u = get_user(update.message.from_user.id)
-        u["settings_msg_ids"] = [sent.message_id]
-        u["settings_chat_id"] = sent.chat_id
-
-    else:
-
-        sent = await update.callback_query.message.reply_text(
-            text,
-            reply_markup=keyboard
-        )
-
-        u = get_user(update.callback_query.from_user.id)
-        u["settings_msg_ids"] = [sent.message_id]
-        u["settings_chat_id"] = sent.chat_id
-
-# =========================
-# BUTTON HANDLER
-# =========================
-
-async def buttons(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    query = update.callback_query
-
-    await query.answer()
-
-    user_id = query.from_user.id
-
-    u = get_user(user_id)
-
-    data = query.data
-
-    time_now = get_time()
-
-    # SETTINGS TIME
-    if data == "settings_time":
-
-        keyboard = InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton("05:00", callback_data="start_5"),
-                InlineKeyboardButton("06:00", callback_data="start_6"),
-                InlineKeyboardButton("07:00", callback_data="start_7"),
-            ]
-        ])
-
-        sent = await query.message.reply_text(
-            "Start vaqtni tanlang",
-            reply_markup=keyboard
-        )
-
-        u["settings_msg_ids"].append(sent.message_id)
-
-        return
-
-    # START HOUR
-    if data.startswith("start_"):
-
-        start_hour = int(data.split("_")[1])
-
-        u["settings"]["start_hour"] = start_hour
-
-        keyboard = InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton("20:00", callback_data="end_20"),
-                InlineKeyboardButton("21:00", callback_data="end_21"),
-                InlineKeyboardButton("22:00", callback_data="end_22"),
-            ]
-        ])
-
-        sent = await query.message.reply_text(
-            "Tugash vaqtni tanlang",
-            reply_markup=keyboard
-        )
-
-        u["settings_msg_ids"].append(sent.message_id)
-
-        return
-
-    # END HOUR
-    if data.startswith("end_"):
-
-        end_hour = int(data.split("_")[1])
-
-        u["settings"]["end_hour"] = end_hour
-
-        rebuild_jobs(context, user_id)
-
-        sent = await query.message.reply_text(
-            f"✅ O'zgartirish qabul qilindi\n\n"
-            f"Ish vaqti:\n"
-            f"{u['settings']['start_hour']}:00 → "
-            f"{u['settings']['end_hour']}:00\n\n"
-            f"⏱ Yuborilgan xabarlar 5 soniyada o'chiriladi"
-        )
-
-        u["settings_msg_ids"].append(sent.message_id)
-
-        _chat_id = user_id
-        _msg_ids = list(u["settings_msg_ids"])
-
-        async def delete_all_end(ctx):
-            for mid in _msg_ids:
-                try:
-                    await ctx.bot.delete_message(chat_id=_chat_id, message_id=mid)
-                except:
-                    pass
-
-        context.job_queue.run_once(delete_all_end, when=5, data=None)
-
-        return
-
-    # INTERVAL SETTINGS
-    if data == "settings_interval":
-
-        keyboard = InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton("10 minut", callback_data="interval_10"),
-                InlineKeyboardButton("20 minut", callback_data="interval_20"),
-            ],
-            [
-                InlineKeyboardButton("30 minut", callback_data="interval_30"),
-                InlineKeyboardButton("1 soat", callback_data="interval_60"),
-            ]
-        ])
-
-        sent = await query.message.reply_text(
-            "Xabar oralig'ini tanlang",
-            reply_markup=keyboard
-        )
-
-        u["settings_msg_ids"].append(sent.message_id)
-
-        return
-
-    # INTERVAL SAVE
-    if data.startswith("interval_"):
-
-        interval = int(data.split("_")[1])
-
-        u["settings"]["interval"] = interval
-
-        rebuild_jobs(context, user_id)
-
-        sent = await query.message.reply_text(
-            f"✅ O'zgartirish qabul qilindi\n\n"
-            f"Har {interval} minutda reminder yuboriladi\n\n"
-            f"⏱ Yuborilgan xabarlar 5 soniyada o'chiriladi"
-        )
-
-        u["settings_msg_ids"].append(sent.message_id)
-
-        _chat_id = user_id
-        _msg_ids = list(u["settings_msg_ids"])
-
-        async def delete_all_interval(ctx):
-            for mid in _msg_ids:
-                try:
-                    await ctx.bot.delete_message(chat_id=_chat_id, message_id=mid)
-                except:
-                    pass
-
-        context.job_queue.run_once(delete_all_interval, when=5, data=None)
-
-        return
-
-    # VAZIFALAR MENYUSI
-    if data == "settings_tasks":
-
-        keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔁 Takrorlanuvchi vazifalar", callback_data="tasks_takror")],
-            [InlineKeyboardButton("✅ Kunlik vazifalar", callback_data="tasks_kunlik")],
-        ])
-
-        sent = await query.message.reply_text(
-            "📝 Vazifalar",
-            reply_markup=keyboard
-        )
-
-        u["settings_msg_ids"] = [sent.message_id]
-
-        return
-
-    # TAKRORLANUVCHI VAZIFALAR MENYUSI
-    if data == "tasks_takror":
-
-        lines = ["\U0001f501 Takrorlanuvchi vazifalar:\n"]
-        for i, t in enumerate(u["takror_tasks"], 1):
-            lines.append(f"{i}. {t['label']}")
-
-        keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("➕ Qo'shish", callback_data="takror_add")],
-            [InlineKeyboardButton("🗑 O'chirish", callback_data="takror_delete")],
-            [InlineKeyboardButton("✏️ Nomini o'zgartirish", callback_data="takror_edit")],
-        ])
-
-        sent = await query.message.reply_text(
-            "\n".join(lines),
-            reply_markup=keyboard
-        )
-
-        u["settings_msg_ids"].append(sent.message_id)
-
-        return
-
-    # KUNLIK VAZIFALAR MENYUSI
-    if data == "tasks_kunlik":
-
-        lines = ["\u2705 Kunlik vazifalar:\n"]
-        for i, t in enumerate(u["kunlik_tasks"], 1):
-            lines.append(f"{i}. {t['label']}")
-
-        keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("➕ Qo'shish", callback_data="kunlik_add")],
-            [InlineKeyboardButton("🗑 O'chirish", callback_data="kunlik_delete")],
-            [InlineKeyboardButton("✏️ Nomini o'zgartirish", callback_data="kunlik_edit")],
-        ])
-
-        sent = await query.message.reply_text(
-            "\n".join(lines),
-            reply_markup=keyboard
-        )
-
-        u["settings_msg_ids"].append(sent.message_id)
-
-        return
-
-    # TAKRORLANUVCHI — QO'SHISH
-    if data == "takror_add":
-
-        u["waiting_for_takror_task"] = True
-
-        sent = await query.message.reply_text(
-            "Yangi takrorlanuvchi vazifa nomini yuboring ✍️"
-        )
-
-        u["settings_msg_ids"].append(sent.message_id)
-
-        return
-
-    # KUNLIK — QO'SHISH
-    if data == "kunlik_add":
-
-        u["waiting_for_kunlik_task"] = True
-
-        sent = await query.message.reply_text(
-            "Yangi kunlik vazifa nomini yuboring ✍️"
-        )
-
-        u["settings_msg_ids"].append(sent.message_id)
-
-        return
-
-    # TAKRORLANUVCHI — O'CHIRISH (ro'yxat)
-    if data == "takror_delete":
-
-        if not u["takror_tasks"]:
-            await query.message.reply_text("Vazifalar yo'q")
-            return
-
-        buttons_list = [
-            [InlineKeyboardButton(f"{t['label']} ❌", callback_data=f"takror_del_{i}")]
-            for i, t in enumerate(u["takror_tasks"])
-        ]
-
-        sent = await query.message.reply_text(
-            "Qaysi vazifani o'chirish kerak?",
-            reply_markup=InlineKeyboardMarkup(buttons_list)
-        )
-
-        u["settings_msg_ids"].append(sent.message_id)
-
-        return
-
-    # KUNLIK — O'CHIRISH (ro'yxat)
-    if data == "kunlik_delete":
-
-        if not u["kunlik_tasks"]:
-            await query.message.reply_text("Vazifalar yo'q")
-            return
-
-        buttons_list = [
-            [InlineKeyboardButton(f"{t['label']} ❌", callback_data=f"kunlik_del_{i}")]
-            for i, t in enumerate(u["kunlik_tasks"])
-        ]
-
-        sent = await query.message.reply_text(
-            "Qaysi vazifani o'chirish kerak?",
-            reply_markup=InlineKeyboardMarkup(buttons_list)
-        )
-
-        u["settings_msg_ids"].append(sent.message_id)
-
-        return
-
-    # TAKRORLANUVCHI — O'CHIRISH (tasdiqlash)
-    if data.startswith("takror_del_"):
-
-        index = int(data.split("_")[2])
-
-        if index < len(u["takror_tasks"]):
-            removed = u["takror_tasks"].pop(index)
-            save_user_data(user_id)
-
-            sent = await query.message.chat.send_message(
-                f"{removed['label']} o'chirildi ✅\n\n⏱ Xabar 5 soniyada o'chiriladi"
-            )
-
-            u["settings_msg_ids"].append(sent.message_id)
-            _msg_ids = list(u["settings_msg_ids"])
-
-            async def _del_takror_del(ctx):
-                for mid in _msg_ids:
-                    try:
-                        await ctx.bot.delete_message(chat_id=user_id, message_id=mid)
-                    except:
-                        pass
-
-            context.job_queue.run_once(_del_takror_del, when=5, data=None)
-
-        return
-
-    # KUNLIK — O'CHIRISH (tasdiqlash)
-    if data.startswith("kunlik_del_"):
-
-        index = int(data.split("_")[2])
-
-        if index < len(u["kunlik_tasks"]):
-            removed = u["kunlik_tasks"].pop(index)
-            u["user_state"].pop(removed["key"], None)
-            save_user_data(user_id)
-
-            sent = await query.message.chat.send_message(
-                f"{removed['label']} o'chirildi ✅\n\n⏱ Xabar 5 soniyada o'chiriladi"
-            )
-
-            u["settings_msg_ids"].append(sent.message_id)
-            _msg_ids = list(u["settings_msg_ids"])
-
-            async def _del_kunlik_del(ctx):
-                for mid in _msg_ids:
-                    try:
-                        await ctx.bot.delete_message(chat_id=user_id, message_id=mid)
-                    except:
-                        pass
-
-            context.job_queue.run_once(_del_kunlik_del, when=5, data=None)
-
-        return
-
-    # TAKRORLANUVCHI — NOMINI O'ZGARTIRISH (ro'yxat)
-    if data == "takror_edit":
-
-        if not u["takror_tasks"]:
-            await query.message.reply_text("Vazifalar yo'q")
-            return
-
-        buttons_list = [
-            [InlineKeyboardButton(t["label"], callback_data=f"takror_edt_{i}")]
-            for i, t in enumerate(u["takror_tasks"])
-        ]
-
-        sent = await query.message.reply_text(
-            "Qaysi vazifani o'zgartirish kerak?",
-            reply_markup=InlineKeyboardMarkup(buttons_list)
-        )
-
-        u["settings_msg_ids"].append(sent.message_id)
-
-        return
-
-    # KUNLIK — NOMINI O'ZGARTIRISH (ro'yxat)
-    if data == "kunlik_edit":
-
-        if not u["kunlik_tasks"]:
-            await query.message.reply_text("Vazifalar yo'q")
-            return
-
-        buttons_list = [
-            [InlineKeyboardButton(t["label"], callback_data=f"kunlik_edt_{i}")]
-            for i, t in enumerate(u["kunlik_tasks"])
-        ]
-
-        sent = await query.message.reply_text(
-            "Qaysi vazifani o'zgartirish kerak?",
-            reply_markup=InlineKeyboardMarkup(buttons_list)
-        )
-
-        u["settings_msg_ids"].append(sent.message_id)
-
-        return
-
-    # TAKRORLANUVCHI — NOMINI O'ZGARTIRISH (tanlandi)
-    if data.startswith("takror_edt_"):
-
-        index = int(data.split("_")[2])
-
-        u["editing_takror_index"] = index
-
-        sent = await query.message.reply_text(
-            "Yangi nomini yuboring ✍️"
-        )
-
-        u["settings_msg_ids"].append(sent.message_id)
-
-        return
-
-    # KUNLIK — NOMINI O'ZGARTIRISH (tanlandi)
-    if data.startswith("kunlik_edt_"):
-
-        index = int(data.split("_")[2])
-
-        u["editing_kunlik_index"] = index
-
-        sent = await query.message.reply_text(
-            "Yangi nomini yuboring ✍️"
-        )
-
-        u["settings_msg_ids"].append(sent.message_id)
-
-        return
-
-    # DELETE REMINDER
-    try:
-
-        await query.message.delete()
-
-    except:
-        pass
-
-    u["last_reminder_message_id"] = None
-
-    # EXTRA TASK COMPLETE
-    if data.startswith("task_"):
-
-        index = int(data.split("_")[1])
-
-        if index < len(u["extra_tasks"]):
-
-            completed_task = u["extra_tasks"].pop(index)
-
-            save_tasks(user_id, u["extra_tasks"])
-
-            await query.message.chat.send_message(
-                f"{completed_task} ✅ {time_now}"
-            )
-
-        return
-
-    # TAKRORLANUVCHI TASK BOSILDI
-    if data.startswith("takror_"):
-
-        key = data[len("takror_"):]
-
-        task = next((t for t in u["takror_tasks"] if t["key"] == key), None)
-
-        if task:
-            await query.message.chat.send_message(
-                f"{task['label']} ✅ {time_now}"
-            )
-
-    # KUNLIK TASK BOSILDI
-    elif data.startswith("kunlik_"):
-
-        key = data[len("kunlik_"):]
-
-        task = next((t for t in u["kunlik_tasks"] if t["key"] == key), None)
-
-        if task:
-            u["user_state"][key] = True
-
-            await query.message.chat.send_message(
-                f"{task['label']} bajarildi ✅ {time_now}"
-            )
-
-# =========================
-# MESSAGE HANDLER
-# =========================
-
-async def messages(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    user_id = update.message.from_user.id
-
-    u = get_user(user_id)
-
-    text = update.message.text
-
-    # AKTUAL CHECKLIST
-    if "Aktual checklist" in text:
-
-        text_msg = build_message(user_id) + "\n\n⏱ Xabar 60 soniyada o'chiriladi"
-
-        sent = await update.message.reply_text(
-            text_msg,
-            reply_markup=build_buttons(user_id)
-        )
-
-        _chat_id = sent.chat_id
-        _msg_id = sent.message_id
-
-        async def delete_checklist(ctx):
-            try:
-                await ctx.bot.delete_message(
-                    chat_id=_chat_id,
-                    message_id=_msg_id
-                )
-            except:
-                pass
-
-        context.job_queue.run_once(
-            delete_checklist,
-            when=60,
-            data=None,
-        )
-
-        return
-
-    # TAKRORLANUVCHI VAZIFA QO'SHISH
-    if u["waiting_for_takror_task"]:
-
-        import re
-        key = "takror_" + re.sub(r"\W+", "_", text.lower())[:20]
-
-        u["takror_tasks"].append({"key": key, "label": text, "weekdays_only": False})
-        save_user_data(user_id)
-        u["waiting_for_takror_task"] = False
-
-        sent = await update.message.reply_text(
-            f"Takrorlanuvchi vazifa qo'shildi \u2705\n\n\u2022 {text}\n\n\u23f1 Xabar 5 soniyada o'chiriladi"
-        )
-
-        u["settings_msg_ids"].append(sent.message_id)
-
-        _chat_id = user_id
-        _msg_ids = list(u["settings_msg_ids"])
-
-        async def _del_takror_add(ctx):
-            for mid in _msg_ids:
-                try:
-                    await ctx.bot.delete_message(chat_id=_chat_id, message_id=mid)
-                except:
-                    pass
-
-        context.job_queue.run_once(_del_takror_add, when=5, data=None)
-
-        return
-
-    # KUNLIK VAZIFA QO'SHISH
-    if u["waiting_for_kunlik_task"]:
-
-        import re
-        key = "kunlik_" + re.sub(r"\W+", "_", text.lower())[:20]
-
-        u["kunlik_tasks"].append({"key": key, "label": text})
-        u["user_state"][key] = False
-        save_user_data(user_id)
-        u["waiting_for_kunlik_task"] = False
-
-        sent = await update.message.reply_text(
-            f"Kunlik vazifa qo'shildi \u2705\n\n\u2022 {text}\n\n\u23f1 Xabar 5 soniyada o'chiriladi"
-        )
-
-        u["settings_msg_ids"].append(sent.message_id)
-
-        _chat_id = user_id
-        _msg_ids = list(u["settings_msg_ids"])
-
-        async def _del_kunlik_add(ctx):
-            for mid in _msg_ids:
-                try:
-                    await ctx.bot.delete_message(chat_id=_chat_id, message_id=mid)
-                except:
-                    pass
-
-        context.job_queue.run_once(_del_kunlik_add, when=5, data=None)
-
-        return
-
-    # TAKRORLANUVCHI NOMINI O'ZGARTIRISH
-    if u["editing_takror_index"] is not None:
-
-        index = u["editing_takror_index"]
-
-        if index < len(u["takror_tasks"]):
-            old_label = u["takror_tasks"][index]["label"]
-            u["takror_tasks"][index]["label"] = text
-            save_user_data(user_id)
-
-            sent = await update.message.reply_text(
-                f"Nom o'zgartirildi \u2705\n\n{old_label} \u2192 {text}\n\n\u23f1 Xabar 5 soniyada o'chiriladi"
-            )
-
-            u["settings_msg_ids"].append(sent.message_id)
-
-            _chat_id = user_id
-            _msg_ids = list(u["settings_msg_ids"])
-
-            async def _del_te(ctx):
-                for mid in _msg_ids:
-                    try:
-                        await ctx.bot.delete_message(chat_id=_chat_id, message_id=mid)
-                    except:
-                        pass
-
-            context.job_queue.run_once(_del_te, when=5, data=None)
-
-        u["editing_takror_index"] = None
-
-        return
-
-    # KUNLIK NOMINI O'ZGARTIRISH
-    if u["editing_kunlik_index"] is not None:
-
-        index = u["editing_kunlik_index"]
-
-        if index < len(u["kunlik_tasks"]):
-            old_label = u["kunlik_tasks"][index]["label"]
-            u["kunlik_tasks"][index]["label"] = text
-            save_user_data(user_id)
-
-            sent = await update.message.reply_text(
-                f"Nom o'zgartirildi \u2705\n\n{old_label} \u2192 {text}\n\n\u23f1 Xabar 5 soniyada o'chiriladi"
-            )
-
-            u["settings_msg_ids"].append(sent.message_id)
-
-            _chat_id = user_id
-            _msg_ids = list(u["settings_msg_ids"])
-
-            async def _del_ke(ctx):
-                for mid in _msg_ids:
-                    try:
-                        await ctx.bot.delete_message(chat_id=_chat_id, message_id=mid)
-                    except:
-                        pass
-
-            context.job_queue.run_once(_del_ke, when=5, data=None)
-
-        u["editing_kunlik_index"] = None
-
-        return
-
-    # ADD TASK (qo'shimcha)
-    if "Vazifa qo'shish" in text:
-
-        u["waiting_for_task"] = True
-
-        await update.message.reply_text(
-            "Yangi vazifani yuboring ✍️"
-        )
-
-        return
-
-    # SETTINGS
-    if "Sozlamalar" in text:
-
-        await settings_menu(update, context, user_id)
-
-        return
-
-    # BOT HAQIDA
-    if "Bot haqida" in text:
-
-        takror_count = len(u["takror_tasks"])
-        kunlik_count = len(u["kunlik_tasks"])
-        extra_count  = len(u["extra_tasks"])
-
-        sent = await update.message.reply_text(
-            f"\u2139\ufe0f Bot haqida\n\n"
-            f"\u23f0 Ish vaqti: "
-            f"{u['settings']['start_hour']}:00 - "
-            f"{u['settings']['end_hour']}:00\n"
-            f"\U0001f501 Interval: har "
-            f"{u['settings']['interval']} daqiqa\n\n"
-            f"\U0001f4cb Vazifalar soni:\n"
-            f"\u2022 Takrorlanuvchi: {takror_count} ta\n"
-            f"\u2022 Kunlik: {kunlik_count} ta\n"
-            f"\u2022 Qo'shimcha: {extra_count} ta\n\n"
-            f"\u2699\ufe0f Sozlamalar orqali:\n"
-            f"\u2022 Ish vaqtini o'zgartirish\n"
-            f"\u2022 Xabar oralig'ini o'zgartirish\n"
-            f"\u2022 Takrorlanuvchi vazifalarni boshqarish\n"
-            f"\u2022 Kunlik vazifalarni boshqarish\n\n"
-            f"\u23f1 Xabar 120 soniyada o'chiriladi"
-        )
-
-        _cid = sent.chat_id
-        _mid = sent.message_id
-
-        async def _del_about(ctx):
-            try:
-                await ctx.bot.delete_message(chat_id=_cid, message_id=_mid)
-            except:
-                pass
-
-        context.job_queue.run_once(_del_about, when=120, data=None)
-
-        return
-
-    # NEW TASK
-    if u["waiting_for_task"]:
-
-        u["extra_tasks"].append(text)
-
-        save_tasks(user_id, u["extra_tasks"])
-
-        u["waiting_for_task"] = False
-
-        await update.message.reply_text(
-            f"Vazifa qo'shildi ✅\n\n• {text}"
-        )
-
-        return
-
-# =========================
-# START
-# =========================
-
-async def start(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    user_id = update.message.from_user.id
-
-    u = get_user(user_id)
-
-    u["last_reminder_message_id"] = None
-
-    rebuild_jobs(context, user_id)
-
-    keyboard = ReplyKeyboardMarkup(
-        [
-            ["📋 Aktual checklist"],
-            ["➕ Vazifa qo'shish"],
-            ["⚙️ Sozlamalar"],
-            ["ℹ️ Bot haqida"]
-        ],
-        resize_keyboard=True
-    )
-
-    await update.message.reply_text(
-        f"Bot ishga tushdi ✅\n\n"
-        f"⏰ Ish vaqti: "
-        f"{u['settings']['start_hour']}:00 - "
-        f"{u['settings']['end_hour']}:00\n"
-        f"🔁 Interval: har "
-        f"{u['settings']['interval']} daqiqa\n\n"
-        f"⚙️ Sozlamalar orqali:\n"
-        f"• ish vaqtini\n"
-        f"• intervalni\n"
-        f"o'zgartirishingiz mumkin.",
-        reply_markup=keyboard
-    )
-
-# =========================
-# STOP
-# =========================
-
-async def stop(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    user_id = update.message.from_user.id
-
-    jobs = context.job_queue.jobs()
-
-    for job in jobs:
-
-        if job.data == user_id:
-            job.schedule_removal()
-
-    await update.message.reply_text(
-        "\U0001f6d1 Bot checklist yuborishni to\'xtatdi\n"
-        "\u25b6\ufe0f Qayta boshlash uchun /start bosing"
-    )
-
-# =========================
-# MAIN
-# =========================
-
-def main():
-
-    app = (
-        Application.builder()
-        .token(TOKEN)
-        .build()
-    )
-
-    app.add_handler(
-        CommandHandler("start", start)
-    )
-
-    app.add_handler(
-        CommandHandler("stop", stop)
-    )
-
-    app.add_handler(
-        CallbackQueryHandler(buttons)
-    )
-
-    app.add_handler(
-        MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            messages
-        )
-    )
-
-    print("Bot ishladi ✅")
-
-    app.run_polling()
-
-# =========================
-# RUN
-# =========================
-
-if __name__ == "__main__":
-
-    main()
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Forex Checklist</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: #f5f5f3; color: #1a1a1a; font-size: 14px; min-height: 100vh; }
+
+/* PAGE SYSTEM */
+.page { display: none; padding: 12px; min-height: 100vh; }
+.page.active { display: block; }
+
+/* HEADER */
+.page-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #e0e0dc; }
+.back-btn { background: #ebebea; border: none; border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
+.page-title { font-size: 17px; font-weight: 700; }
+
+/* HOME PAGE */
+.home-header { padding: 16px 12px 12px; border-bottom: 1px solid #e0e0dc; }
+.home-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.home-subtitle { font-size: 13px; color: #888; }
+.date-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+input[type=date] { background: #ebebea; border: none; border-radius: 8px; padding: 7px 10px; font-size: 13px; font-weight: 500; color: #1a1a1a; font-family: inherit; outline: none; flex: 1; }
+.day-badge { background: #ebebea; border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 500; color: #555; white-space: nowrap; }
+
+.menu-list { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.menu-item { background: #fff; border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.menu-item:active { background: #f0f0ee; }
+.menu-left { display: flex; align-items: center; gap: 12px; }
+.menu-icon { font-size: 24px; width: 44px; height: 44px; background: #f0f0ee; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.menu-text { }
+.menu-name { font-size: 16px; font-weight: 600; }
+.menu-desc { font-size: 12px; color: #888; margin-top: 2px; }
+.menu-arrow { font-size: 18px; color: #ccc; }
+.menu-badge { background: #1a1a1a; color: #fff; border-radius: 20px; padding: 3px 9px; font-size: 12px; font-weight: 600; }
+
+.alert-btn { width: 100%; background: #ff9500; color: #fff; border: none; border-radius: 10px; padding: 13px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 10px; }
+.alert-btn.active { background: #34c759; }
+.alert-btn:disabled { opacity: 0.5; }
+.alert-status { font-size: 12px; color: #888; text-align: center; margin-top: 6px; }
+.instr-table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.instr-table th { background: #ebebea; color: #888; font-weight: 500; padding: 10px 12px; text-align: center; border-bottom: 0.5px solid #ddd; }
+.instr-table td { padding: 8px 12px; border-bottom: 0.5px solid #f0f0ee; text-align: center; }
+.instr-table tr:last-child td { border-bottom: none; }
+.num-cell { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; user-select: none; border: 1.5px solid transparent; }
+.num-cell.selected { border-color: #1a1a1a; }
+input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; accent-color: #1a1a1a; }
+
+/* SETUP PAGE */
+.setup-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 12px; }
+.setup-slots-row { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 0.5px solid #f0f0ee; }
+.setup-label-txt { font-weight: 600; font-size: 14px; margin-right: 4px; }
+.no-lbl { color: #888; font-size: 13px; }
+.uline { width: 40px; border-bottom: 1.5px solid #aaa; display: inline-block; min-height: 16px; vertical-align: bottom; text-align: center; font-size: 13px; font-weight: 600; }
+.setup-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.setup-table td { padding: 9px 14px; border-bottom: 0.5px solid #f0f0ee; vertical-align: middle; }
+.setup-table tr:last-child td { border-bottom: none; }
+.setup-table td.lbl { font-style: italic; color: #666; width: 120px; }
+.setup-table td.cb { width: 40px; text-align: center; }
+input[type=text].time-inp { border: none; outline: none; background: transparent; font-size: 13px; font-family: inherit; color: #1a1a1a; width: 50px; border-bottom: 1px solid #ccc; padding: 1px 0; text-align: center; }
+input[type=datetime-local] { border: none; outline: none; background: transparent; font-size: 11px; font-family: inherit; color: #1a1a1a; width: 100%; cursor: pointer; padding: 0; }
+.spacer-row td { height: 8px; border: none !important; background: transparent; }
+
+/* JOURNAL PAGE */
+.save-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.journal-title-sm { font-size: 14px; font-weight: 600; }
+.save-btn { background: #1a1a1a; color: #fff; border: none; border-radius: 8px; padding: 9px 16px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
+.save-btn:disabled { opacity: 0.4; }
+.save-status { font-size: 11px; color: #888; margin-bottom: 8px; text-align: right; }
+.journal-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.journal-table { border-collapse: collapse; font-size: 12px; min-width: 520px; width: 100%; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.journal-table th { background: #ebebea; color: #888; font-weight: 500; padding: 8px 10px; text-align: left; border-bottom: 0.5px solid #ddd; white-space: nowrap; }
+.journal-table td { padding: 8px 10px; border-bottom: 0.5px solid #f0f0ee; white-space: nowrap; }
+.journal-table tr:last-child td { border-bottom: none; }
+.journal-table td:first-child { text-align: center; width: 28px; }
+.long-badge { color: #16a34a; font-weight: 600; }
+.short-badge { color: #dc2626; font-weight: 600; }
+.empty-msg { text-align: center; color: #bbb; font-size: 13px; padding: 20px; }
+</style>
+</head>
+<body>
+
+<!-- HOME PAGE -->
+<div class="page active" id="page-home">
+  <div class="home-header">
+    <div class="home-title">Forex Checklist</div>
+    <div class="home-subtitle">Nima ko'rmoqchisiz?</div>
+    <div class="date-row">
+      <input type="date" id="datepicker">
+      <span class="day-badge" id="dayname"></span>
+    </div>
+  </div>
+  <div class="menu-list">
+    <div class="menu-item" onclick="goTo('page-checklist')">
+      <div class="menu-left">
+        <div class="menu-icon">📋</div>
+        <div class="menu-text">
+          <div class="menu-name">Checklist</div>
+          <div class="menu-desc">Instrumentlar va ochilgan bitimlar</div>
+        </div>
+      </div>
+      <span class="menu-arrow">›</span>
+    </div>
+    <div class="menu-item" onclick="goTo('page-setup')">
+      <div class="menu-left">
+        <div class="menu-icon">⚙️</div>
+        <div class="menu-text">
+          <div class="menu-name">Setup</div>
+          <div class="menu-desc">Trend, RSI, MA va vaqt</div>
+        </div>
+      </div>
+      <span class="menu-arrow">›</span>
+    </div>
+    <div class="menu-item" onclick="goTo('page-journal')">
+      <div class="menu-left">
+        <div class="menu-icon">📒</div>
+        <div class="menu-text">
+          <div class="menu-name">Bitimlar jurnali</div>
+          <div class="menu-desc">Ochilgan bitimlar va saqlash</div>
+        </div>
+      </div>
+      <span id="journal-badge" class="menu-arrow">›</span>
+    </div>
+    <button class="alert-btn" id="alert-btn" onclick="toggleAlert()">🔔 Eslatma yoqish</button>
+    <div class="alert-status" id="alert-status"></div>
+  </div>
+</div>
+
+<!-- CHECKLIST PAGE -->
+<div class="page" id="page-checklist">
+  <div class="page-header">
+    <button class="back-btn" onclick="goTo('page-home')">← Orqaga</button>
+    <span class="page-title">📋 Checklist</span>
+  </div>
+  <table class="instr-table">
+    <thead><tr><th>№</th><th>Instrument</th><th>Opened</th></tr></thead>
+    <tbody id="inst-body"></tbody>
+  </table>
+</div>
+
+<!-- SETUP PAGE -->
+<div class="page" id="page-setup">
+  <div class="page-header">
+    <button class="back-btn" onclick="goTo('page-home')">← Orqaga</button>
+    <span class="page-title">⚙️ Setup</span>
+  </div>
+  <div class="setup-card">
+    <table class="setup-table">
+      <tbody>
+        <tr>
+          <td class="lbl" style="font-style:normal;font-weight:600;">Setup:</td>
+          <td class="cb"><span class="no-lbl">№</span><span class="uline" id="slot1"></span></td>
+          <td class="cb"><span class="uline" id="slot2"></span></td>
+        </tr>
+        <tr><td class="lbl">UPTREND</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
+        <tr><td class="lbl">DOWNTREND</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
+        <tr><td class="lbl">M5</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
+        <tr><td class="lbl">M15</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
+        <tr><td class="lbl">RSI 70/30</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
+        <tr><td class="lbl">RSI DIVERGENCE</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
+        <tr><td class="lbl">MA H1</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
+        <tr><td class="lbl">MA H4</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
+        <tr><td class="lbl">MA D1</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
+        <tr class="spacer-row"><td colspan="3"></td></tr>
+        <tr>
+          <td class="lbl">Time:</td>
+          <td class="cb"><input type="text" class="time-inp" id="time1" placeholder="12:38" maxlength="5" oninput="updateTrades()"></td>
+          <td class="cb"><input type="text" class="time-inp" id="time2" placeholder="12:38" maxlength="5" oninput="updateTrades()"></td>
+        </tr>
+        <tr><td class="lbl">LONG</td><td class="cb"><input type="checkbox" id="long1" onchange="updateLS(0,'LONG',this)"></td><td class="cb"><input type="checkbox" id="long2" onchange="updateLS(1,'LONG',this)"></td></tr>
+        <tr><td class="lbl">SHORT</td><td class="cb"><input type="checkbox" id="short1" onchange="updateLS(0,'SHORT',this)"></td><td class="cb"><input type="checkbox" id="short2" onchange="updateLS(1,'SHORT',this)"></td></tr>
+        <tr><td class="lbl">SL</td><td class="cb"><input type="checkbox" id="sl1" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="sl2" onchange="updateTrades()"></td></tr>
+        <tr><td class="lbl">RR 1:1</td><td class="cb"><input type="checkbox" id="rr11_1" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="rr11_2" onchange="updateTrades()"></td></tr>
+        <tr><td class="lbl">RR 1:2</td><td class="cb"><input type="checkbox" id="rr12_1" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="rr12_2" onchange="updateTrades()"></td></tr>
+        <tr><td class="lbl">RR 1:3</td><td class="cb"><input type="checkbox" id="rr13_1" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="rr13_2" onchange="updateTrades()"></td></tr>
+        <tr>
+          <td class="lbl">CLOSE:</td>
+          <td style="padding:4px 8px;"><input type="datetime-local" id="close1" onchange="updateTrades()"></td>
+          <td style="padding:4px 8px;"><input type="datetime-local" id="close2" onchange="updateTrades()"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- JOURNAL PAGE -->
+<div class="page" id="page-journal">
+  <div class="page-header">
+    <button class="back-btn" onclick="goTo('page-home')">← Orqaga</button>
+    <span class="page-title">📒 Bitimlar jurnali</span>
+  </div>
+  <div class="save-row">
+    <div class="journal-title-sm">Ochilgan bitimlar</div>
+    <button class="save-btn" id="save-btn" onclick="saveToSheets()">Sheetsga saqlash</button>
+  </div>
+  <div class="save-status" id="save-status"></div>
+  <div class="journal-wrap">
+    <table class="journal-table">
+      <thead>
+        <tr><th>№</th><th>Sana</th><th>Instrument</th><th>L/S</th><th>Vaqt</th><th>SL</th><th>RR1</th><th>RR2</th><th>RR3</th><th>Close</th></tr>
+      </thead>
+      <tbody id="journal-body">
+        <tr><td colspan="10" class="empty-msg">Hali bitim ochilmagan</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwm7uHr_JS0MW8dQhlxpXLd9cunrZRjReQazwRFE4psuSvzz46iE5t8ErNAHwyKvLBGWQ/exec';
+const instruments = ['XAUUSD','DJ30','NASDAQ','SPX500','EURUSD','GBPUSD','AUDUSD','NZDUSD','USDCHF','USDCAD','USDJPY','EURGBP','EURCAD','EURJPY','EURAUD','EURCHF','GBPJPY','GBPAUD','AUDCAD','AUDJPY','CADCHF','CADJPY','NZDJPY','CHFJPY'];
+const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const openedSlots = [null, null];
+const lsState = ['', ''];
+const savedTradeIds = {};
+
+function goTo(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function buildTable() {
+  const tbody = document.getElementById('inst-body');
+  tbody.innerHTML = '';
+  instruments.forEach((name, i) => {
+    const num = i + 1;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><span class="num-cell" onclick="toggleNum(this)">${num}</span></td><td style="text-align:left">${name}</td><td><input type="checkbox" onchange="toggleOpened(this, ${num})"></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function toggleNum(el) { el.classList.toggle('selected'); }
+
+function toggleOpened(cb, num) {
+  if (cb.checked) {
+    const emptySlot = openedSlots.indexOf(null);
+    if (emptySlot !== -1) { openedSlots[emptySlot] = num; }
+    else { cb.checked = false; return; }
+  } else {
+    const idx = openedSlots.indexOf(num);
+    if (idx !== -1) { openedSlots[idx] = null; lsState[idx] = ''; }
+  }
+  updateSlots();
+  updateTrades();
+  updateBadge();
+}
+
+function updateLS(slotIdx, type, cb) {
+  if (cb.checked) {
+    lsState[slotIdx] = type;
+    const otherId = type === 'LONG' ? `short${slotIdx+1}` : `long${slotIdx+1}`;
+    document.getElementById(otherId).checked = false;
+  } else { lsState[slotIdx] = ''; }
+  updateTrades();
+}
+
+function updateSlots() {
+  [1,2].forEach(i => {
+    document.getElementById('slot'+i).textContent = openedSlots[i-1] !== null ? openedSlots[i-1] : '';
+  });
+}
+
+function updateBadge() {
+  const count = openedSlots.filter(s => s !== null).length;
+  const badge = document.getElementById('journal-badge');
+  if (count > 0) {
+    badge.className = 'menu-badge';
+    badge.textContent = count;
+  } else {
+    badge.className = 'menu-arrow';
+    badge.textContent = '›';
+  }
+}
+
+function getDateStr() {
+  const dp = document.getElementById('datepicker');
+  if (!dp.value) return '';
+  const [y,m,d] = dp.value.split('-');
+  return `${d}.${m}`;
+}
+
+function getCloseStr(idx) {
+  const el = document.getElementById(`close${idx+1}`);
+  if (!el.value) return '—';
+  const dt = new Date(el.value);
+  const d = String(dt.getDate()).padStart(2,'0');
+  const m = String(dt.getMonth()+1).padStart(2,'0');
+  const h = String(dt.getHours()).padStart(2,'0');
+  const min = String(dt.getMinutes()).padStart(2,'0');
+  return `${d}.${m} ${h}:${min}`;
+}
+
+function cbCheck(id) {
+  const el = document.getElementById(id);
+  return el && el.checked ? '✓' : '—';
+}
+
+function getTradeRows() {
+  const rows = [];
+  openedSlots.forEach((num, i) => {
+    if (num !== null) {
+      rows.push({
+        sana: getDateStr(),
+        instrument: instruments[num-1],
+        ls: lsState[i] || '—',
+        vaqt: (document.getElementById(`time${i+1}`).value || '').trim() || '—',
+        sl: cbCheck(`sl${i+1}`),
+        rr11: cbCheck(`rr11_${i+1}`),
+        rr12: cbCheck(`rr12_${i+1}`),
+        rr13: cbCheck(`rr13_${i+1}`),
+        close: getCloseStr(i)
+      });
+    }
+  });
+  return rows;
+}
+
+function updateTrades() {
+  const tbody = document.getElementById('journal-body');
+  const rows = getTradeRows();
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" class="empty-msg">Hali bitim ochilmagan</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map((r, i) => `
+    <tr>
+      <td>${i+1}</td><td>${r.sana}</td><td>${r.instrument}</td>
+      <td class="${r.ls==='LONG'?'long-badge':r.ls==='SHORT'?'short-badge':''}">${r.ls}</td>
+      <td>${r.vaqt}</td>
+      <td style="text-align:center">${r.sl}</td>
+      <td style="text-align:center">${r.rr11}</td>
+      <td style="text-align:center">${r.rr12}</td>
+      <td style="text-align:center">${r.rr13}</td>
+      <td>${r.close}</td>
+    </tr>`).join('');
+}
+
+async function saveToSheets() {
+  const rows = getTradeRows();
+  if (rows.length === 0) { document.getElementById('save-status').textContent = 'Saqlash uchun bitim yoq!'; return; }
+  const btn = document.getElementById('save-btn');
+  const status = document.getElementById('save-status');
+  btn.disabled = true; btn.textContent = 'Saqlanmoqda...'; status.textContent = '';
+  let saved = 0;
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const key = row.instrument + '_' + row.sana;
+    try {
+      let params;
+      if (savedTradeIds[key]) {
+        params = new URLSearchParams({ action:'update', tradeId:savedTradeIds[key], sl:row.sl, rr11:row.rr11, rr12:row.rr12, rr13:row.rr13, close:row.close });
+      } else {
+        params = new URLSearchParams({ action:'save', sana:row.sana, instrument:row.instrument, ls:row.ls, vaqt:row.vaqt, sl:row.sl, rr11:row.rr11, rr12:row.rr12, rr13:row.rr13, close:row.close });
+      }
+      const img = new Image();
+      img.src = SCRIPT_URL + '?' + params.toString();
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (!savedTradeIds[key]) savedTradeIds[key] = i + 1;
+      saved++;
+    } catch(e) {}
+  }
+  btn.disabled = false; btn.textContent = 'Sheetsga saqlash';
+  status.textContent = `✓ ${saved} ta bitim saqlandi — ${new Date().toLocaleTimeString()}`;
+}
+
+// ========== ALERT SYSTEM ==========
+const BOT_TOKEN = '8780693245:AAGEbojMC_6WodZtHRvYG52EVTic8BB2x7c';
+const CHAT_ID = '1645167548';
+let alertInterval = null;
+let alertActive = false;
+
+function getWatchedInstruments() {
+  const watched = [];
+  document.querySelectorAll('.num-cell.selected').forEach(el => {
+    const row = el.closest('tr');
+    const name = row.querySelector('td:nth-child(2)').textContent.trim();
+    watched.push(name);
+  });
+  return watched;
+}
+
+async function sendTelegramAlert(instruments) {
+  const now = new Date();
+  const hour = now.getHours();
+  if (hour < 6 || hour >= 21) return; // 06:00-21:00 orasida yuboradi
+
+  const text = `⚠️ Setup kuzatilmoqda:\n${instruments.map(i => `• ${i}`).join('\n')}\n\n🕐 ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: CHAT_ID, text })
+    });
+  } catch(e) {}
+}
+
+function toggleAlert() {
+  const btn = document.getElementById('alert-btn');
+  const status = document.getElementById('alert-status');
+
+  if (alertActive) {
+    clearInterval(alertInterval);
+    alertInterval = null;
+    alertActive = false;
+    btn.textContent = '🔔 Eslatma yoqish';
+    btn.classList.remove('active');
+    status.textContent = '';
+  } else {
+    const instruments = getWatchedInstruments();
+    if (instruments.length === 0) {
+      status.textContent = 'Avval doira qo\'ying!';
+      return;
+    }
+    alertActive = true;
+    btn.textContent = '🔕 Eslatmani o\'chirish';
+    btn.classList.add('active');
+    status.textContent = `✓ ${instruments.join(', ')} — har 30 daqiqada eslatadi`;
+
+    // Darhol yuboradi
+    sendTelegramAlert(instruments);
+
+    // Har 30 daqiqada
+    alertInterval = setInterval(() => {
+      const current = getWatchedInstruments();
+      if (current.length === 0) {
+        toggleAlert();
+        return;
+      }
+      sendTelegramAlert(current);
+    }, 30 * 60 * 1000);
+  }
+}
+  if (!val) return;
+  const [y,m,d] = val.split('-').map(Number);
+  document.getElementById('dayname').textContent = days[new Date(y,m-1,d).getDay()];
+  updateTrades();
+}
+
+const today = new Date();
+const todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+const dp = document.getElementById('datepicker');
+dp.value = todayStr; setDate(todayStr);
+dp.addEventListener('change', () => setDate(dp.value));
+buildTable();
+</script>
+</body>
+</html>
