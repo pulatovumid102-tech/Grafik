@@ -93,7 +93,7 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
     </div>
   </div>
   <div class="menu-list">
-    <div class="menu-item" onclick="goTo('page-checklist')">
+    <div class="menu-item" data-page="page-checklist">
       <div class="menu-left">
         <div class="menu-icon">📋</div>
         <div class="menu-text">
@@ -103,7 +103,7 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
       </div>
       <span class="menu-arrow">›</span>
     </div>
-    <div class="menu-item" onclick="goTo('page-setup')">
+    <div class="menu-item" data-page="page-setup">
       <div class="menu-left">
         <div class="menu-icon">⚙️</div>
         <div class="menu-text">
@@ -113,7 +113,7 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
       </div>
       <span class="menu-arrow">›</span>
     </div>
-    <div class="menu-item" onclick="goTo('page-journal')">
+    <div class="menu-item" data-page="page-journal">
       <div class="menu-left">
         <div class="menu-icon">📒</div>
         <div class="menu-text">
@@ -129,7 +129,7 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
 <!-- CHECKLIST PAGE -->
 <div class="page" id="page-checklist">
   <div class="page-header">
-    <button class="back-btn" onclick="goTo('page-home')">← Orqaga</button>
+    <button class="back-btn" data-back="true">← Orqaga</button>
     <span class="page-title">📋 Checklist</span>
   </div>
   <table class="instr-table">
@@ -141,7 +141,7 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
 <!-- SETUP PAGE -->
 <div class="page" id="page-setup">
   <div class="page-header">
-    <button class="back-btn" onclick="goTo('page-home')">← Orqaga</button>
+    <button class="back-btn" data-back="true">← Orqaga</button>
     <span class="page-title">⚙️ Setup</span>
   </div>
   <div class="setup-card">
@@ -186,7 +186,7 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
 <!-- JOURNAL PAGE -->
 <div class="page" id="page-journal">
   <div class="page-header">
-    <button class="back-btn" onclick="goTo('page-home')">← Orqaga</button>
+    <button class="back-btn" data-back="true">← Orqaga</button>
     <span class="page-title">📒 Bitimlar jurnali</span>
   </div>
   <div class="save-row">
@@ -219,6 +219,20 @@ function goTo(pageId) {
   document.getElementById(pageId).classList.add('active');
   window.scrollTo(0, 0);
 }
+
+// Menu navigation
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('[data-page]').forEach(el => {
+    el.addEventListener('click', function() {
+      goTo(this.getAttribute('data-page'));
+    });
+  });
+  document.querySelectorAll('[data-back]').forEach(el => {
+    el.addEventListener('click', function() {
+      goTo('page-home');
+    });
+  });
+});
 
 function buildTable() {
   const tbody = document.getElementById('inst-body');
