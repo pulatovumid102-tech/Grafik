@@ -387,7 +387,7 @@ async function sendTelegramAlert(instruments) {
   const now = new Date();
   const hour = now.getHours();
   if (hour < 6 || hour >= 21) return;
-  const text = `⚠️ Setup kuzatilmoqda:\n${instruments.map(i => `• ${i}`).join('\n')}\n\n🕐 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const text = `Savdoga kirish uchun setup shakllanmoqda, o'tkazib yubormang!\n\n${instruments.map(i => `• ${i}`).join('\n')}\n\n🕐 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   try {
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: 'POST',
