@@ -350,12 +350,13 @@ function stopAlertSystem() { if (alertInterval) { clearInterval(alertInterval); 
 function updateAlertInterval() { getWatchedInstruments().length > 0 ? startAlertSystem() : stopAlertSystem(); }
 
 function clearAll() {
-  document.querySelectorAll('#page-checklist input[type=checkbox], #page-setup input[type=checkbox]').forEach(cb => cb.checked = false);
-  document.querySelectorAll('.num-cell.selected').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('#page-setup input[type=checkbox]').forEach(cb => cb.checked = false);
+  document.querySelectorAll('#page-checklist .num-cell.selected').forEach(el => el.classList.remove('selected'));
   document.querySelectorAll('.time-inp').forEach(el => el.value = '');
   document.querySelectorAll('input[type=datetime-local]').forEach(el => el.value = '');
-  openedSlots.fill(null); lsState.fill('');
-  updateSlots(); updateTrades(); updateBadge(); updateAlertInterval();
+  lsState.fill('');
+  updateTrades();
+  updateAlertInterval();
 }
 
 function toggleDeleteMode() {
