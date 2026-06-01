@@ -3,135 +3,108 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Forex Checklist</title>
+<title>Forex</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: #f5f5f3; color: #1a1a1a; font-size: 14px; min-height: 100vh; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: var(--tg-theme-bg-color, #f3efe8); color: var(--tg-theme-text-color, #1a1a1a); font-size: 14px; min-height: 100vh; }
+:root { --acc: var(--tg-theme-button-color, #336659); --acc-text: var(--tg-theme-button-text-color, #ffffff); --hint: var(--tg-theme-hint-color, #7a7a72); --secondary-bg: var(--tg-theme-secondary-bg-color, #ffffff); --border: rgba(0,0,0,0.08); }
 
-/* PAGE SYSTEM */
-.page { display: none; padding: 12px; min-height: 100vh; }
+.page { display: none; padding: 16px; }
 .page.active { display: block; }
 
-/* HEADER */
-.page-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #e0e0dc; }
-.back-btn { background: #ebebea; border: none; border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
-.page-title { font-size: 17px; font-weight: 700; }
+.page-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.back-btn { background: transparent; border: none; font-size: 13px; color: var(--acc); cursor: pointer; font-family: inherit; font-weight: 500; padding: 0; }
+.page-title { font-size: 16px; font-weight: 600; }
+.clear-btn { margin-left: auto; background: transparent; border: none; color: var(--hint); font-size: 13px; cursor: pointer; font-family: inherit; }
 
-/* HOME PAGE */
-.home-header { padding: 16px 12px 12px; border-bottom: 1px solid #e0e0dc; }
-.home-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
-.home-subtitle { font-size: 13px; color: #888; }
-.date-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-input[type=date] { background: #ebebea; border: none; border-radius: 8px; padding: 7px 10px; font-size: 13px; font-weight: 500; color: #1a1a1a; font-family: inherit; outline: none; flex: 1; }
-.day-badge { background: #ebebea; border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 500; color: #555; white-space: nowrap; }
+.home-header { padding: 24px 16px 20px; }
+.home-title { font-size: 30px; font-weight: 700; letter-spacing: -1px; }
+.home-date { font-size: 13px; color: var(--hint); margin-top: 3px; }
 
-.menu-list { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
-.menu-item { background: #fff; border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-.menu-item:active { background: #f0f0ee; }
-.menu-left { display: flex; align-items: center; gap: 12px; }
-.menu-icon { font-size: 24px; width: 44px; height: 44px; background: #f0f0ee; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-.menu-text { }
-.menu-name { font-size: 16px; font-weight: 600; }
-.menu-desc { font-size: 12px; color: #888; margin-top: 2px; }
-.menu-arrow { font-size: 18px; color: #ccc; }
-.menu-badge { background: #1a1a1a; color: #fff; border-radius: 20px; padding: 3px 9px; font-size: 12px; font-weight: 600; }
+.menu-list { display: flex; flex-direction: column; gap: 8px; }
+.menu-item { background: var(--secondary-bg); border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+.menu-item:active { opacity: 0.8; }
+.menu-name { font-size: 15px; font-weight: 600; }
+.menu-desc { font-size: 12px; color: var(--hint); margin-top: 2px; }
+.menu-arrow { font-size: 20px; color: var(--hint); }
+.menu-badge { background: var(--acc); color: var(--secondary-bg); border-radius: 20px; padding: 3px 10px; font-size: 12px; font-weight: 600; }
 
-.clear-btn { background: #ff3b30; color: #fff; border: none; border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; margin-left: auto; }
-.gear-btn { background: #ebebea; border: none; border-radius: 8px; padding: 8px 12px; font-size: 16px; cursor: pointer; }
-.delete-row-btn { background: #ff3b30; color: #fff; border: none; border-radius: 6px; padding: 3px 8px; font-size: 12px; cursor: pointer; display: none; }
-.delete-mode .delete-row-btn { display: inline-block; }
-.instr-table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-.instr-table th { background: #ebebea; color: #888; font-weight: 500; padding: 10px 12px; text-align: center; border-bottom: 0.5px solid #ddd; }
-.instr-table td { padding: 8px 12px; border-bottom: 0.5px solid #f0f0ee; text-align: center; }
+.instr-table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--secondary-bg); border-radius: 12px; overflow: hidden; }
+.instr-table th { background: var(--acc); color: var(--secondary-bg); font-weight: 500; padding: 10px 12px; text-align: center; }
+.instr-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); text-align: center; }
 .instr-table tr:last-child td { border-bottom: none; }
 .num-cell { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; user-select: none; border: 1.5px solid transparent; }
-.num-cell.selected { border-color: #1a1a1a; }
-input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; accent-color: #1a1a1a; }
+.num-cell.selected { border-color: var(--acc); color: var(--acc); font-weight: 600; }
+input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--acc); }
 
-/* SETUP PAGE */
-.setup-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 12px; }
-.setup-slots-row { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 0.5px solid #f0f0ee; }
-.setup-label-txt { font-weight: 600; font-size: 14px; margin-right: 4px; }
-.no-lbl { color: #888; font-size: 13px; }
-.uline { width: 40px; border-bottom: 1.5px solid #aaa; display: inline-block; min-height: 16px; vertical-align: bottom; text-align: center; font-size: 13px; font-weight: 600; }
+.setup-card { background: var(--secondary-bg); border-radius: 12px; overflow: hidden; }
 .setup-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.setup-table td { padding: 9px 14px; border-bottom: 0.5px solid #f0f0ee; vertical-align: middle; }
+.setup-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 .setup-table tr:last-child td { border-bottom: none; }
-.setup-table td.lbl { font-style: italic; color: #666; width: 120px; }
+.setup-table td.lbl { font-style: italic; color: var(--hint); width: 120px; }
 .setup-table td.cb { width: 40px; text-align: center; }
-input[type=text].time-inp { border: none; outline: none; background: transparent; font-size: 13px; font-family: inherit; color: #1a1a1a; width: 50px; border-bottom: 1px solid #ccc; padding: 1px 0; text-align: center; }
-input[type=datetime-local] { border: none; outline: none; background: transparent; font-size: 11px; font-family: inherit; color: #1a1a1a; width: 100%; cursor: pointer; padding: 0; }
+.uline { width: 40px; border-bottom: 1.5px solid var(--acc); display: inline-block; min-height: 16px; vertical-align: bottom; text-align: center; font-size: 13px; font-weight: 600; color: var(--acc); }
+.no-lbl { color: var(--hint); font-size: 13px; margin-right: 4px; }
+input[type=text].time-inp { border: none; outline: none; background: transparent; font-size: 13px; font-family: inherit; color: inherit; width: 50px; border-bottom: 1px solid var(--border); padding: 1px 0; text-align: center; }
+input[type=datetime-local] { border: none; outline: none; background: transparent; font-size: 11px; font-family: inherit; color: inherit; width: 100%; cursor: pointer; padding: 0; }
 .spacer-row td { height: 8px; border: none !important; background: transparent; }
 
-/* JOURNAL PAGE */
 .save-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .journal-title-sm { font-size: 14px; font-weight: 600; }
-.save-btn { background: #1a1a1a; color: #fff; border: none; border-radius: 8px; padding: 9px 16px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
-.save-btn:disabled { opacity: 0.4; }
-.save-status { font-size: 11px; color: #888; margin-bottom: 8px; text-align: right; }
+.save-btn { background: var(--acc); color: var(--secondary-bg); border: none; border-radius: 8px; padding: 9px 16px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
+.save-btn:disabled { opacity: 0.5; }
+.gear-btn { background: transparent; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13px; cursor: pointer; color: var(--hint); font-family: inherit; }
+.save-status { font-size: 11px; color: var(--hint); margin-bottom: 8px; text-align: right; }
 .journal-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.journal-table { border-collapse: collapse; font-size: 12px; min-width: 520px; width: 100%; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-.journal-table th { background: #ebebea; color: #888; font-weight: 500; padding: 8px 10px; text-align: left; border-bottom: 0.5px solid #ddd; white-space: nowrap; }
-.journal-table td { padding: 8px 10px; border-bottom: 0.5px solid #f0f0ee; white-space: nowrap; }
+.journal-table { border-collapse: collapse; font-size: 12px; min-width: 520px; width: 100%; background: var(--secondary-bg); border-radius: 12px; overflow: hidden; }
+.journal-table th { background: var(--acc); color: var(--secondary-bg); font-weight: 500; padding: 8px 10px; text-align: left; white-space: nowrap; }
+.journal-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
 .journal-table tr:last-child td { border-bottom: none; }
 .journal-table td:first-child { text-align: center; width: 28px; }
-.long-badge { color: #16a34a; font-weight: 600; }
-.short-badge { color: #dc2626; font-weight: 600; }
-.empty-msg { text-align: center; color: #bbb; font-size: 13px; padding: 20px; }
+.long-badge { color: var(--acc); font-weight: 600; }
+.short-badge { color: #7a1a1a; font-weight: 600; }
+.empty-msg { text-align: center; color: var(--hint); font-size: 13px; padding: 24px; }
+.delete-row-btn { background: transparent; color: #7a1a1a; border: 1px solid #7a1a1a; border-radius: 4px; padding: 2px 7px; font-size: 11px; cursor: pointer; display: none; }
+.delete-mode .delete-row-btn { display: inline-block; }
 </style>
 </head>
 <body>
 
-<!-- HOME PAGE -->
 <div class="page active" id="page-home">
   <div class="home-header">
-    <div class="home-title">Forex Checklist</div>
-    <div class="home-subtitle">Nima ko'rmoqchisiz?</div>
-    <div class="date-row">
-      <input type="date" id="datepicker">
-      <span class="day-badge" id="dayname"></span>
-    </div>
+    <div class="home-title">Forex</div>
+    <div class="home-date" id="home-date"></div>
   </div>
   <div class="menu-list">
     <div class="menu-item" data-page="page-checklist">
-      <div class="menu-left">
-        <div class="menu-icon">📋</div>
-        <div class="menu-text">
-          <div class="menu-name">Checklist</div>
-          <div class="menu-desc">Instrumentlar va ochilgan bitimlar</div>
-        </div>
+      <div>
+        <div class="menu-name">Instrumentlar</div>
+        <div class="menu-desc">Savdo instrumentlari ro'yxati</div>
       </div>
       <span class="menu-arrow">›</span>
     </div>
     <div class="menu-item" data-page="page-setup">
-      <div class="menu-left">
-        <div class="menu-icon">⚙️</div>
-        <div class="menu-text">
-          <div class="menu-name">Setup</div>
-          <div class="menu-desc">Trend, RSI, MA va vaqt</div>
-        </div>
+      <div>
+        <div class="menu-name">Setup</div>
+        <div class="menu-desc">Trend, RSI, MA va vaqt</div>
       </div>
       <span class="menu-arrow">›</span>
     </div>
     <div class="menu-item" data-page="page-journal">
-      <div class="menu-left">
-        <div class="menu-icon">📒</div>
-        <div class="menu-text">
-          <div class="menu-name">Bitimlar jurnali</div>
-          <div class="menu-desc">Ochilgan bitimlar va saqlash</div>
-        </div>
+      <div>
+        <div class="menu-name">Bitimlar jurnali</div>
+        <div class="menu-desc">Ochilgan bitimlar va saqlash</div>
       </div>
       <span id="journal-badge" class="menu-arrow">›</span>
     </div>
   </div>
 </div>
 
-<!-- CHECKLIST PAGE -->
 <div class="page" id="page-checklist">
   <div class="page-header">
     <button class="back-btn" data-back="true">← Orqaga</button>
-    <span class="page-title">📋 Checklist</span>
-    <button class="clear-btn" onclick="clearAll()">🗑 Tozalash</button>
+    <span class="page-title">Instrumentlar</span>
+    <button class="clear-btn" onclick="clearAll()">Tozalash</button>
   </div>
   <table class="instr-table">
     <thead><tr><th>№</th><th>Instrument</th><th>Opened</th></tr></thead>
@@ -139,12 +112,11 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
   </table>
 </div>
 
-<!-- SETUP PAGE -->
 <div class="page" id="page-setup">
   <div class="page-header">
     <button class="back-btn" data-back="true">← Orqaga</button>
-    <span class="page-title">⚙️ Setup</span>
-    <button class="clear-btn" onclick="clearAll()">🗑 Tozalash</button>
+    <span class="page-title">Setup</span>
+    <button class="clear-btn" onclick="clearAll()">Tozalash</button>
   </div>
   <div class="setup-card">
     <table class="setup-table">
@@ -185,27 +157,26 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
   </div>
 </div>
 
-<!-- JOURNAL PAGE -->
 <div class="page" id="page-journal">
   <div class="page-header">
     <button class="back-btn" data-back="true">← Orqaga</button>
-    <span class="page-title">📒 Bitimlar jurnali</span>
+    <span class="page-title">Bitimlar jurnali</span>
   </div>
   <div class="save-row">
     <div class="journal-title-sm">Ochilgan bitimlar</div>
     <div style="display:flex;gap:8px;">
       <button class="save-btn" id="save-btn" onclick="saveToSheets()">Sheetsga saqlash</button>
-      <button class="gear-btn" onclick="toggleDeleteMode()" id="gear-btn">⚙️</button>
+      <button class="gear-btn" onclick="toggleDeleteMode()" id="gear-btn">Ochirish</button>
     </div>
   </div>
   <div class="save-status" id="save-status"></div>
   <div class="journal-wrap">
     <table class="journal-table">
       <thead>
-        <tr><th>№</th><th>Sana</th><th>Kun</th><th>Instrument</th><th>L/S</th><th>Vaqt</th><th>SL</th><th>RR1</th><th>RR2</th><th>RR3</th><th>Close</th></tr>
+        <tr><th>№</th><th>Sana</th><th>Kun</th><th>Instrument</th><th>L/S</th><th>Vaqt</th><th>SL</th><th>RR1</th><th>RR2</th><th>RR3</th><th>Close</th><th></th></tr>
       </thead>
       <tbody id="journal-body">
-        <tr><td colspan="10" class="empty-msg">Hali bitim ochilmagan</td></tr>
+        <tr><td colspan="12" class="empty-msg">Hali bitim ochilmagan</td></tr>
       </tbody>
     </table>
   </div>
@@ -214,10 +185,12 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx13zQYbDVVVhkOu4Gjr5sM8GkASyqTf5GjxBAi-9r2V50LPrgXmW26LYUANB-24qimLQ/exec';
 const instruments = ['XAUUSD','DJ30','NASDAQ','SPX500','EURUSD','GBPUSD','AUDUSD','NZDUSD','USDCHF','USDCAD','USDJPY','EURGBP','EURCAD','EURJPY','EURAUD','EURCHF','GBPJPY','GBPAUD','AUDCAD','AUDJPY','CADCHF','CADJPY','NZDJPY','CHFJPY'];
-const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const openedSlots = [null, null];
 const lsState = ['', ''];
 const savedTradeIds = {};
+let alertInterval = null;
+let lastAlertMinute = -1;
+let deleteMode = false;
 
 function goTo(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -225,141 +198,83 @@ function goTo(pageId) {
   window.scrollTo(0, 0);
 }
 
-// Menu navigation
-document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('[data-page]').forEach(el => {
-    el.addEventListener('click', function() {
-      goTo(this.getAttribute('data-page'));
-    });
-  });
-  document.querySelectorAll('[data-back]').forEach(el => {
-    el.addEventListener('click', function() {
-      goTo('page-home');
-    });
-  });
-});
-
 function buildTable() {
   const tbody = document.getElementById('inst-body');
   tbody.innerHTML = '';
   instruments.forEach((name, i) => {
     const num = i + 1;
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td><span class="num-cell" onclick="toggleNum(this)">${num}</span></td><td style="text-align:left">${name}</td><td><input type="checkbox" onchange="toggleOpened(this, ${num})"></td>`;
+    tr.innerHTML = '<td><span class="num-cell" onclick="toggleNum(this)">' + num + '</span></td><td style="text-align:left">' + name + '</td><td><input type="checkbox" onchange="toggleOpened(this,' + num + ')"></td>';
     tbody.appendChild(tr);
   });
 }
 
-function toggleNum(el) {
-  el.classList.toggle('selected');
-  updateAlertInterval();
-  saveState();
-}
+function toggleNum(el) { el.classList.toggle('selected'); updateAlertInterval(); saveState(); }
 
 function toggleOpened(cb, num) {
   if (cb.checked) {
     const emptySlot = openedSlots.indexOf(null);
     if (emptySlot !== -1) {
       openedSlots[emptySlot] = num;
-      // Bitim ochildi xabari yuborish va alertni to'xtatish
       const instrName = instruments[num-1];
       const now = new Date();
-      const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-      sendTelegramMessage(`✅ Bitim ochildi!\n\n• ${instrName}\n\n🕐 ${timeStr}`);
-      // Bu instrument uchun doirani olib tashla
+      const t = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+      sendTelegramMessage('Bitim ochildi!\n\n• ' + instrName + '\n\n' + t);
       document.querySelectorAll('.num-cell.selected').forEach(el => {
-        const row = el.closest('tr');
-        const name = row.querySelector('td:nth-child(2)').textContent.trim();
-        if (name === instrName) el.classList.remove('selected');
+        if (el.closest('tr').querySelector('td:nth-child(2)').textContent.trim() === instrName) el.classList.remove('selected');
       });
       updateAlertInterval();
-    }
-    else { cb.checked = false; return; }
+    } else { cb.checked = false; return; }
   } else {
     const idx = openedSlots.indexOf(num);
     if (idx !== -1) { openedSlots[idx] = null; lsState[idx] = ''; }
   }
-  updateSlots();
-  updateTrades();
-  updateBadge();
+  updateSlots(); updateTrades(); updateBadge();
 }
 
 function updateLS(slotIdx, type, cb) {
   if (cb.checked) {
     lsState[slotIdx] = type;
-    const otherId = type === 'LONG' ? `short${slotIdx+1}` : `long${slotIdx+1}`;
-    document.getElementById(otherId).checked = false;
+    document.getElementById((type === 'LONG' ? 'short' : 'long') + (slotIdx+1)).checked = false;
   } else { lsState[slotIdx] = ''; }
   updateTrades();
 }
 
 function updateSlots() {
-  [1,2].forEach(i => {
-    document.getElementById('slot'+i).textContent = openedSlots[i-1] !== null ? openedSlots[i-1] : '';
-  });
+  [1,2].forEach(i => { document.getElementById('slot'+i).textContent = openedSlots[i-1] !== null ? openedSlots[i-1] : ''; });
 }
 
 function updateBadge() {
   const count = openedSlots.filter(s => s !== null).length;
   const badge = document.getElementById('journal-badge');
-  if (count > 0) {
-    badge.className = 'menu-badge';
-    badge.textContent = count;
-  } else {
-    badge.className = 'menu-arrow';
-    badge.textContent = '›';
-  }
+  if (count > 0) { badge.className = 'menu-badge'; badge.textContent = count; }
+  else { badge.className = 'menu-arrow'; badge.textContent = '›'; }
 }
 
 function getDateStr() {
-  const dp = document.getElementById('datepicker');
-  if (!dp.value) return '';
-  const [y,m,d] = dp.value.split('-');
-  return `${d}.${m}`;
+  const now = new Date();
+  return String(now.getDate()).padStart(2,'0') + '.' + String(now.getMonth()+1).padStart(2,'0');
 }
 
-function getDayStr() {
-  const dp = document.getElementById('datepicker');
-  if (!dp.value) return '';
-  const [y,m,d] = dp.value.split('-');
-  const date = new Date(Number(y), Number(m)-1, Number(d));
-  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  return dayNames[date.getDay()];
-}
+function getDayStr() { return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date().getDay()]; }
 
 function getCloseStr(idx) {
-  const el = document.getElementById(`close${idx+1}`);
+  const el = document.getElementById('close'+(idx+1));
   if (!el.value) return '—';
   const dt = new Date(el.value);
-  const d = String(dt.getDate()).padStart(2,'0');
-  const m = String(dt.getMonth()+1).padStart(2,'0');
-  const h = String(dt.getHours()).padStart(2,'0');
-  const min = String(dt.getMinutes()).padStart(2,'0');
-  return `${d}.${m} ${h}:${min}`;
+  return String(dt.getDate()).padStart(2,'0') + '.' + String(dt.getMonth()+1).padStart(2,'0') + ' ' + String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
 }
 
-function cbCheck(id) {
-  const el = document.getElementById(id);
-  return el && el.checked ? '✓' : '—';
-}
+function cbCheck(id) { const el = document.getElementById(id); return el && el.checked ? '✓' : '—'; }
 
 function getTradeRows() {
   const rows = [];
   openedSlots.forEach((num, i) => {
-    if (num !== null) {
-      rows.push({
-        sana: getDateStr(),
-        kun: getDayStr(),
-        instrument: instruments[num-1],
-        ls: lsState[i] || '—',
-        vaqt: (document.getElementById(`time${i+1}`).value || '').trim() || '—',
-        sl: cbCheck(`sl${i+1}`),
-        rr11: cbCheck(`rr11_${i+1}`),
-        rr12: cbCheck(`rr12_${i+1}`),
-        rr13: cbCheck(`rr13_${i+1}`),
-        close: getCloseStr(i)
-      });
-    }
+    if (num !== null) rows.push({
+      sana: getDateStr(), kun: getDayStr(), instrument: instruments[num-1],
+      ls: lsState[i] || '—', vaqt: (document.getElementById('time'+(i+1)).value || '').trim() || '—',
+      sl: cbCheck('sl'+(i+1)), rr11: cbCheck('rr11_'+(i+1)), rr12: cbCheck('rr12_'+(i+1)), rr13: cbCheck('rr13_'+(i+1)), close: getCloseStr(i)
+    });
   });
   return rows;
 }
@@ -367,25 +282,10 @@ function getTradeRows() {
 function updateTrades() {
   const tbody = document.getElementById('journal-body');
   const rows = getTradeRows();
-  if (rows.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10" class="empty-msg">Hali bitim ochilmagan</td></tr>';
-    saveState();
-    return;
-  }
+  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="12" class="empty-msg">Hali bitim ochilmagan</td></tr>'; saveState(); return; }
   tbody.innerHTML = rows.map((r, i) => {
     const slotIdx = openedSlots.findIndex(s => s !== null && instruments[s-1] === r.instrument);
-    return `
-    <tr>
-      <td>${i+1}</td><td>${r.sana}</td><td>${r.kun}</td><td>${r.instrument}</td>
-      <td class="${r.ls==='LONG'?'long-badge':r.ls==='SHORT'?'short-badge':''}">${r.ls}</td>
-      <td>${r.vaqt}</td>
-      <td style="text-align:center">${r.sl}</td>
-      <td style="text-align:center">${r.rr11}</td>
-      <td style="text-align:center">${r.rr12}</td>
-      <td style="text-align:center">${r.rr13}</td>
-      <td>${r.close}</td>
-      <td><button class="delete-row-btn" onclick="deleteTradeRow(${slotIdx})">✕</button></td>
-    </tr>`;
+    return '<tr><td>' + (i+1) + '</td><td>' + r.sana + '</td><td>' + r.kun + '</td><td>' + r.instrument + '</td><td class="' + (r.ls==='LONG'?'long-badge':r.ls==='SHORT'?'short-badge':'') + '">' + r.ls + '</td><td>' + r.vaqt + '</td><td style="text-align:center">' + r.sl + '</td><td style="text-align:center">' + r.rr11 + '</td><td style="text-align:center">' + r.rr12 + '</td><td style="text-align:center">' + r.rr13 + '</td><td>' + r.close + '</td><td><button class="delete-row-btn" onclick="deleteTradeRow(' + slotIdx + ')">x</button></td></tr>';
   }).join('');
   saveState();
 }
@@ -398,15 +298,11 @@ async function saveToSheets() {
   btn.disabled = true; btn.textContent = 'Saqlanmoqda...'; status.textContent = '';
   let saved = 0;
   for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    const key = row.instrument + '_' + row.sana;
+    const row = rows[i]; const key = row.instrument + '_' + row.sana;
     try {
-      let params;
-      if (savedTradeIds[key]) {
-        params = new URLSearchParams({ action:'update', tradeId:savedTradeIds[key], sl:row.sl, rr11:row.rr11, rr12:row.rr12, rr13:row.rr13, close:row.close });
-      } else {
-        params = new URLSearchParams({ action:'save', sana:row.sana, kun:row.kun, instrument:row.instrument, ls:row.ls, vaqt:row.vaqt, sl:row.sl, rr11:row.rr11, rr12:row.rr12, rr13:row.rr13, close:row.close });
-      }
+      const params = savedTradeIds[key]
+        ? new URLSearchParams({ action:'update', tradeId:savedTradeIds[key], sl:row.sl, rr11:row.rr11, rr12:row.rr12, rr13:row.rr13, close:row.close })
+        : new URLSearchParams({ action:'save', sana:row.sana, kun:row.kun, instrument:row.instrument, ls:row.ls, vaqt:row.vaqt, sl:row.sl, rr11:row.rr11, rr12:row.rr12, rr13:row.rr13, close:row.close });
       const img = new Image();
       img.src = SCRIPT_URL + '?' + params.toString();
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -415,235 +311,109 @@ async function saveToSheets() {
     } catch(e) {}
   }
   btn.disabled = false; btn.textContent = 'Sheetsga saqlash';
-  status.textContent = `✓ ${saved} ta bitim saqlandi — ${new Date().toLocaleTimeString()}`;
+  status.textContent = saved + ' ta bitim saqlandi';
 }
 
-// ========== ALERT SYSTEM ==========
-const BOT_TOKEN = '8780693245:AAGEbojMC_6WodZtHRvYG52EVTic8BB2x7c';
-const CHAT_ID = '1645167548';
-let alertInterval = null;
-let lastAlertMinute = -1;
+function sendTelegramMessage(text) {
+  const img = new Image();
+  img.src = SCRIPT_URL + '?action=alert&text=' + encodeURIComponent(text);
+}
+
+function sendTelegramAlert(instrs) {
+  const now = new Date(); const h = now.getHours();
+  if (h < 6 || h >= 21) return;
+  const t = String(h).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  sendTelegramMessage("Savdoga kirish uchun setup shakllanmoqda, o'tkazib yubormang!\n\n" + instrs.map(i => '• ' + i).join('\n') + '\n\n' + t);
+}
 
 function getWatchedInstruments() {
-  const watched = [];
-  document.querySelectorAll('.num-cell.selected').forEach(el => {
-    const row = el.closest('tr');
-    const name = row.querySelector('td:nth-child(2)').textContent.trim();
-    watched.push(name);
-  });
-  return watched;
-}
-
-async function sendTelegramMessage(text) {
-  try {
-    const params = new URLSearchParams({ action: 'alert', text: text });
-    const img = new Image();
-    img.src = SCRIPT_URL + '?' + params.toString();
-  } catch(e) {}
-}
-
-async function sendTelegramAlert(instruments) {
-  const now = new Date();
-  const hour = now.getHours();
-  if (hour < 6 || hour >= 21) return;
-  const text = `Savdoga kirish uchun setup shakllanmoqda, o'tkazib yubormang!\n\n${instruments.map(i => `• ${i}`).join('\n')}\n\n🕐 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-  await sendTelegramMessage(text);
+  const w = [];
+  document.querySelectorAll('.num-cell.selected').forEach(el => w.push(el.closest('tr').querySelector('td:nth-child(2)').textContent.trim()));
+  return w;
 }
 
 function startAlertSystem() {
   if (alertInterval) return;
-  // Har 1 daqiqada tekshiradi, lekin faqat :00 va :30 da yuboradi
   alertInterval = setInterval(() => {
-    const now = new Date();
-    const hour = now.getHours();
-    const minute = now.getMinutes();
-    const currentMark = hour * 60 + minute;
-
-    if (hour < 6 || hour >= 21) return;
-    if ((minute === 0 || minute === 30) && currentMark !== lastAlertMinute) {
-      lastAlertMinute = currentMark;
-      const instruments = getWatchedInstruments();
-      if (instruments.length === 0) {
-        stopAlertSystem();
-        return;
-      }
-      sendTelegramAlert(instruments);
+    const now = new Date(); const h = now.getHours(); const m = now.getMinutes(); const mark = h * 60 + m;
+    if (h < 6 || h >= 21) return;
+    if ((m === 0 || m === 30) && mark !== lastAlertMinute) {
+      lastAlertMinute = mark;
+      const instrs = getWatchedInstruments();
+      if (instrs.length === 0) { stopAlertSystem(); return; }
+      sendTelegramAlert(instrs);
     }
   }, 60 * 1000);
 }
 
-function stopAlertSystem() {
-  if (alertInterval) {
-    clearInterval(alertInterval);
-    alertInterval = null;
-  }
-  lastAlertMinute = -1;
-}
-
-function updateAlertInterval() {
-  const instruments = getWatchedInstruments();
-  if (instruments.length > 0) {
-    startAlertSystem();
-  } else {
-    stopAlertSystem();
-  }
-}
+function stopAlertSystem() { if (alertInterval) { clearInterval(alertInterval); alertInterval = null; } lastAlertMinute = -1; }
+function updateAlertInterval() { getWatchedInstruments().length > 0 ? startAlertSystem() : stopAlertSystem(); }
 
 function clearAll() {
   document.querySelectorAll('#page-checklist input[type=checkbox], #page-setup input[type=checkbox]').forEach(cb => cb.checked = false);
   document.querySelectorAll('.num-cell.selected').forEach(el => el.classList.remove('selected'));
   document.querySelectorAll('.time-inp').forEach(el => el.value = '');
   document.querySelectorAll('input[type=datetime-local]').forEach(el => el.value = '');
-  openedSlots.fill(null);
-  lsState.fill('');
-  updateSlots();
-  updateTrades();
-  updateBadge();
-  updateAlertInterval();
+  openedSlots.fill(null); lsState.fill('');
+  updateSlots(); updateTrades(); updateBadge(); updateAlertInterval();
 }
 
-let deleteMode = false;
 function toggleDeleteMode() {
   deleteMode = !deleteMode;
   const wrap = document.getElementById('journal-body').closest('table');
-  if (deleteMode) {
-    wrap.classList.add('delete-mode');
-    document.getElementById('gear-btn').style.background = '#ff3b30';
-    document.getElementById('gear-btn').style.color = '#fff';
-  } else {
-    wrap.classList.remove('delete-mode');
-    document.getElementById('gear-btn').style.background = '';
-    document.getElementById('gear-btn').style.color = '';
-  }
+  const btn = document.getElementById('gear-btn');
+  if (deleteMode) { wrap.classList.add('delete-mode'); btn.style.color = '#7a1a1a'; btn.style.borderColor = '#7a1a1a'; }
+  else { wrap.classList.remove('delete-mode'); btn.style.color = ''; btn.style.borderColor = ''; }
   updateTrades();
 }
 
 function deleteTradeRow(idx) {
-  openedSlots[idx] = null;
-  lsState[idx] = '';
-  // Checklist da opened checkbox ni tozala
-  document.querySelectorAll('#inst-body input[type=checkbox]').forEach((cb, i) => {
-    if (openedSlots.every(s => s !== i+1)) cb.checked = false;
-  });
-  updateSlots();
-  updateTrades();
-  updateBadge();
+  openedSlots[idx] = null; lsState[idx] = '';
+  document.querySelectorAll('#inst-body input[type=checkbox]').forEach((cb, i) => { if (openedSlots.every(s => s !== i+1)) cb.checked = false; });
+  updateSlots(); updateTrades(); updateBadge();
 }
 
 function saveState() {
   try {
-    const state = {
-      openedSlots: openedSlots,
-      lsState: lsState,
-      checkboxes: {},
-      numCells: [],
-      times: [],
-      closes: [],
-      date: document.getElementById('datepicker').value
-    };
-    ['sl1','sl2','rr11_1','rr11_2','rr12_1','rr12_2','rr13_1','rr13_2','long1','long2','short1','short2'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) state.checkboxes[id] = el.checked;
-    });
-    document.querySelectorAll('.num-cell.selected').forEach(el => {
-      state.numCells.push(el.textContent.trim());
-    });
-    [1,2].forEach(i => {
-      const el = document.getElementById('time'+i);
-      state.times.push(el ? el.value : '');
-      const cl = document.getElementById('close'+i);
-      state.closes.push(cl ? cl.value : '');
-    });
-    const data = JSON.stringify(state);
-    const params = new URLSearchParams({ action: 'savestate', data: data });
+    const state = { openedSlots, lsState, checkboxes: {}, numCells: [], times: [], closes: [] };
+    ['sl1','sl2','rr11_1','rr11_2','rr12_1','rr12_2','rr13_1','rr13_2','long1','long2','short1','short2'].forEach(id => { const el = document.getElementById(id); if (el) state.checkboxes[id] = el.checked; });
+    document.querySelectorAll('.num-cell.selected').forEach(el => state.numCells.push(el.textContent.trim()));
+    [1,2].forEach(i => { const t = document.getElementById('time'+i); state.times.push(t ? t.value : ''); const c = document.getElementById('close'+i); state.closes.push(c ? c.value : ''); });
     const img = new Image();
-    img.src = SCRIPT_URL + '?' + params.toString();
+    img.src = SCRIPT_URL + '?action=savestate&data=' + encodeURIComponent(JSON.stringify(state));
   } catch(e) {}
 }
 
 function loadState() {
-  try {
-    const script = document.createElement('script');
-    window._stateCallback = function(data) {
-      try {
-        if (!data || data === '{}') return;
-        const state = typeof data === 'string' ? JSON.parse(data) : data;
-        if (state.date) {
-          document.getElementById('datepicker').value = state.date;
-          setDate(state.date);
-        }
-        if (state.openedSlots) state.openedSlots.forEach((v,i) => openedSlots[i] = v);
-        if (state.lsState) state.lsState.forEach((v,i) => lsState[i] = v);
-        if (state.checkboxes) {
-          Object.keys(state.checkboxes).forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.checked = state.checkboxes[id];
-          });
-        }
-        if (state.times) state.times.forEach((v,i) => {
-          const el = document.getElementById('time'+(i+1));
-          if (el) el.value = v;
-        });
-        if (state.closes) state.closes.forEach((v,i) => {
-          const el = document.getElementById('close'+(i+1));
-          if (el) el.value = v;
-        });
-        openedSlots.forEach(num => {
-          if (num !== null) {
-            const rows = document.querySelectorAll('#inst-body tr');
-            if (rows[num-1]) {
-              const cb = rows[num-1].querySelector('input[type=checkbox]');
-              if (cb) cb.checked = true;
-            }
-          }
-        });
-        if (state.numCells) {
-          document.querySelectorAll('.num-cell').forEach(el => {
-            if (state.numCells.includes(el.textContent.trim())) {
-              el.classList.add('selected');
-            }
-          });
-        }
-        updateSlots();
-        updateTrades();
-        updateBadge();
-      } catch(err) {}
-      document.body.removeChild(script);
-    };
-    script.src = SCRIPT_URL + '?action=loadstate&callback=_stateCallback';
-    document.body.appendChild(script);
-  } catch(e) {}
+  const script = document.createElement('script');
+  window._stateCallback = function(data) {
+    try {
+      if (!data || data === '{}') return;
+      const state = typeof data === 'string' ? JSON.parse(data) : data;
+      if (state.openedSlots) state.openedSlots.forEach((v,i) => openedSlots[i] = v);
+      if (state.lsState) state.lsState.forEach((v,i) => lsState[i] = v);
+      if (state.checkboxes) Object.keys(state.checkboxes).forEach(id => { const el = document.getElementById(id); if (el) el.checked = state.checkboxes[id]; });
+      if (state.times) state.times.forEach((v,i) => { const el = document.getElementById('time'+(i+1)); if (el) el.value = v; });
+      if (state.closes) state.closes.forEach((v,i) => { const el = document.getElementById('close'+(i+1)); if (el) el.value = v; });
+      openedSlots.forEach(num => { if (num !== null) { const rows = document.querySelectorAll('#inst-body tr'); if (rows[num-1]) { const cb = rows[num-1].querySelector('input[type=checkbox]'); if (cb) cb.checked = true; } } });
+      if (state.numCells) document.querySelectorAll('.num-cell').forEach(el => { if (state.numCells.includes(el.textContent.trim())) el.classList.add('selected'); });
+      updateSlots(); updateTrades(); updateBadge();
+    } catch(err) {}
+    try { document.body.removeChild(script); } catch(e) {}
+  };
+  script.src = SCRIPT_URL + '?action=loadstate&callback=_stateCallback';
+  document.body.appendChild(script);
 }
 
-function setDate(val) {
-  if (!val) return;
-  const [y,m,d] = val.split('-').map(Number);
-  document.getElementById('dayname').textContent = days[new Date(y,m-1,d).getDay()];
-  updateTrades();
-}
+const now = new Date();
+const dayNames = ['Yakshanba','Dushanba','Seshanba','Chorshanba','Payshanba','Juma','Shanba'];
+document.getElementById('home-date').textContent = dayNames[now.getDay()] + ', ' + String(now.getDate()).padStart(2,'0') + '.' + String(now.getMonth()+1).padStart(2,'0') + '.' + now.getFullYear();
 
-const today = new Date();
-const todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
-const dp = document.getElementById('datepicker');
-dp.value = todayStr;
-setDate(todayStr);
-dp.addEventListener('change', () => { setDate(dp.value); saveState(); });
 buildTable();
 setTimeout(() => { loadState(); }, 100);
 
-// Navigation setup
-document.querySelectorAll('[data-page]').forEach(el => {
-  el.addEventListener('click', function(e) {
-    e.preventDefault();
-    goTo(this.getAttribute('data-page'));
-  });
-});
-document.querySelectorAll('[data-back]').forEach(el => {
-  el.addEventListener('click', function(e) {
-    e.preventDefault();
-    goTo('page-home');
-  });
-});
+document.querySelectorAll('[data-page]').forEach(el => { el.addEventListener('click', function(e) { e.preventDefault(); goTo(this.getAttribute('data-page')); }); });
+document.querySelectorAll('[data-back]').forEach(el => { el.addEventListener('click', function(e) { e.preventDefault(); goTo('page-home'); }); });
 </script>
 </body>
 </html>
