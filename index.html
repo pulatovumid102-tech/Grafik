@@ -197,7 +197,7 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
   <div class="journal-wrap">
     <table class="journal-table">
       <thead>
-        <tr><th>№</th><th>Sana</th><th>Instrument</th><th>L/S</th><th>Vaqt</th><th>SL</th><th>RR1</th><th>RR2</th><th>RR3</th><th>Close</th></tr>
+        <tr><th>№</th><th>Sana</th><th>Kun</th><th>Instrument</th><th>L/S</th><th>Vaqt</th><th>SL</th><th>RR1</th><th>RR2</th><th>RR3</th><th>Close</th></tr>
       </thead>
       <tbody id="journal-body">
         <tr><td colspan="10" class="empty-msg">Hali bitim ochilmagan</td></tr>
@@ -298,6 +298,15 @@ function getDateStr() {
   return `${d}.${m}`;
 }
 
+function getDayStr() {
+  const dp = document.getElementById('datepicker');
+  if (!dp.value) return '';
+  const [y,m,d] = dp.value.split('-');
+  const date = new Date(Number(y), Number(m)-1, Number(d));
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  return dayNames[date.getDay()];
+}
+
 function getCloseStr(idx) {
   const el = document.getElementById(`close${idx+1}`);
   if (!el.value) return '—';
@@ -320,6 +329,7 @@ function getTradeRows() {
     if (num !== null) {
       rows.push({
         sana: getDateStr(),
+        kun: getDayStr(),
         instrument: instruments[num-1],
         ls: lsState[i] || '—',
         vaqt: (document.getElementById(`time${i+1}`).value || '').trim() || '—',
@@ -343,7 +353,7 @@ function updateTrades() {
   }
   tbody.innerHTML = rows.map((r, i) => `
     <tr>
-      <td>${i+1}</td><td>${r.sana}</td><td>${r.instrument}</td>
+      <td>${i+1}</td><td>${r.sana}</td><td>${r.kun}</td><td>${r.instrument}</td>
       <td class="${r.ls==='LONG'?'long-badge':r.ls==='SHORT'?'short-badge':''}">${r.ls}</td>
       <td>${r.vaqt}</td>
       <td style="text-align:center">${r.sl}</td>
@@ -369,7 +379,7 @@ async function saveToSheets() {
       if (savedTradeIds[key]) {
         params = new URLSearchParams({ action:'update', tradeId:savedTradeIds[key], sl:row.sl, rr11:row.rr11, rr12:row.rr12, rr13:row.rr13, close:row.close });
       } else {
-        params = new URLSearchParams({ action:'save', sana:row.sana, instrument:row.instrument, ls:row.ls, vaqt:row.vaqt, sl:row.sl, rr11:row.rr11, rr12:row.rr12, rr13:row.rr13, close:row.close });
+        params = new URLSearchParams({ action:'save', sana:row.sana, kun:row.kun, instrument:row.instrument, ls:row.ls, vaqt:row.vaqt, sl:row.sl, rr11:row.rr11, rr12:row.rr12, rr13:row.rr13, close:row.close });
       }
       const img = new Image();
       img.src = SCRIPT_URL + '?' + params.toString();
@@ -432,6 +442,8 @@ function updateAlertInterval() {
     }
   }
 }
+
+function setDate(val) {
   if (!val) return;
   const [y,m,d] = val.split('-').map(Number);
   document.getElementById('dayname').textContent = days[new Date(y,m-1,d).getDay()];
@@ -444,6 +456,20 @@ const dp = document.getElementById('datepicker');
 dp.value = todayStr; setDate(todayStr);
 dp.addEventListener('change', () => setDate(dp.value));
 buildTable();
+
+// Navigation setup
+document.querySelectorAll('[data-page]').forEach(el => {
+  el.addEventListener('click', function(e) {
+    e.preventDefault();
+    goTo(this.getAttribute('data-page'));
+  });
+});
+document.querySelectorAll('[data-back]').forEach(el => {
+  el.addEventListener('click', function(e) {
+    e.preventDefault();
+    goTo('page-home');
+  });
+});
 </script>
 </body>
 </html>
