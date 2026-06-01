@@ -6,125 +6,204 @@
 <title>Forex Checklist</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: #f5f5f3; color: #1a1a1a; padding: 10px; font-size: 13px; }
-.wrap { width: 100%; }
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #e0e0dc; }
-.title { font-size: 17px; font-weight: 700; }
-.date-wrap { display: flex; align-items: center; gap: 5px; }
-input[type=date] { background: #ebebea; border: none; border-radius: 7px; padding: 5px 7px; font-size: 12px; font-weight: 500; color: #1a1a1a; font-family: inherit; outline: none; }
-.day-badge { background: #ebebea; border-radius: 7px; padding: 5px 9px; font-size: 12px; font-weight: 500; color: #555; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: #f5f5f3; color: #1a1a1a; font-size: 14px; min-height: 100vh; }
 
-.main { display: flex; gap: 8px; align-items: flex-start; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.left { flex-shrink: 0; }
-.left table { border-collapse: collapse; font-size: 12px; }
-.left th { background: #ebebea; color: #888; font-weight: 500; padding: 6px 8px; text-align: center; border: 0.5px solid #ddd; }
-.left td { padding: 4px 8px; border: 0.5px solid #ddd; text-align: center; height: 30px; }
-.num-cell { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; user-select: none; border: 1.5px solid transparent; }
+/* PAGE SYSTEM */
+.page { display: none; padding: 12px; min-height: 100vh; }
+.page.active { display: block; }
+
+/* HEADER */
+.page-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #e0e0dc; }
+.back-btn { background: #ebebea; border: none; border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
+.page-title { font-size: 17px; font-weight: 700; }
+
+/* HOME PAGE */
+.home-header { padding: 16px 12px 12px; border-bottom: 1px solid #e0e0dc; }
+.home-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.home-subtitle { font-size: 13px; color: #888; }
+.date-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+input[type=date] { background: #ebebea; border: none; border-radius: 8px; padding: 7px 10px; font-size: 13px; font-weight: 500; color: #1a1a1a; font-family: inherit; outline: none; flex: 1; }
+.day-badge { background: #ebebea; border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 500; color: #555; white-space: nowrap; }
+
+.menu-list { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.menu-item { background: #fff; border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.menu-item:active { background: #f0f0ee; }
+.menu-left { display: flex; align-items: center; gap: 12px; }
+.menu-icon { font-size: 24px; width: 44px; height: 44px; background: #f0f0ee; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.menu-text { }
+.menu-name { font-size: 16px; font-weight: 600; }
+.menu-desc { font-size: 12px; color: #888; margin-top: 2px; }
+.menu-arrow { font-size: 18px; color: #ccc; }
+.menu-badge { background: #1a1a1a; color: #fff; border-radius: 20px; padding: 3px 9px; font-size: 12px; font-weight: 600; }
+
+/* CHECKLIST PAGE */
+.instr-table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.instr-table th { background: #ebebea; color: #888; font-weight: 500; padding: 10px 12px; text-align: center; border-bottom: 0.5px solid #ddd; }
+.instr-table td { padding: 8px 12px; border-bottom: 0.5px solid #f0f0ee; text-align: center; }
+.instr-table tr:last-child td { border-bottom: none; }
+.num-cell { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; user-select: none; border: 1.5px solid transparent; }
 .num-cell.selected { border-color: #1a1a1a; }
-input[type=checkbox] { width: 17px; height: 17px; cursor: pointer; accent-color: #1a1a1a; }
+input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; accent-color: #1a1a1a; }
 
-.right { flex-shrink: 0; }
-.right table { border-collapse: collapse; font-size: 12px; }
-.right td { padding: 4px 7px; border: 0.5px solid #ddd; height: 30px; vertical-align: middle; }
-.right td.label { font-style: italic; color: #888; width: 100px; }
-.right td.cb { width: 34px; text-align: center; }
-.right td.close-td { padding: 2px 5px; }
-.uline { width: 34px; border-bottom: 1px solid #aaa; display: inline-block; min-height: 14px; vertical-align: bottom; text-align: center; font-size: 12px; font-weight: 500; }
-.no-lbl { color: #888; font-size: 12px; margin-right: 2px; }
-input[type=text].time-inp { border: none; outline: none; background: transparent; font-size: 12px; font-family: inherit; color: #1a1a1a; width: 46px; border-bottom: 1px solid #ccc; padding: 1px 0; }
-input[type=datetime-local] { border: none; outline: none; background: transparent; font-size: 10px; font-family: inherit; color: #1a1a1a; width: 100%; cursor: pointer; padding: 0; }
+/* SETUP PAGE */
+.setup-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 12px; }
+.setup-slots-row { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 0.5px solid #f0f0ee; }
+.setup-label-txt { font-weight: 600; font-size: 14px; margin-right: 4px; }
+.no-lbl { color: #888; font-size: 13px; }
+.uline { width: 40px; border-bottom: 1.5px solid #aaa; display: inline-block; min-height: 16px; vertical-align: bottom; text-align: center; font-size: 13px; font-weight: 600; }
+.setup-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.setup-table td { padding: 9px 14px; border-bottom: 0.5px solid #f0f0ee; vertical-align: middle; }
+.setup-table tr:last-child td { border-bottom: none; }
+.setup-table td.lbl { font-style: italic; color: #666; width: 120px; }
+.setup-table td.cb { width: 40px; text-align: center; }
+input[type=text].time-inp { border: none; outline: none; background: transparent; font-size: 13px; font-family: inherit; color: #1a1a1a; width: 50px; border-bottom: 1px solid #ccc; padding: 1px 0; text-align: center; }
+input[type=datetime-local] { border: none; outline: none; background: transparent; font-size: 11px; font-family: inherit; color: #1a1a1a; width: 100%; cursor: pointer; padding: 0; }
+.spacer-row td { height: 8px; border: none !important; background: transparent; }
 
-.journal-section { margin-top: 14px; border-top: 1px solid #e0e0dc; padding-top: 12px; }
-.journal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.journal-title { font-size: 14px; font-weight: 600; }
-.save-btn { background: #1a1a1a; color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
+/* JOURNAL PAGE */
+.save-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.journal-title-sm { font-size: 14px; font-weight: 600; }
+.save-btn { background: #1a1a1a; color: #fff; border: none; border-radius: 8px; padding: 9px 16px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
 .save-btn:disabled { opacity: 0.4; }
-.save-status { font-size: 11px; color: #888; margin-top: 4px; text-align: right; }
+.save-status { font-size: 11px; color: #888; margin-bottom: 8px; text-align: right; }
 .journal-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.journal-table { border-collapse: collapse; font-size: 12px; min-width: 560px; width: 100%; }
-.journal-table th { background: #ebebea; color: #888; font-weight: 500; padding: 6px 8px; text-align: left; border: 0.5px solid #ddd; white-space: nowrap; }
-.journal-table td { padding: 6px 8px; border: 0.5px solid #ddd; white-space: nowrap; }
+.journal-table { border-collapse: collapse; font-size: 12px; min-width: 520px; width: 100%; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.journal-table th { background: #ebebea; color: #888; font-weight: 500; padding: 8px 10px; text-align: left; border-bottom: 0.5px solid #ddd; white-space: nowrap; }
+.journal-table td { padding: 8px 10px; border-bottom: 0.5px solid #f0f0ee; white-space: nowrap; }
+.journal-table tr:last-child td { border-bottom: none; }
 .journal-table td:first-child { text-align: center; width: 28px; }
 .long-badge { color: #16a34a; font-weight: 600; }
 .short-badge { color: #dc2626; font-weight: 600; }
-.empty-msg { text-align: center; color: #bbb; font-size: 12px; padding: 14px; }
+.empty-msg { text-align: center; color: #bbb; font-size: 13px; padding: 20px; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="header">
-    <span class="title">Forex Checklist</span>
-    <div class="date-wrap">
+
+<!-- HOME PAGE -->
+<div class="page active" id="page-home">
+  <div class="home-header">
+    <div class="home-title">Forex Checklist</div>
+    <div class="home-subtitle">Nima ko'rmoqchisiz?</div>
+    <div class="date-row">
       <input type="date" id="datepicker">
       <span class="day-badge" id="dayname"></span>
     </div>
   </div>
-
-  <div class="main">
-    <div class="left">
-      <table>
-        <thead><tr><th>№</th><th>Instrument</th><th>Opened</th></tr></thead>
-        <tbody id="inst-body"></tbody>
-      </table>
+  <div class="menu-list">
+    <div class="menu-item" onclick="goTo('page-checklist')">
+      <div class="menu-left">
+        <div class="menu-icon">📋</div>
+        <div class="menu-text">
+          <div class="menu-name">Checklist</div>
+          <div class="menu-desc">Instrumentlar va ochilgan bitimlar</div>
+        </div>
+      </div>
+      <span class="menu-arrow">›</span>
     </div>
-    <div class="right">
-      <table>
-        <tbody>
-          <tr>
-            <td class="label" style="font-style:normal;font-weight:600;">Setup:</td>
-            <td class="cb"><span class="no-lbl">№</span><span class="uline" id="slot1"></span></td>
-            <td class="cb"><span class="uline" id="slot2"></span></td>
-            <td class="cb"><span class="uline" id="slot3"></span></td>
-          </tr>
-          <tr><td class="label">UPTREND</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
-          <tr><td class="label">DOWNTREND</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
-          <tr><td class="label">M5</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
-          <tr><td class="label">M15</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
-          <tr><td class="label">RSI 70/30</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
-          <tr><td class="label">RSI DIVERGENCE</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
-          <tr><td class="label">MA H1</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
-          <tr><td class="label">MA H4</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
-          <tr><td class="label">MA D1</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
-          <tr><td colspan="4" style="height:10px;border:none;background:transparent;"></td></tr>
-          <tr>
-            <td class="label">Time:</td>
-            <td class="cb"><input type="text" class="time-inp" id="time1" placeholder="12:38" maxlength="5" oninput="updateTrades()"></td>
-            <td class="cb"><input type="text" class="time-inp" id="time2" placeholder="12:38" maxlength="5" oninput="updateTrades()"></td>
-            <td class="cb"><input type="text" class="time-inp" id="time3" placeholder="12:38" maxlength="5" oninput="updateTrades()"></td>
-          </tr>
-          <tr><td class="label">LONG</td><td class="cb"><input type="checkbox" id="long1" onchange="updateLS(0,'LONG',this)"></td><td class="cb"><input type="checkbox" id="long2" onchange="updateLS(1,'LONG',this)"></td><td class="cb"><input type="checkbox" id="long3" onchange="updateLS(2,'LONG',this)"></td></tr>
-          <tr><td class="label">SHORT</td><td class="cb"><input type="checkbox" id="short1" onchange="updateLS(0,'SHORT',this)"></td><td class="cb"><input type="checkbox" id="short2" onchange="updateLS(1,'SHORT',this)"></td><td class="cb"><input type="checkbox" id="short3" onchange="updateLS(2,'SHORT',this)"></td></tr>
-          <tr><td class="label">SL</td><td class="cb"><input type="checkbox" id="sl1" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="sl2" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="sl3" onchange="updateTrades()"></td></tr>
-          <tr><td class="label">RR 1:1</td><td class="cb"><input type="checkbox" id="rr11_1" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="rr11_2" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="rr11_3" onchange="updateTrades()"></td></tr>
-          <tr><td class="label">RR 1:2</td><td class="cb"><input type="checkbox" id="rr12_1" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="rr12_2" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="rr12_3" onchange="updateTrades()"></td></tr>
-          <tr><td class="label">RR 1:3</td><td class="cb"><input type="checkbox" id="rr13_1" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="rr13_2" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="rr13_3" onchange="updateTrades()"></td></tr>
-          <tr>
-            <td class="label">CLOSE:</td>
-            <td class="close-td"><input type="datetime-local" id="close1" onchange="updateTrades()"></td>
-            <td class="close-td"><input type="datetime-local" id="close2" onchange="updateTrades()"></td>
-            <td class="close-td"><input type="datetime-local" id="close3" onchange="updateTrades()"></td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="menu-item" onclick="goTo('page-setup')">
+      <div class="menu-left">
+        <div class="menu-icon">⚙️</div>
+        <div class="menu-text">
+          <div class="menu-name">Setup</div>
+          <div class="menu-desc">Trend, RSI, MA va vaqt</div>
+        </div>
+      </div>
+      <span class="menu-arrow">›</span>
+    </div>
+    <div class="menu-item" onclick="goTo('page-journal')">
+      <div class="menu-left">
+        <div class="menu-icon">📒</div>
+        <div class="menu-text">
+          <div class="menu-name">Bitimlar jurnali</div>
+          <div class="menu-desc">Ochilgan bitimlar va saqlash</div>
+        </div>
+      </div>
+      <span id="journal-badge" class="menu-arrow">›</span>
     </div>
   </div>
+</div>
 
-  <div class="journal-section">
-    <div class="journal-header">
-      <div class="journal-title">Bitimlar jurnali</div>
-      <button class="save-btn" id="save-btn" onclick="saveToSheets()">Sheetsga saqlash</button>
+<!-- CHECKLIST PAGE -->
+<div class="page" id="page-checklist">
+  <div class="page-header">
+    <button class="back-btn" onclick="goTo('page-home')">← Orqaga</button>
+    <span class="page-title">📋 Checklist</span>
+  </div>
+  <table class="instr-table">
+    <thead><tr><th>№</th><th>Instrument</th><th>Opened</th></tr></thead>
+    <tbody id="inst-body"></tbody>
+  </table>
+</div>
+
+<!-- SETUP PAGE -->
+<div class="page" id="page-setup">
+  <div class="page-header">
+    <button class="back-btn" onclick="goTo('page-home')">← Orqaga</button>
+    <span class="page-title">⚙️ Setup</span>
+  </div>
+  <div class="setup-card">
+    <div class="setup-slots-row">
+      <span class="setup-label-txt">Setup:</span>
+      <span class="no-lbl">№</span>
+      <span class="uline" id="slot1"></span>
+      <span class="uline" id="slot2"></span>
+      <span class="uline" id="slot3"></span>
     </div>
-    <div class="save-status" id="save-status"></div>
-    <div class="journal-wrap">
-      <table class="journal-table">
-        <thead>
-          <tr><th>№</th><th>Sana</th><th>Instrument</th><th>L/S</th><th>Vaqt</th><th>SL</th><th>RR1</th><th>RR2</th><th>RR3</th><th>Close</th></tr>
-        </thead>
-        <tbody id="journal-body">
-          <tr><td colspan="10" class="empty-msg">Hali bitim ochilmagan</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <table class="setup-table">
+      <tbody>
+        <tr><td class="lbl">UPTREND</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
+        <tr><td class="lbl">DOWNTREND</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
+        <tr><td class="lbl">M5</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
+        <tr><td class="lbl">M15</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
+        <tr><td class="lbl">RSI 70/30</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
+        <tr><td class="lbl">RSI DIVERGENCE</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
+        <tr><td class="lbl">MA H1</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
+        <tr><td class="lbl">MA H4</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
+        <tr><td class="lbl">MA D1</td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td><td class="cb"><input type="checkbox"></td></tr>
+        <tr class="spacer-row"><td colspan="4"></td></tr>
+        <tr>
+          <td class="lbl">Time:</td>
+          <td class="cb"><input type="text" class="time-inp" id="time1" placeholder="12:38" maxlength="5" oninput="updateTrades()"></td>
+          <td class="cb"><input type="text" class="time-inp" id="time2" placeholder="12:38" maxlength="5" oninput="updateTrades()"></td>
+          <td class="cb"><input type="text" class="time-inp" id="time3" placeholder="12:38" maxlength="5" oninput="updateTrades()"></td>
+        </tr>
+        <tr><td class="lbl">LONG</td><td class="cb"><input type="checkbox" id="long1" onchange="updateLS(0,'LONG',this)"></td><td class="cb"><input type="checkbox" id="long2" onchange="updateLS(1,'LONG',this)"></td><td class="cb"><input type="checkbox" id="long3" onchange="updateLS(2,'LONG',this)"></td></tr>
+        <tr><td class="lbl">SHORT</td><td class="cb"><input type="checkbox" id="short1" onchange="updateLS(0,'SHORT',this)"></td><td class="cb"><input type="checkbox" id="short2" onchange="updateLS(1,'SHORT',this)"></td><td class="cb"><input type="checkbox" id="short3" onchange="updateLS(2,'SHORT',this)"></td></tr>
+        <tr><td class="lbl">SL</td><td class="cb"><input type="checkbox" id="sl1" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="sl2" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="sl3" onchange="updateTrades()"></td></tr>
+        <tr><td class="lbl">RR 1:1</td><td class="cb"><input type="checkbox" id="rr11_1" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="rr11_2" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="rr11_3" onchange="updateTrades()"></td></tr>
+        <tr><td class="lbl">RR 1:2</td><td class="cb"><input type="checkbox" id="rr12_1" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="rr12_2" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="rr12_3" onchange="updateTrades()"></td></tr>
+        <tr><td class="lbl">RR 1:3</td><td class="cb"><input type="checkbox" id="rr13_1" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="rr13_2" onchange="updateTrades()"></td><td class="cb"><input type="checkbox" id="rr13_3" onchange="updateTrades()"></td></tr>
+        <tr>
+          <td class="lbl">CLOSE:</td>
+          <td style="padding:4px 8px;"><input type="datetime-local" id="close1" onchange="updateTrades()"></td>
+          <td style="padding:4px 8px;"><input type="datetime-local" id="close2" onchange="updateTrades()"></td>
+          <td style="padding:4px 8px;"><input type="datetime-local" id="close3" onchange="updateTrades()"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- JOURNAL PAGE -->
+<div class="page" id="page-journal">
+  <div class="page-header">
+    <button class="back-btn" onclick="goTo('page-home')">← Orqaga</button>
+    <span class="page-title">📒 Bitimlar jurnali</span>
+  </div>
+  <div class="save-row">
+    <div class="journal-title-sm">Ochilgan bitimlar</div>
+    <button class="save-btn" id="save-btn" onclick="saveToSheets()">Sheetsga saqlash</button>
+  </div>
+  <div class="save-status" id="save-status"></div>
+  <div class="journal-wrap">
+    <table class="journal-table">
+      <thead>
+        <tr><th>№</th><th>Sana</th><th>Instrument</th><th>L/S</th><th>Vaqt</th><th>SL</th><th>RR1</th><th>RR2</th><th>RR3</th><th>Close</th></tr>
+      </thead>
+      <tbody id="journal-body">
+        <tr><td colspan="10" class="empty-msg">Hali bitim ochilmagan</td></tr>
+      </tbody>
+    </table>
   </div>
 </div>
 
@@ -136,13 +215,19 @@ const openedSlots = [null, null, null];
 const lsState = ['', '', ''];
 const savedTradeIds = {};
 
+function goTo(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
 function buildTable() {
   const tbody = document.getElementById('inst-body');
   tbody.innerHTML = '';
   instruments.forEach((name, i) => {
     const num = i + 1;
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td><span class="num-cell" onclick="toggleNum(this)">${num}</span></td><td>${name}</td><td><input type="checkbox" onchange="toggleOpened(this, ${num})"></td>`;
+    tr.innerHTML = `<td><span class="num-cell" onclick="toggleNum(this)">${num}</span></td><td style="text-align:left">${name}</td><td><input type="checkbox" onchange="toggleOpened(this, ${num})"></td>`;
     tbody.appendChild(tr);
   });
 }
@@ -160,6 +245,7 @@ function toggleOpened(cb, num) {
   }
   updateSlots();
   updateTrades();
+  updateBadge();
 }
 
 function updateLS(slotIdx, type, cb) {
@@ -175,6 +261,18 @@ function updateSlots() {
   [1,2,3].forEach(i => {
     document.getElementById('slot'+i).textContent = openedSlots[i-1] !== null ? openedSlots[i-1] : '';
   });
+}
+
+function updateBadge() {
+  const count = openedSlots.filter(s => s !== null).length;
+  const badge = document.getElementById('journal-badge');
+  if (count > 0) {
+    badge.className = 'menu-badge';
+    badge.textContent = count;
+  } else {
+    badge.className = 'menu-arrow';
+    badge.textContent = '›';
+  }
 }
 
 function getDateStr() {
