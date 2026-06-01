@@ -212,7 +212,7 @@ input[type=datetime-local] { border: none; outline: none; background: transparen
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzh9GjkctA1l1X9fuFJFaLryYwEvl2rK6ksLkwEsyG3jUQym6GLVfAKwC3fdDLiGWwLA/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbynSz19zzMzyiyAXAFupp_PL5KNx-sbdCeddfficVVDYJ4mAZa4BsypkBt3aJeVMkAvKQ/exec';
 const instruments = ['XAUUSD','DJ30','NASDAQ','SPX500','EURUSD','GBPUSD','AUDUSD','NZDUSD','USDCHF','USDCAD','USDJPY','EURGBP','EURCAD','EURJPY','EURAUD','EURCHF','GBPJPY','GBPAUD','AUDCAD','AUDJPY','CADCHF','CADJPY','NZDJPY','CHFJPY'];
 const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const openedSlots = [null, null];
@@ -541,47 +541,44 @@ function saveState() {
       closes: [],
       date: document.getElementById('datepicker').value
     };
-    // Checkboxlarni saqlash
     ['sl1','sl2','rr11_1','rr11_2','rr12_1','rr12_2','rr13_1','rr13_2','long1','long2','short1','short2'].forEach(id => {
       const el = document.getElementById(id);
       if (el) state.checkboxes[id] = el.checked;
     });
-    // Doiralarni saqlash
     document.querySelectorAll('.num-cell.selected').forEach(el => {
       state.numCells.push(el.textContent.trim());
     });
-    // Vaqtlarni saqlash
     [1,2].forEach(i => {
       const el = document.getElementById('time'+i);
       state.times.push(el ? el.value : '');
       const cl = document.getElementById('close'+i);
       state.closes.push(cl ? cl.value : '');
     });
-    localStorage.setItem('forex_state', JSON.stringify(state));
+    const data = JSON.stringify(state);
+    const params = new URLSearchParams({ action: 'savestate', data: data });
+    const img = new Image();
+    img.src = SCRIPT_URL + '?' + params.toString();
   } catch(e) {}
 }
 
-function loadState() {
+async function loadState() {
   try {
-    const raw = localStorage.getItem('forex_state');
-    if (!raw) return;
-    const state = JSON.parse(raw);
-    // Date
+    const resp = await fetch(SCRIPT_URL + '?action=loadstate');
+    const text = await resp.text();
+    if (!text || text === '{}') return;
+    const state = JSON.parse(text);
     if (state.date) {
       document.getElementById('datepicker').value = state.date;
       setDate(state.date);
     }
-    // openedSlots va lsState
     if (state.openedSlots) state.openedSlots.forEach((v,i) => openedSlots[i] = v);
     if (state.lsState) state.lsState.forEach((v,i) => lsState[i] = v);
-    // Checkboxlar
     if (state.checkboxes) {
       Object.keys(state.checkboxes).forEach(id => {
         const el = document.getElementById(id);
         if (el) el.checked = state.checkboxes[id];
       });
     }
-    // Vaqtlar
     if (state.times) state.times.forEach((v,i) => {
       const el = document.getElementById('time'+(i+1));
       if (el) el.value = v;
@@ -590,7 +587,6 @@ function loadState() {
       const el = document.getElementById('close'+(i+1));
       if (el) el.value = v;
     });
-    // Opened checkboxlar
     openedSlots.forEach(num => {
       if (num !== null) {
         const rows = document.querySelectorAll('#inst-body tr');
@@ -600,7 +596,6 @@ function loadState() {
         }
       }
     });
-    // Doiralar
     if (state.numCells) {
       document.querySelectorAll('.num-cell').forEach(el => {
         if (state.numCells.includes(el.textContent.trim())) {
