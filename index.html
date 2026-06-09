@@ -25,8 +25,6 @@
   .breadcrumb span:hover { color: var(--accent); }
   .main { padding: 20px 16px; }
   .page-title { font-size: 13px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; font-weight: 500; }
-
-  /* CARDS */
   .card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 10px; transition: opacity 0.15s; }
   .card:active { opacity: 0.8; }
   .card.danger { border-color: var(--danger); background: #fdf2f2; }
@@ -37,8 +35,6 @@
   .card-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
   .card.danger .card-sub { color: var(--danger); }
   .card-arrow { color: var(--light); font-size: 20px; }
-
-  /* DAY LIST */
   .day-card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 10px; transition: opacity 0.15s; }
   .day-card:active { opacity: 0.8; }
   .day-card.warn-red { border-color: var(--danger); background: #fdf2f2; }
@@ -52,8 +48,6 @@
   .day-warn { font-size: 11px; color: var(--danger); margin-top: 2px; }
   .today-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: var(--accent); color: white; font-weight: 500; flex-shrink: 0; }
   .past-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: #fdecea; color: var(--danger); font-weight: 500; flex-shrink: 0; }
-
-  /* MEAL CARDS in day detail */
   .meal-card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: opacity 0.15s; }
   .meal-card:active { opacity: 0.8; }
   .meal-card.missing { border-color: var(--danger); background: #fdf2f2; }
@@ -67,8 +61,6 @@
   .meal-card-items { font-size: 12px; color: var(--text3); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--bg3); }
   .meal-card.missing .meal-card-items { border-top-color: #f0c0c0; }
   .meal-card-missing { font-size: 12px; color: var(--danger); margin-top: 4px; font-weight: 500; }
-
-  /* ZAPAS */
   .zapas-item { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
   .zapas-icon { font-size: 28px; flex-shrink: 0; }
   .zapas-info { flex: 1; }
@@ -83,15 +75,12 @@
   .status-red { color: var(--danger); }
   .progress-bar { height: 4px; background: var(--bg3); border-radius: 2px; margin-top: 8px; overflow: hidden; }
   .progress-fill { height: 100%; border-radius: 2px; }
-
   .ovqat-card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
   .ovqat-icon { width: 44px; height: 44px; background: var(--bg3); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
   .ovqat-info { flex: 1; }
   .ovqat-name { font-size: 15px; font-weight: 500; color: var(--text); }
   .ovqat-items { font-size: 12px; color: var(--text3); margin-top: 2px; }
   .btn-sm { width: 30px; height: 30px; border: 1px solid var(--bg3); background: var(--bg3); border-radius: var(--radius-sm); color: var(--text3); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-
-  /* MODAL */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: flex-end; justify-content: center; }
   .modal-overlay.open { display: flex; }
   .modal { background: var(--bg2); border-radius: var(--radius) var(--radius) 0 0; padding: 20px 20px 40px; width: 100%; max-width: 500px; border-top: 2px solid var(--accent2); max-height: 85vh; overflow-y: auto; }
@@ -247,6 +236,8 @@
 <div class="toast" id="toast"></div>
 
 <script>
+var STORAGE_KEY = 'umatizim_data';
+
 var UZ_DAYS = ['Yakshanba','Dushanba','Seshanba','Chorshanba','Payshanba','Juma','Shanba'];
 var UZ_MONTHS = ['Yan','Fev','Mar','Apr','May','Iyun','Iyul','Avg','Sen','Okt','Noy','Dek'];
 
@@ -278,7 +269,7 @@ var DEFAULT_OVQATLAR = [
   ]},
   { id: 'tuxum_meal', name: 'Tuxum',  icon: '🍳', ingredients: [{ productId: 'tuxum',  rawAmount: 5, cookedAmount: 5 }] },
   { id: 'tvorog_meal',name: 'Tvorog', icon: '🥛', ingredients: [{ productId: 'tvorog', rawAmount: 1, cookedAmount: 1 }] },
-  { id: 'olma_meal',  name: 'Olma',   icon: '🍎', ingredients: [{ productId: 'olma',   rawAmount: 2, cookedAmount: 2 }] },
+  { id: 'olma_meal',  name: 'Olma',   icon: '🍎', ingredients: [{ productId: 'olma',   rawAmount: 1, cookedAmount: 1 }] },
 ];
 
 var DEFAULT_DAY_PLAN = {
@@ -304,12 +295,12 @@ var ingSelectedProduct = null;
 
 function loadData() {
   try {
-    var d = localStorage.getItem('umatizim_v7');
+    var d = localStorage.getItem(STORAGE_KEY);
     if (d) { var p = JSON.parse(d); zapas = p.zapas||[]; ovqatlar = p.ovqatlar||[]; dayPlans = p.dayPlans||{}; }
     if (!ovqatlar.length) ovqatlar = JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));
   } catch(e) { zapas = []; ovqatlar = JSON.parse(JSON.stringify(DEFAULT_OVQATLAR)); dayPlans = {}; }
 }
-function saveData() { localStorage.setItem('umatizim_v7', JSON.stringify({ zapas:zapas, ovqatlar:ovqatlar, dayPlans:dayPlans })); }
+function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify({ zapas:zapas, ovqatlar:ovqatlar, dayPlans:dayPlans })); }
 function dateStr(d) { return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
 function fmtDate(d) { return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2); }
 function getDayPlan(d) { return dayPlans[dateStr(d)] || JSON.parse(JSON.stringify(DEFAULT_DAY_PLAN)); }
@@ -323,38 +314,34 @@ function getDays() {
 function isToday(d) { var t=new Date(); t.setHours(0,0,0,0); return d.getTime()===t.getTime(); }
 function isYesterday(d) { var t=new Date(); t.setHours(0,0,0,0); var y=new Date(t); y.setDate(t.getDate()-1); return d.getTime()===y.getTime(); }
 function isPast(d) { var t=new Date(); t.setHours(0,0,0,0); return d.getTime()<t.getTime(); }
-function getTomorrow() { var t=new Date(); t.setHours(0,0,0,0); var tm=new Date(t); tm.setDate(t.getDate()+1); return tm; }
 function getOvqat(id) { if(!id) return null; return ovqatlar.find(function(o){return o.id===id;})||null; }
 function getProd(id) { return DEFAULT_PRODUCTS.find(function(p){return p.id===id;})||null; }
 
 function getRawNeeded(ing) {
-  if (ing.rawAmount !== undefined) return ing.rawAmount;
-  var prod = getProd(ing.productId);
-  if (!prod) return ing.amount||0;
-  return prod.coef!==1 ? ing.amount/prod.coef : ing.amount;
+  if (ing.rawAmount!==undefined) return ing.rawAmount;
+  var prod=getProd(ing.productId); if(!prod) return ing.amount||0;
+  return prod.coef!==1?ing.amount/prod.coef:ing.amount;
 }
 function getCookedAmount(ing) {
-  if (ing.cookedAmount !== undefined) return ing.cookedAmount;
-  var prod = getProd(ing.productId);
-  if (!prod) return ing.amount||0;
-  return prod.coef!==1 ? Math.round(ing.rawAmount*prod.coef) : ing.rawAmount;
+  if (ing.cookedAmount!==undefined) return ing.cookedAmount;
+  var prod=getProd(ing.productId); if(!prod) return ing.amount||0;
+  return prod.coef!==1?Math.round(ing.rawAmount*prod.coef):ing.rawAmount;
 }
 
 function calcRemainingForDay(productId, dayIndex, allDays) {
-  var zapItem = zapas.find(function(z){return z.productId===productId;});
-  if (!zapItem) return 0;
-  var available = zapItem.rawAmount;
-  var entryDate = zapItem.entryDate ? new Date(zapItem.entryDate) : null;
-  if (entryDate) entryDate.setHours(0,0,0,0);
-  for (var i=0; i<dayIndex; i++) {
-    var d = allDays[i];
-    if (entryDate && d < entryDate) continue;
-    var plan = getDayPlan(d);
-    MEAL_TIMES.forEach(function(mt) {
-      var ovqat = getOvqat(plan[mt.key]);
-      if (!ovqat) return;
-      ovqat.ingredients.forEach(function(ing) {
-        if (ing.productId===productId) available -= getRawNeeded(ing);
+  var zapItem=zapas.find(function(z){return z.productId===productId;});
+  if(!zapItem) return 0;
+  var available=zapItem.rawAmount;
+  var entryDate=zapItem.entryDate?new Date(zapItem.entryDate):null;
+  if(entryDate) entryDate.setHours(0,0,0,0);
+  for(var i=0;i<dayIndex;i++){
+    var d=allDays[i];
+    if(entryDate&&d<entryDate) continue;
+    var plan=getDayPlan(d);
+    MEAL_TIMES.forEach(function(mt){
+      var ovqat=getOvqat(plan[mt.key]); if(!ovqat) return;
+      ovqat.ingredients.forEach(function(ing){
+        if(ing.productId===productId) available-=getRawNeeded(ing);
       });
     });
   }
@@ -362,65 +349,80 @@ function calcRemainingForDay(productId, dayIndex, allDays) {
 }
 
 function dayHasMissing(d, dayIndex, allDays) {
-  if (isPast(d)) return false;
-  var plan = getDayPlan(d);
-  for (var i=0; i<MEAL_TIMES.length; i++) {
-    var ovqat = getOvqat(plan[MEAL_TIMES[i].key]);
-    if (!ovqat) continue;
-    for (var j=0; j<ovqat.ingredients.length; j++) {
-      var ing = ovqat.ingredients[j];
-      if (calcRemainingForDay(ing.productId, dayIndex, allDays) < getRawNeeded(ing)) return true;
+  if(isPast(d)) return false;
+  var plan=getDayPlan(d);
+  for(var i=0;i<MEAL_TIMES.length;i++){
+    var ovqat=getOvqat(plan[MEAL_TIMES[i].key]); if(!ovqat) continue;
+    for(var j=0;j<ovqat.ingredients.length;j++){
+      var ing=ovqat.ingredients[j];
+      if(calcRemainingForDay(ing.productId,dayIndex,allDays)<getRawNeeded(ing)) return true;
     }
   }
   return false;
 }
 
 function getMissingForMeal(ovqatId, dayIndex, allDays) {
-  var ovqat = getOvqat(ovqatId); if(!ovqat) return [];
-  var missing = [];
-  ovqat.ingredients.forEach(function(ing) {
-    if (calcRemainingForDay(ing.productId, dayIndex, allDays) < getRawNeeded(ing)) {
-      var prod = getProd(ing.productId);
-      if (prod) missing.push(prod.name);
+  var ovqat=getOvqat(ovqatId); if(!ovqat) return [];
+  var missing=[];
+  ovqat.ingredients.forEach(function(ing){
+    if(calcRemainingForDay(ing.productId,dayIndex,allDays)<getRawNeeded(ing)){
+      var prod=getProd(ing.productId); if(prod) missing.push(prod.name);
     }
   });
   return missing;
 }
 
-// Check if tomorrow has missing ingredients
-function tomorrowHasMissing() {
+// Find first day in next 7 days that has missing ingredients
+// Returns { dayIndex, dayName } or null
+function findFirstMissingDay() {
   var allDays = getDays();
-  var tm = getTomorrow();
-  var tmIdx = allDays.findIndex(function(d){return dateStr(d)===dateStr(tm);});
-  if (tmIdx < 0) return false;
-  return dayHasMissing(tm, tmIdx, allDays);
+  var today = new Date(); today.setHours(0,0,0,0);
+  for (var i=0; i<allDays.length; i++) {
+    var d = allDays[i];
+    if (d <= today) continue; // skip today and past
+    if (dayHasMissing(d, i, allDays)) {
+      return { day: d, dayName: UZ_DAYS[d.getDay()] };
+    }
+  }
+  return null;
+}
+
+// Find day BEFORE first missing day — that's when we need to warn
+function shouldWarnToday() {
+  var missing = findFirstMissingDay();
+  if (!missing) return null;
+  var today = new Date(); today.setHours(0,0,0,0);
+  var dayBefore = new Date(missing.day); dayBefore.setDate(missing.day.getDate()-1);
+  if (dayBefore.getTime() === today.getTime()) {
+    return missing.dayName; // warn today
+  }
+  return null;
 }
 
 function calcEffectiveRemaining(item) {
-  var prod = getProd(item.productId); if(!prod) return item.rawAmount;
-  if (!item.entryDate) return item.rawAmount;
-  var entry = new Date(item.entryDate); entry.setHours(0,0,0,0);
-  var today = new Date(); today.setHours(0,0,0,0);
-  var remaining = item.rawAmount;
-  var cur = new Date(entry);
-  while (cur < today) {
-    var plan = getDayPlan(cur);
-    MEAL_TIMES.forEach(function(mt) {
-      var ovqat = getOvqat(plan[mt.key]);
-      if (!ovqat) return;
-      ovqat.ingredients.forEach(function(ing) {
-        if (ing.productId===item.productId) remaining -= getRawNeeded(ing);
+  var prod=getProd(item.productId); if(!prod) return item.rawAmount;
+  if(!item.entryDate) return item.rawAmount;
+  var entry=new Date(item.entryDate); entry.setHours(0,0,0,0);
+  var today=new Date(); today.setHours(0,0,0,0);
+  var remaining=item.rawAmount;
+  var cur=new Date(entry);
+  while(cur<today){
+    var plan=getDayPlan(cur);
+    MEAL_TIMES.forEach(function(mt){
+      var ovqat=getOvqat(plan[mt.key]); if(!ovqat) return;
+      ovqat.ingredients.forEach(function(ing){
+        if(ing.productId===item.productId) remaining-=getRawNeeded(ing);
       });
     });
     cur.setDate(cur.getDate()+1);
   }
-  return Math.max(0, Math.round(remaining*10)/10);
+  return Math.max(0,Math.round(remaining*10)/10);
 }
 
 function calcDaysLeft(item) {
-  var prod = getProd(item.productId); if(!prod) return 0;
-  var effective = calcEffectiveRemaining(item);
-  var daily = prod.dailyRaw ? prod.dailyRaw : prod.dailyCooked/prod.coef;
+  var prod=getProd(item.productId); if(!prod) return 0;
+  var effective=calcEffectiveRemaining(item);
+  var daily=prod.dailyRaw?prod.dailyRaw:prod.dailyCooked/prod.coef;
   return Math.round((effective/daily)*10)/10;
 }
 function statusClass(d){return d>=3?'status-green':d>=1?'status-warn':'status-red';}
@@ -428,26 +430,26 @@ function statusColor(d){return d>=3?'#558237':d>=1?'#AA7B08':'#c0392b';}
 
 // =================== RENDER ===================
 function render() {
-  var page = pageStack[pageStack.length-1];
-  var app = document.getElementById('app');
-  if (page==='home') renderHome(app);
-  else if (page==='soglik') renderSoglik(app);
-  else if (page==='ovqatlanish') renderOvqatlanish(app);
-  else if (page==='ratsion') renderRatsion(app);
-  else if (page==='day') renderDay(app);
-  else if (page==='zapas') renderZapas(app);
-  else if (page==='harid') renderHarid(app);
-  else if (page==='ovqatlar') renderOvqatlar(app);
+  var page=pageStack[pageStack.length-1];
+  var app=document.getElementById('app');
+  if(page==='home') renderHome(app);
+  else if(page==='soglik') renderSoglik(app);
+  else if(page==='ovqatlanish') renderOvqatlanish(app);
+  else if(page==='ratsion') renderRatsion(app);
+  else if(page==='day') renderDay(app);
+  else if(page==='zapas') renderZapas(app);
+  else if(page==='harid') renderHarid(app);
+  else if(page==='ovqatlar') renderOvqatlar(app);
 }
 
-function mkH(title, back, addId) {
-  var left = back
-    ? '<button class="back-btn" id="btn-back">←</button><div><div class="header-title">'+title+'</div></div>'
-    : '<div class="logo">🌿</div><div><div class="header-title">'+title+'</div><div class="header-sub">Sog\'liq va sport</div></div>';
-  var right = addId ? '<button class="btn-add" id="'+addId+'">+</button>' : '';
+function mkH(title,back,addId){
+  var left=back
+    ?'<button class="back-btn" id="btn-back">←</button><div><div class="header-title">'+title+'</div></div>'
+    :'<div class="logo">🌿</div><div><div class="header-title">'+title+'</div><div class="header-sub">Sog\'liq va sport</div></div>';
+  var right=addId?'<button class="btn-add" id="'+addId+'">+</button>':'';
   return '<div class="header"><div class="header-left">'+left+'</div>'+right+'</div>';
 }
-function mkBc() {
+function mkBc(){
   var lb={home:'🏠',soglik:"💚 Sog'liq",ovqatlanish:"🥗 Ovqatlanish",ratsion:'📋 Ratsion',zapas:'📦 Zapas',harid:'🛒 Xarid',ovqatlar:"🍽️ Ovqatlar",day:'📅 Kun'};
   if(pageStack.length<=1) return '';
   var h='<div class="breadcrumb">';
@@ -455,7 +457,7 @@ function mkBc() {
   h+='<span style="color:var(--text2)">'+(lb[pageStack[pageStack.length-1]]||'')+'</span></div>';
   return h;
 }
-function bc() {
+function bc(){
   document.querySelectorAll('.breadcrumb [data-idx]').forEach(function(el){
     el.addEventListener('click',function(){pageStack=pageStack.slice(0,parseInt(this.getAttribute('data-idx'))+1);render();});
   });
@@ -467,7 +469,6 @@ function renderHome(app){
   app.innerHTML=mkH('Umatizim',false,null)+'<div class="main"><div class="page-title">Bo\'limlar</div><div class="card" id="gs"><div class="card-icon">💚</div><div class="card-info"><div class="card-name">Sog\'liq</div><div class="card-sub">Sport va to\'g\'ri ovqatlanish</div></div><span class="card-arrow">›</span></div></div>';
   document.getElementById('gs').addEventListener('click',function(){pageStack.push('soglik');render();});
 }
-
 function renderSoglik(app){
   app.innerHTML=mkH("💚 Sog'liq",true,null)+mkBc()+'<div class="main"><div class="page-title">Bo\'limlar</div><div class="card" id="g1"><div class="card-icon">🏋️</div><div class="card-info"><div class="card-name">Sport</div><div class="card-sub">Mashqlar va trenirovka</div></div><span class="card-arrow">›</span></div><div class="card" id="g2"><div class="card-icon">🥗</div><div class="card-info"><div class="card-name">To\'g\'ri ovqatlanish</div><div class="card-sub">Ratsion, zapas, xarid</div></div><span class="card-arrow">›</span></div></div>';
   bc();
@@ -476,11 +477,12 @@ function renderSoglik(app){
 }
 
 function renderOvqatlanish(app){
-  var tmMissing = tomorrowHasMissing();
+  var warnDay = shouldWarnToday();
+  var haridSub = warnDay ? '⚠️ '+warnDay+' uchun xarid kerak!' : 'Nima olish kerak';
   app.innerHTML=mkH("🥗 Ovqatlanish",true,null)+mkBc()+'<div class="main"><div class="page-title">Bo\'limlar</div>'+
     '<div class="card" id="gr"><div class="card-icon">📋</div><div class="card-info"><div class="card-name">Kunlik ratsion</div><div class="card-sub">7 kunlik ovqat rejasi</div></div><span class="card-arrow">›</span></div>'+
     '<div class="card" id="gz"><div class="card-icon">📦</div><div class="card-info"><div class="card-name">Zapas</div><div class="card-sub">Nima bor, necha kunga</div></div><span class="card-arrow">›</span></div>'+
-    '<div class="card'+(tmMissing?' danger':'')+'" id="gh"><div class="card-icon">🛒</div><div class="card-info"><div class="card-name">Xarid rejasi</div><div class="card-sub">'+(tmMissing?'⚠️ Ertaga mahsulot yetmaydi!':'Nima olish kerak')+'</div></div><span class="card-arrow">›</span></div>'+
+    '<div class="card'+(warnDay?' danger':'')+'" id="gh"><div class="card-icon">🛒</div><div class="card-info"><div class="card-name">Xarid rejasi</div><div class="card-sub">'+haridSub+'</div></div><span class="card-arrow">›</span></div>'+
     '<div class="card" id="go"><div class="card-icon">🍽️</div><div class="card-info"><div class="card-name">Ovqatlar</div><div class="card-sub">Retseptlar va tarkiblar</div></div><span class="card-arrow">›</span></div></div>';
   bc();
   document.getElementById('gr').addEventListener('click',function(){pageStack.push('ratsion');render();});
@@ -490,14 +492,13 @@ function renderOvqatlanish(app){
 }
 
 function renderRatsion(app){
-  var allDays = getDays();
-  var h = mkH('📋 Kunlik ratsion',true,null)+mkBc()+'<div class="main"><div class="page-title">Kunlar</div>';
-  for (var i=0; i<allDays.length; i++) {
+  var allDays=getDays();
+  var h=mkH('📋 Kunlik ratsion',true,null)+mkBc()+'<div class="main"><div class="page-title">Kunlar</div>';
+  for(var i=0;i<allDays.length;i++){
     var d=allDays[i]; var tod=isToday(d); var yest=isYesterday(d); var past=isPast(d);
     var miss=dayHasMissing(d,i,allDays);
     var plan=getDayPlan(d);
     var mealNames=MEAL_TIMES.map(function(mt){var o=getOvqat(plan[mt.key]);return o?o.name:null;}).filter(Boolean);
-    // Yesterday: normal card, only badge is red
     var cardClass='day-card'+(!past&&miss?' warn-red':'');
     h+='<div class="'+cardClass+'" data-ts="'+d.getTime()+'">';
     h+='<div class="day-date"><div class="day-date-num">'+d.getDate()+'</div>';
@@ -505,10 +506,10 @@ function renderRatsion(app){
     h+='<div class="day-divider"></div>';
     h+='<div class="day-info"><div class="day-name">'+UZ_DAYS[d.getDay()]+'</div>';
     h+='<div class="day-meals">'+mealNames.join(' / ')+'</div>';
-    if (!past&&miss) h+='<div class="day-warn">⚠️ Mahsulot yetmaydi</div>';
+    if(!past&&miss) h+='<div class="day-warn">⚠️ Mahsulot yetmaydi</div>';
     h+='</div>';
-    if (tod) h+='<span class="today-badge">Bugun</span>';
-    else if (yest) h+='<span class="past-badge" style="color:var(--danger)">Kecha</span>';
+    if(tod) h+='<span class="today-badge">Bugun</span>';
+    else if(yest) h+='<span class="past-badge">Kecha</span>';
     h+='<span class="card-arrow">›</span></div>';
   }
   h+='</div>';
@@ -533,23 +534,18 @@ function renderDay(app){
     var hasMissing=missing.length>0;
     var itemsStr=ovqat?ovqat.ingredients.map(function(ing){
       var p=getProd(ing.productId); if(!p) return '';
-      var cooked=getCookedAmount(ing);
-      var raw=getRawNeeded(ing);
+      var cooked=getCookedAmount(ing); var raw=getRawNeeded(ing);
       if(p.coef!==1) return p.name+' '+cooked+p.unit+' <span style="opacity:0.55;font-size:11px">('+raw+'g xom)</span>';
       return p.name+' '+raw+p.unit;
     }).join(' · '):'—';
-
     h+='<div class="meal-card'+(hasMissing?' missing':'')+'" data-time="'+mt.key+'">';
     h+='<div class="meal-card-header">';
     h+='<div class="meal-card-icon">'+mt.icon+'</div>';
-    h+='<div class="meal-card-info">';
-    h+='<div class="meal-card-time">'+mt.name+'</div>';
-    h+='<div class="meal-card-name">'+(ovqat?ovqat.icon+' '+ovqat.name:'Tanlanmagan')+'</div>';
-    h+='</div>';
-    h+='<span class="meal-card-arrow">›</span>';
-    h+='</div>';
-    if (ovqat) h+='<div class="meal-card-items">'+itemsStr+'</div>';
-    if (hasMissing) h+='<div class="meal-card-missing">⚠️ Yo\'q: '+missing.join(', ')+'</div>';
+    h+='<div class="meal-card-info"><div class="meal-card-time">'+mt.name+'</div>';
+    h+='<div class="meal-card-name">'+(ovqat?ovqat.icon+' '+ovqat.name:'Tanlanmagan')+'</div></div>';
+    h+='<span class="meal-card-arrow">›</span></div>';
+    if(ovqat) h+='<div class="meal-card-items">'+itemsStr+'</div>';
+    if(hasMissing) h+='<div class="meal-card-missing">⚠️ Yo\'q: '+missing.join(', ')+'</div>';
     h+='</div>';
   });
   h+='</div>';
@@ -615,7 +611,6 @@ function renderOvqatlar(app){
   });
 }
 
-// =================== ZAPAS MODALS ===================
 function buildZaddList(){
   var q=document.getElementById('zadd-search').value.toLowerCase();
   var filtered=DEFAULT_PRODUCTS.filter(function(p){return p.name.toLowerCase().includes(q);});
@@ -692,7 +687,6 @@ document.getElementById('zedit-del').addEventListener('click',function(){
   document.getElementById('modal-zedit').classList.remove('open'); render(); showToast("O'chirildi");
 });
 
-// =================== MEAL SELECT ===================
 function openMealSelect(ds,timeKey,currentOvqatId){
   editingMealTime={dateStr:ds,timeKey:timeKey}; pendingMealChange=null;
   var mt=MEAL_TIMES.find(function(m){return m.key===timeKey;});
@@ -733,7 +727,6 @@ document.getElementById('meal-confirm-yes').addEventListener('click',function(){
   document.getElementById('meal-options').style.display=''; pendingMealChange=null; render(); showToast('Saqlandi ✓');
 });
 
-// =================== OVQAT MODAL ===================
 var ovqatSelectedEmoji='🍲';
 var OVQAT_EMOJIS=['🍲','🥘','🍜','🥗','🍳','🥩','🍖','🫕','🥣','🍱','🫔','🥙'];
 function buildOvqatEmoji(){
@@ -765,8 +758,7 @@ function openOvqatModal(oid){
     var o=getOvqat(oid);
     document.getElementById('ovqat-modal-title').textContent='Tahrir';
     document.getElementById('ovqat-name').value=o.name;
-    ovqatSelectedEmoji=o.icon;
-    tempIngredients=JSON.parse(JSON.stringify(o.ingredients));
+    ovqatSelectedEmoji=o.icon; tempIngredients=JSON.parse(JSON.stringify(o.ingredients));
     document.getElementById('ovqat-del').style.display='flex';
   } else {
     document.getElementById('ovqat-modal-title').textContent='Yangi ovqat';
@@ -797,7 +789,6 @@ document.getElementById('ovqat-del').addEventListener('click',function(){
   saveData(); document.getElementById('modal-ovqat').classList.remove('open'); render(); showToast("O'chirildi");
 });
 
-// =================== ING MODAL ===================
 function buildIngList(){
   var q=document.getElementById('ing-search').value.toLowerCase();
   var filtered=DEFAULT_PRODUCTS.filter(function(p){return p.name.toLowerCase().includes(q);});
@@ -842,8 +833,7 @@ document.getElementById('ing-save').addEventListener('click',function(){
   var ex=tempIngredients.find(function(i){return i.productId===prod.id;});
   if(ex){ex.rawAmount=rawAmt;ex.cookedAmount=cookedAmt;}
   else tempIngredients.push({productId:prod.id,rawAmount:rawAmt,cookedAmount:cookedAmt});
-  document.getElementById('modal-ing').classList.remove('open');
-  renderTempIngs();
+  document.getElementById('modal-ing').classList.remove('open'); renderTempIngs();
 });
 
 function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
