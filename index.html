@@ -75,6 +75,12 @@
   .status-red { color: var(--danger); }
   .progress-bar { height: 4px; background: var(--bg3); border-radius: 2px; margin-top: 8px; overflow: hidden; }
   .progress-fill { height: 100%; border-radius: 2px; }
+  .section-divider { font-size: 12px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; padding: 16px 0 8px; border-top: 1px solid var(--bg3); margin-top: 8px; }
+  .xarid-item { background: #fdf2f2; border: 1px solid #f0c0c0; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
+  .xarid-icon { font-size: 28px; flex-shrink: 0; }
+  .xarid-info { flex: 1; }
+  .xarid-name { font-size: 15px; font-weight: 500; color: var(--text); }
+  .xarid-amount { font-size: 13px; color: var(--danger); margin-top: 2px; }
   .ovqat-card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
   .ovqat-icon { width: 44px; height: 44px; background: var(--bg3); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
   .ovqat-info { flex: 1; }
@@ -242,11 +248,11 @@ var UZ_DAYS = ['Yakshanba','Dushanba','Seshanba','Chorshanba','Payshanba','Juma'
 var UZ_MONTHS = ['Yan','Fev','Mar','Apr','May','Iyun','Iyul','Avg','Sen','Okt','Noy','Dek'];
 
 var MEAL_TIMES = [
-  { key: 'nonushta', icon: '🌅', name: 'Nonushta' },
-  { key: 'snack',    icon: '🍎', name: 'Перекус' },
-  { key: 'obed',     icon: '☀️', name: 'Tushlik' },
-  { key: 'ujin',     icon: '🌙', name: 'Kechki ovqat' },
-  { key: 'kechga',   icon: '🌛', name: 'Kechga' }
+  { key: 'nonushta',   icon: '🌅', name: 'Nonushta' },
+  { key: 'snack',      icon: '🍎', name: 'Oraliq ovqat' },
+  { key: 'obed',       icon: '☀️', name: 'Tushlik' },
+  { key: 'ujin',       icon: '🌙', name: 'Kechki ovqat' },
+  { key: 'kechga',     icon: '🌛', name: 'Kechga' }
 ];
 
 var DEFAULT_PRODUCTS = [
@@ -372,31 +378,61 @@ function getMissingForMeal(ovqatId, dayIndex, allDays) {
   return missing;
 }
 
-// Find first day in next 7 days that has missing ingredients
-// Returns { dayIndex, dayName } or null
+// Find first future day with missing ingredients
 function findFirstMissingDay() {
-  var allDays = getDays();
-  var today = new Date(); today.setHours(0,0,0,0);
-  for (var i=0; i<allDays.length; i++) {
-    var d = allDays[i];
-    if (d <= today) continue; // skip today and past
-    if (dayHasMissing(d, i, allDays)) {
-      return { day: d, dayName: UZ_DAYS[d.getDay()] };
-    }
+  var allDays=getDays();
+  var today=new Date(); today.setHours(0,0,0,0);
+  for(var i=0;i<allDays.length;i++){
+    var d=allDays[i];
+    if(d<=today) continue;
+    if(dayHasMissing(d,i,allDays)) return { day:d, dayName:UZ_DAYS[d.getDay()] };
   }
   return null;
 }
 
-// Find day BEFORE first missing day — that's when we need to warn
-function shouldWarnToday() {
-  var missing = findFirstMissingDay();
-  if (!missing) return null;
-  var today = new Date(); today.setHours(0,0,0,0);
-  var dayBefore = new Date(missing.day); dayBefore.setDate(missing.day.getDate()-1);
-  if (dayBefore.getTime() === today.getTime()) {
-    return missing.dayName; // warn today
+// Get xarid info for card display
+function getXaridInfo() {
+  var missing=findFirstMissingDay();
+  if(!missing) return null;
+  var today=new Date(); today.setHours(0,0,0,0);
+  var dayBefore=new Date(missing.day); dayBefore.setDate(missing.day.getDate()-1);
+  var isUrgent=dayBefore.getTime()===today.getTime();
+  return {
+    day: missing.day,
+    dayName: missing.dayName,
+    isUrgent: isUrgent,
+    dateLabel: fmtDate(missing.day)+' '+missing.dayName
+  };
+}
+
+// Get missing products for first missing day
+function getMissingProductsForXarid() {
+  var allDays=getDays();
+  var today=new Date(); today.setHours(0,0,0,0);
+  var missingProds = {};
+  for(var i=0;i<allDays.length;i++){
+    var d=allDays[i];
+    if(d<=today) continue;
+    if(!dayHasMissing(d,i,allDays)) continue;
+    var plan=getDayPlan(d);
+    MEAL_TIMES.forEach(function(mt){
+      var ovqat=getOvqat(plan[mt.key]); if(!ovqat) return;
+      ovqat.ingredients.forEach(function(ing){
+        var rem=calcRemainingForDay(ing.productId,i,allDays);
+        var needed=getRawNeeded(ing);
+        if(rem<needed){
+          var prod=getProd(ing.productId); if(!prod) return;
+          if(!missingProds[ing.productId]){
+            missingProds[ing.productId]={prod:prod, needed: needed - Math.max(0,rem)};
+          } else {
+            missingProds[ing.productId].needed += needed;
+          }
+        }
+      });
+    });
+    break; // only first missing day
   }
-  return null;
+  return Object.values(missingProds);
 }
 
 function calcEffectiveRemaining(item) {
@@ -437,8 +473,7 @@ function render() {
   else if(page==='ovqatlanish') renderOvqatlanish(app);
   else if(page==='ratsion') renderRatsion(app);
   else if(page==='day') renderDay(app);
-  else if(page==='zapas') renderZapas(app);
-  else if(page==='harid') renderHarid(app);
+  else if(page==='zaxira') renderZaxira(app);
   else if(page==='ovqatlar') renderOvqatlar(app);
 }
 
@@ -450,7 +485,7 @@ function mkH(title,back,addId){
   return '<div class="header"><div class="header-left">'+left+'</div>'+right+'</div>';
 }
 function mkBc(){
-  var lb={home:'🏠',soglik:"💚 Sog'liq",ovqatlanish:"🥗 Ovqatlanish",ratsion:'📋 Ratsion',zapas:'📦 Zapas',harid:'🛒 Xarid',ovqatlar:"🍽️ Ovqatlar",day:'📅 Kun'};
+  var lb={home:'🏠',soglik:"💚 Sog'liq",ovqatlanish:"🥗 Ovqatlanish",ratsion:'📋 Ratsion',zaxira:'📦 Zaxira va Xarid',ovqatlar:"🍽️ Ovqatlar",day:'📅 Kun'};
   if(pageStack.length<=1) return '';
   var h='<div class="breadcrumb">';
   for(var i=0;i<pageStack.length-1;i++) h+='<span data-idx="'+i+'">'+(lb[pageStack[i]]||'')+'</span><span style="color:var(--light)"> › </span>';
@@ -470,24 +505,32 @@ function renderHome(app){
   document.getElementById('gs').addEventListener('click',function(){pageStack.push('soglik');render();});
 }
 function renderSoglik(app){
-  app.innerHTML=mkH("💚 Sog'liq",true,null)+mkBc()+'<div class="main"><div class="page-title">Bo\'limlar</div><div class="card" id="g1"><div class="card-icon">🏋️</div><div class="card-info"><div class="card-name">Sport</div><div class="card-sub">Mashqlar va trenirovka</div></div><span class="card-arrow">›</span></div><div class="card" id="g2"><div class="card-icon">🥗</div><div class="card-info"><div class="card-name">To\'g\'ri ovqatlanish</div><div class="card-sub">Ratsion, zapas, xarid</div></div><span class="card-arrow">›</span></div></div>';
+  app.innerHTML=mkH("💚 Sog'liq",true,null)+mkBc()+'<div class="main"><div class="page-title">Bo\'limlar</div><div class="card" id="g1"><div class="card-icon">🏋️</div><div class="card-info"><div class="card-name">Sport</div><div class="card-sub">Mashqlar va trenirovka</div></div><span class="card-arrow">›</span></div><div class="card" id="g2"><div class="card-icon">🥗</div><div class="card-info"><div class="card-name">To\'g\'ri ovqatlanish</div><div class="card-sub">Ratsion, zaxira, xarid</div></div><span class="card-arrow">›</span></div></div>';
   bc();
   document.getElementById('g1').addEventListener('click',function(){showToast('Tez kunda qo\'shiladi');});
   document.getElementById('g2').addEventListener('click',function(){pageStack.push('ovqatlanish');render();});
 }
 
 function renderOvqatlanish(app){
-  var warnDay = shouldWarnToday();
-  var haridSub = warnDay ? '⚠️ '+warnDay+' uchun xarid kerak!' : 'Nima olish kerak';
+  var xarid=getXaridInfo();
+  var zaxiraSub, zaxiraDanger=false;
+  if(xarid){
+    if(xarid.isUrgent){
+      zaxiraSub="⚠️ Do'konga borish: bugun!";
+      zaxiraDanger=true;
+    } else {
+      zaxiraSub="Do'konga borish: "+xarid.dateLabel;
+    }
+  } else {
+    zaxiraSub="Zaxira yetarli ✅";
+  }
   app.innerHTML=mkH("🥗 Ovqatlanish",true,null)+mkBc()+'<div class="main"><div class="page-title">Bo\'limlar</div>'+
     '<div class="card" id="gr"><div class="card-icon">📋</div><div class="card-info"><div class="card-name">Kunlik ratsion</div><div class="card-sub">7 kunlik ovqat rejasi</div></div><span class="card-arrow">›</span></div>'+
-    '<div class="card" id="gz"><div class="card-icon">📦</div><div class="card-info"><div class="card-name">Zapas</div><div class="card-sub">Nima bor, necha kunga</div></div><span class="card-arrow">›</span></div>'+
-    '<div class="card'+(warnDay?' danger':'')+'" id="gh"><div class="card-icon">🛒</div><div class="card-info"><div class="card-name">Xarid rejasi</div><div class="card-sub">'+haridSub+'</div></div><span class="card-arrow">›</span></div>'+
+    '<div class="card'+(zaxiraDanger?' danger':'')+'" id="gz"><div class="card-icon">📦</div><div class="card-info"><div class="card-name">Zaxira va Xarid rejasi</div><div class="card-sub">'+zaxiraSub+'</div></div><span class="card-arrow">›</span></div>'+
     '<div class="card" id="go"><div class="card-icon">🍽️</div><div class="card-info"><div class="card-name">Ovqatlar</div><div class="card-sub">Retseptlar va tarkiblar</div></div><span class="card-arrow">›</span></div></div>';
   bc();
   document.getElementById('gr').addEventListener('click',function(){pageStack.push('ratsion');render();});
-  document.getElementById('gz').addEventListener('click',function(){pageStack.push('zapas');render();});
-  document.getElementById('gh').addEventListener('click',function(){pageStack.push('harid');render();});
+  document.getElementById('gz').addEventListener('click',function(){pageStack.push('zaxira');render();});
   document.getElementById('go').addEventListener('click',function(){pageStack.push('ovqatlar');render();});
 }
 
@@ -555,8 +598,34 @@ function renderDay(app){
   });
 }
 
-function renderZapas(app){
-  var h=mkH('📦 Zapas',true,'zadd-btn')+mkBc()+'<div class="main"><div class="page-title">Mahsulotlar</div>';
+function renderZaxira(app){
+  var xarid=getXaridInfo();
+  var missingProds=getMissingProductsForXarid();
+
+  var h=mkH('📦 Zaxira va Xarid rejasi',true,'zadd-btn')+mkBc()+'<div class="main">';
+
+  // Xarid banner
+  if(xarid){
+    var bannerColor=xarid.isUrgent?'#fdf2f2':'#f0f3ee';
+    var bannerBorder=xarid.isUrgent?'var(--danger)':'var(--bg3)';
+    var bannerText=xarid.isUrgent?"⚠️ Do'konga borish: bugun!":"🛒 Do'konga borish: "+xarid.dateLabel;
+    var bannerTextColor=xarid.isUrgent?'var(--danger)':'var(--text2)';
+    h+='<div style="background:'+bannerColor+';border:1px solid '+bannerBorder+';border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:14px;font-weight:500;color:'+bannerTextColor+'">'+bannerText+'</div>';
+  }
+
+  // Xarid kerak bo'lgan mahsulotlar
+  if(missingProds.length){
+    h+='<div class="page-title">Xarid ro\'yxati</div>';
+    missingProds.forEach(function(item){
+      h+='<div class="xarid-item">';
+      h+='<div class="xarid-icon">'+item.prod.icon+'</div>';
+      h+='<div class="xarid-info"><div class="xarid-name">'+item.prod.name+'</div>';
+      h+='<div class="xarid-amount">Kerak: ~'+Math.ceil(item.needed)+item.prod.unit+'</div></div></div>';
+    });
+  }
+
+  // Zaxira
+  h+='<div class="page-title" style="margin-top:'+(missingProds.length?'8px':'0')+'">Zaxira</div>';
   if(!zapas.length){
     h+='<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">Hali mahsulot yo\'q</div><div class="empty-sub">+ tugmasini bosib qo\'shing</div></div>';
   } else {
@@ -584,11 +653,6 @@ function renderZapas(app){
   document.querySelectorAll('.zapas-item').forEach(function(el){
     el.addEventListener('click',function(){openZeditModal(parseInt(this.getAttribute('data-idx')));});
   });
-}
-
-function renderHarid(app){
-  app.innerHTML=mkH('🛒 Xarid rejasi',true,null)+mkBc()+'<div class="main"><div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-text">Tez kunda qo\'shiladi</div></div></div>';
-  bc();
 }
 
 function renderOvqatlar(app){
