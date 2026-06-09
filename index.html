@@ -2,535 +2,320 @@
 <html lang="uz">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Biznes jarayonlar</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Umatizim</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;background:var(--tg-theme-bg-color,#f5f5f3);color:var(--tg-theme-text-color,#1a1a1a);font-size:14px;min-height:100vh}
-:root{--acc:var(--tg-theme-button-color,#1a1a1a);--acc-text:var(--tg-theme-button-text-color,#fff);--hint:var(--tg-theme-hint-color,#888);--bg2:var(--tg-theme-secondary-bg-color,#fff);--border:rgba(0,0,0,0.08)}
-.page{display:none;padding:16px}.page.active{display:block}
-.page-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
-.back-btn{background:transparent;border:none;font-size:13px;color:var(--acc);cursor:pointer;font-family:inherit;font-weight:600;padding:0}
-.page-title{font-size:16px;font-weight:700}
-.home-header{padding:24px 16px 16px}
-.home-title{font-size:28px;font-weight:700;letter-spacing:-0.5px}
-.home-sub{font-size:13px;color:var(--hint);margin-top:3px}
-.menu-list{display:flex;flex-direction:column;gap:8px;padding:0 16px}
-.menu-item{background:var(--bg2);border-radius:12px;padding:16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
-.menu-item:active{opacity:.7}
-.menu-name{font-size:15px;font-weight:600}
-.menu-desc{font-size:12px;color:var(--hint);margin-top:2px}
-.menu-arrow{font-size:20px;color:var(--hint)}
-.section-list{display:flex;flex-direction:column;gap:8px}
-.section-item{background:var(--bg2);border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
-.section-item:active{opacity:.7}
-.section-num{width:28px;height:28px;border-radius:8px;background:rgba(0,0,0,0.05);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--hint);flex-shrink:0;margin-right:12px}
-.section-name{font-size:14px;font-weight:600}
-.chevron{color:var(--hint);font-size:16px}
-.cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-.nav-card{background:var(--bg2);border-radius:12px;padding:16px;cursor:pointer;position:relative;min-height:80px}
-.nav-card:active{opacity:.7}
-.nav-card-title{font-size:14px;font-weight:700}
-.nav-card-arrow{position:absolute;bottom:12px;right:12px;font-size:14px;opacity:.2}
-.add-btn{width:100%;padding:13px;background:transparent;border:1.5px dashed var(--border);border-radius:12px;font-size:13px;color:var(--hint);cursor:pointer;font-family:inherit;margin-top:4px}
-.add-item-btn{width:100%;padding:11px;background:transparent;border:1.5px dashed var(--border);border-radius:10px;font-size:13px;color:var(--hint);cursor:pointer;font-family:inherit;margin-top:6px}
-.search-wrap{margin-bottom:12px}
-.search-inp{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg2);color:var(--tg-theme-text-color,#1a1a1a);outline:none}
-.form-box{background:var(--bg2);border-radius:12px;padding:14px;margin-top:8px}
-.fi{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:rgba(0,0,0,0.03);color:var(--tg-theme-text-color,#1a1a1a);outline:none;margin-top:4px}
-.fi:focus{border-color:var(--acc)}
-.flbl{font-size:11px;font-weight:600;color:var(--hint);text-transform:uppercase;letter-spacing:.5px}
-.frow{margin-bottom:10px}
-.fbtns{display:flex;gap:8px;margin-top:12px}
-.fsave{background:var(--acc);color:var(--acc-text);border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
-.fcancel{background:transparent;border:1px solid var(--border);padding:9px 14px;border-radius:8px;font-size:13px;cursor:pointer;color:var(--hint);font-family:inherit}
-.action-btns{display:flex;gap:4px;opacity:0;transition:opacity .15s}
-.section-item:hover .action-btns,.nav-card:hover .action-btns{opacity:1}
-.abtn{border:1px solid var(--border);background:transparent;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:var(--hint)}
-.abtn-red{border-color:rgba(220,38,38,.3);color:#dc2626}
-.nav-card-actions{position:absolute;top:6px;right:6px;display:flex;gap:3px;opacity:0}
-.nav-card:hover .nav-card-actions{opacity:1}
-.tree-wrap{overflow-x:auto;padding-bottom:16px}
-.tree-col{display:flex;flex-direction:column}
-.node-row{display:flex;flex-direction:row;align-items:flex-start;margin-bottom:10px}
-.node-card{width:260px;flex-shrink:0;background:var(--bg2);border-radius:10px;padding:12px;position:relative}
-.node-num{position:absolute;top:-1px;left:-1px;width:24px;height:24px;background:rgba(0,0,0,0.05);border-radius:10px 0 6px 0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--hint)}
-.node-name{font-size:13px;font-weight:600;line-height:1.4;margin-top:12px;padding-right:36px}
-.node-msg{background:rgba(0,0,0,0.04);border-radius:6px;padding:8px 30px 8px 8px;font-size:11px;line-height:1.6;margin-top:8px;white-space:pre-wrap;position:relative;font-family:monospace}
-.copy-btn{position:absolute;top:5px;right:5px;width:20px;height:20px;border:1px solid var(--border);background:var(--bg2);border-radius:4px;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;opacity:.7}
-.node-link{font-size:11px;color:var(--hint);margin-top:6px;word-break:break-all}
-.node-link a{color:var(--acc)}
-.node-corner{position:absolute;top:5px;right:5px;display:flex;gap:2px;opacity:0}
-.node-card:hover .node-corner{opacity:1}
-.corner-btn{width:20px;height:20px;border:1px solid var(--border);background:var(--bg2);border-radius:4px;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;color:var(--hint)}
-.corner-btn.always{opacity:1!important}
-.connector{display:flex;flex-direction:row;align-items:stretch}
-.vbar-wrap{width:24px;display:flex;flex-direction:column;align-items:center;flex-shrink:0}
-.vbar{width:1px;background:var(--border);flex:1}
-.children-col{display:flex;flex-direction:column}
-.child-row{display:flex;align-items:flex-start}
-.hbar{width:24px;height:1px;background:var(--border);flex-shrink:0;margin-top:22px}
-.add-child-btn{width:260px;padding:7px 10px;background:transparent;border:1.5px dashed var(--border);border-radius:10px;font-size:11px;color:var(--hint);cursor:pointer;font-family:inherit;text-align:left;margin-bottom:8px}
-.add-root-btn{padding:9px 14px;background:transparent;border:1.5px dashed var(--border);border-radius:10px;font-size:12px;color:var(--hint);cursor:pointer;font-family:inherit;margin-top:6px;display:flex;align-items:center;gap:6px}
-.node-form{width:260px;background:var(--bg2);border-radius:10px;padding:12px;margin-bottom:8px}
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:100;align-items:center;justify-content:center}
-.modal-bg.open{display:flex}
-.modal-box{background:var(--bg2);border-radius:16px;padding:20px;width:300px}
-.modal-title{font-size:16px;font-weight:700;margin-bottom:4px}
-.modal-sub{font-size:12px;color:var(--hint);margin-bottom:14px}
-.modal-err{font-size:11px;color:#dc2626;margin-top:6px;display:none}
-.modal-err.show{display:block}
-.notif{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:#1a1a1a;color:#fff;padding:10px 18px;border-radius:10px;font-size:12px;font-weight:500;z-index:999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap}
-.notif.show{opacity:1;transform:translateX(-50%) translateY(0)}
-.img-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:200;align-items:center;justify-content:center;cursor:zoom-out}
-.img-modal.open{display:flex}
-.img-modal img{max-width:95vw;max-height:90vh;border-radius:8px;object-fit:contain}
-.fade{animation:fadeIn .2s ease}
-@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-.breadcrumb{padding:8px 16px 0;font-size:12px;color:var(--hint);display:flex;flex-wrap:wrap;gap:4px;align-items:center}
-.bc-item{cursor:pointer;color:var(--acc)}.bc-sep{opacity:.4}.bc-cur{color:var(--tg-theme-text-color,#1a1a1a);font-weight:500}
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #f0f3ee;
+    --bg2: #ffffff;
+    --bg3: #e2e8de;
+    --accent: #558237;
+    --accent2: #a4b83f;
+    --dark: #1e5927;
+    --mid: #7a9669;
+    --light: #a9b7a3;
+    --lightest: #dadfe2;
+    --text: #1e2e1a;
+    --text2: #558237;
+    --text3: #7a9669;
+    --danger: #c0392b;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; padding-bottom: 40px; }
+
+  /* HEADER */
+  .header { background: var(--bg2); padding: 16px 20px; border-bottom: 1px solid var(--bg3); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .back-btn { width: 32px; height: 32px; background: var(--bg3); border: none; border-radius: 8px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .logo { width: 36px; height: 36px; background: var(--dark); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .app-name { font-size: 17px; font-weight: 600; color: var(--dark); }
+  .app-sub { font-size: 12px; color: var(--text3); margin-top: 1px; }
+  .btn-add { width: 36px; height: 36px; background: var(--accent); border: none; border-radius: 10px; color: white; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
+
+  /* MAIN */
+  .main { padding: 20px 16px; }
+  .page-title { font-size: 13px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; font-weight: 500; }
+
+  /* SECTION CARDS */
+  .sections-list { display: flex; flex-direction: column; gap: 10px; }
+  .section-card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: box-shadow 0.15s; }
+  .section-card:active { box-shadow: 0 2px 12px rgba(85,130,55,0.15); }
+  .drag-handle { color: var(--light); font-size: 18px; cursor: grab; padding: 4px; }
+  .section-icon { width: 46px; height: 46px; background: var(--bg3); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+  .section-info { flex: 1; }
+  .section-name { font-size: 16px; font-weight: 500; color: var(--text); }
+  .section-arrow { color: var(--light); font-size: 18px; margin-right: 4px; }
+  .badge-inactive { font-size: 11px; background: var(--bg3); color: var(--text3); padding: 2px 8px; border-radius: 20px; margin-top: 4px; display: inline-block; }
+  .section-actions { display: flex; gap: 6px; }
+  .btn-icon { width: 32px; height: 32px; border: 1px solid var(--bg3); background: var(--bg3); border-radius: var(--radius-sm); color: var(--text3); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .btn-icon.danger { color: var(--danger); }
+
+  /* INNER PAGE */
+  .inner-page { display: none; }
+  .inner-page.active { display: block; }
+  .home-page { display: block; }
+  .home-page.hidden { display: none; }
+
+  .inner-header-title { font-size: 17px; font-weight: 600; color: var(--dark); }
+  .inner-content { padding: 20px 16px; }
+  .coming-soon { text-align: center; padding: 60px 20px; color: var(--text3); }
+  .coming-soon-icon { font-size: 48px; margin-bottom: 12px; }
+  .coming-soon-text { font-size: 16px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
+  .coming-soon-sub { font-size: 13px; }
+
+  /* EMPTY */
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-text { font-size: 15px; margin-bottom: 6px; color: var(--text2); }
+  .empty-sub { font-size: 13px; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: flex-end; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg2); border-radius: var(--radius) var(--radius) 0 0; padding: 24px 20px 40px; width: 100%; max-width: 500px; border-top: 2px solid var(--accent2); }
+  .modal-handle { width: 36px; height: 4px; background: var(--bg3); border-radius: 2px; margin: 0 auto 20px; }
+  .modal-title { font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 20px; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 13px; color: var(--text3); margin-bottom: 6px; display: block; font-weight: 500; }
+  .form-input { width: 100%; background: var(--bg); border: 1px solid var(--bg3); border-radius: var(--radius-sm); padding: 12px 14px; color: var(--text); font-size: 15px; outline: none; }
+  .form-input:focus { border-color: var(--accent); }
+  .form-input::placeholder { color: var(--light); }
+  .emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-top: 8px; }
+  .emoji-btn { width: 100%; aspect-ratio: 1; background: var(--bg); border: 2px solid transparent; border-radius: var(--radius-sm); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .emoji-btn.selected { border-color: var(--accent); background: #e8f0e0; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid var(--bg3); margin-top: 4px; }
+  .toggle-label { font-size: 15px; color: var(--text2); }
+  .toggle { width: 48px; height: 26px; background: var(--light); border-radius: 13px; border: none; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+  .toggle.on { background: var(--accent); }
+  .toggle::after { content: ''; position: absolute; width: 20px; height: 20px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: left 0.2s; }
+  .toggle.on::after { left: 25px; }
+  .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+  .btn-cancel { flex: 1; padding: 14px; background: var(--bg3); border: none; border-radius: var(--radius-sm); color: var(--text3); font-size: 15px; cursor: pointer; font-weight: 500; }
+  .btn-save { flex: 2; padding: 14px; background: var(--accent); border: none; border-radius: var(--radius-sm); color: white; font-size: 15px; font-weight: 600; cursor: pointer; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--dark); color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 500; z-index: 300; transition: transform 0.25s; pointer-events: none; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
 
-<div class="page active" id="p-home">
-  <div class="home-header">
-    <div class="home-title">Biznes jarayonlar</div>
-    <div class="home-sub">Bo'limni tanlang</div>
-  </div>
-  <div style="padding:0 16px">
-    <div id="sections-grid" class="cards-grid"></div>
-    <div id="section-form"></div>
-  </div>
-</div>
-
-<div class="page" id="p-section">
-  <div class="breadcrumb" id="bc-section"></div>
-  <div style="padding:16px">
-    <div class="page-header">
-      <button class="back-btn" onclick="goBack('p-home')">← Orqaga</button>
-      <span class="page-title" id="section-title"></span>
-    </div>
-    <div class="search-wrap"><input class="search-inp" id="search-cats" placeholder="🔍 Qidirish..." oninput="renderCats()"></div>
-    <div id="cats-list" class="section-list"></div>
-    <div id="cat-form"></div>
-  </div>
-</div>
-
-<div class="page" id="p-cat">
-  <div class="breadcrumb" id="bc-cat"></div>
-  <div style="padding:16px">
-    <div class="page-header">
-      <button class="back-btn" onclick="goBack('p-section')">← Orqaga</button>
-      <span class="page-title" id="cat-title"></span>
-    </div>
-    <div class="search-wrap"><input class="search-inp" id="search-flows" placeholder="🔍 Qidirish..." oninput="renderFlows()"></div>
-    <div id="flows-list" class="section-list"></div>
-    <div id="flow-form"></div>
-  </div>
-</div>
-
-<div class="page" id="p-flow">
-  <div class="breadcrumb" id="bc-flow"></div>
-  <div style="padding:16px">
-    <div class="page-header">
-      <button class="back-btn" onclick="goBack('p-cat')">← Orqaga</button>
-      <span class="page-title" id="flow-title"></span>
-      <div id="flow-admin-btns" style="display:none;margin-left:auto;gap:4px;display:none">
-        <button class="abtn" onclick="editFlowName()">✏</button>
-        <button class="abtn abtn-red" onclick="deleteFlow()">✕</button>
+<!-- HOME PAGE -->
+<div id="home-page" class="home-page">
+  <div class="header">
+    <div class="header-left">
+      <div class="logo">🌿</div>
+      <div>
+        <div class="app-name">Umatizim</div>
+        <div class="app-sub">Соғлиқ ва спорт</div>
       </div>
     </div>
-    <div id="flow-name-form" style="display:none;margin-bottom:14px"></div>
-    <div class="tree-wrap" id="tree-wrap"></div>
-    <div id="root-form"></div>
+    <button class="btn-add" id="btn-add">+</button>
+  </div>
+  <div class="main">
+    <div class="page-title">Бўлимлар</div>
+    <div id="sections-list" class="sections-list"></div>
   </div>
 </div>
 
-<div class="modal-bg" id="login-modal">
-  <div class="modal-box">
-    <div class="modal-title">Admin kirish</div>
-    <div class="modal-sub">Tahrirlash uchun kiring</div>
-    <div class="frow"><label class="flbl">Login</label><input class="fi" id="l-login" autocomplete="off"></div>
-    <div class="frow"><label class="flbl">Parol</label><input class="fi" id="l-pass" type="password" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <div class="modal-err" id="l-err">Noto'g'ri</div>
-    <div class="fbtns" style="margin-top:14px">
-      <button class="fsave" onclick="doLogin()">Kirish</button>
-      <button class="fcancel" onclick="closeModal()">Bekor</button>
+<!-- INNER PAGE -->
+<div id="inner-page" class="inner-page">
+  <div class="header">
+    <div class="header-left">
+      <button class="back-btn" id="btn-back">←</button>
+      <div>
+        <div class="inner-header-title" id="inner-title">Бўлим</div>
+      </div>
+    </div>
+    <button class="btn-add" id="btn-add-inner" style="display:none">+</button>
+  </div>
+  <div class="inner-content">
+    <div class="coming-soon">
+      <div class="coming-soon-icon" id="inner-icon">📋</div>
+      <div class="coming-soon-text" id="inner-name-text">Бўлим</div>
+      <div class="coming-soon-sub">Мазмун яқинда қўшилади</div>
     </div>
   </div>
 </div>
 
-<div class="img-modal" id="img-modal" onclick="closeImg()"><img id="img-src" src="" alt=""></div>
-<div class="notif" id="notif"></div>
-
-<div style="position:fixed;top:0;right:0;z-index:50;padding:10px">
-  <button id="admin-btn" onclick="handleAdmin()" style="border:1px solid var(--border);background:var(--bg2);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;color:var(--hint)">⚙ Admin</button>
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title">Янги бўлим</div>
+    <div class="form-group">
+      <label class="form-label">Номи</label>
+      <input class="form-input" id="input-name" type="text" placeholder="Масалан: Соғлиқ" maxlength="30">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Белги</label>
+      <div class="emoji-grid" id="emoji-grid"></div>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Фаол</span>
+      <button class="toggle on" id="toggle-active"></button>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="btn-cancel">Бекор</button>
+      <button class="btn-save" id="btn-save">Сақлаш</button>
+    </div>
+  </div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-const tg=window.Telegram?.WebApp;
-if(tg){tg.ready();tg.expand();}
+var EMOJIS = ['💚','🏋️','🥗','🏃','💪','🧘','🍎','🥦','🏊','⚽','🎯','📋','📦','🛒','💊','🩺','🧠','❤️','🔥','⚡','🌿','🌱','🥩','🍳','💧','😴','📊','🏆'];
+var sections = [];
+var editingId = null;
+var selectedEmoji = '💚';
+var isActive = true;
+var nextId = 1;
+var dragSrc = null;
 
-const ADMIN_L='testlogin',ADMIN_P='test26';
-let isAdmin=false;
-const DB_KEY='biznes_db_v1';
-
-let db={sections:[]};
-let curSection=null,curCat=null,curFlow=null;
-let navStack=['p-home'];
-
-// ---- STORAGE ----
-function save(){try{localStorage.setItem(DB_KEY,JSON.stringify(db));}catch(e){}}
-function load(){try{const d=localStorage.getItem(DB_KEY);if(d)db=JSON.parse(d);}catch(e){}}
-
-// ---- NAV ----
-function goTo(p){
-  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-  document.getElementById(p).classList.add('active','fade');
-  if(navStack[navStack.length-1]!==p) navStack.push(p);
-  render(p);window.scrollTo(0,0);
-}
-function goBack(p){
-  while(navStack[navStack.length-1]!==p&&navStack.length>1) navStack.pop();
-  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-  document.getElementById(p).classList.add('active');
-  render(p);window.scrollTo(0,0);
-}
-function render(p){
-  if(p==='p-home') renderSections();
-  else if(p==='p-section') renderCats();
-  else if(p==='p-cat') renderFlows();
-  else if(p==='p-flow') renderTree();
-  updateBc();
-}
-function updateBc(){
-  const sec=db.sections.find(s=>s.id===curSection);
-  const cat=sec?.cats.find(c=>c.id===curCat);
-  const flow=cat?.flows.find(f=>f.id===curFlow);
-  const map={'p-home':'Bosh sahifa','p-section':sec?.title||'','p-cat':cat?.title||'','p-flow':flow?.title||''};
-  navStack.forEach((p,i)=>{
-    const el=document.getElementById('bc-'+p.replace('p-',''));
-    if(!el) return;
-    let html='';
-    navStack.slice(0,i+1).forEach((pp,ii)=>{
-      if(ii<i) html+=`<span class="bc-item" onclick="goBack('${pp}')">${map[pp]}</span><span class="bc-sep">›</span>`;
-      else html+=`<span class="bc-cur">${map[pp]}</span>`;
-    });
-    el.innerHTML=html;
-  });
+function loadData() {
+  try {
+    var raw = localStorage.getItem('umatizim_sections');
+    if (raw) { var p = JSON.parse(raw); sections = p.sections || []; nextId = p.nextId || 1; }
+  } catch(e) { sections = []; nextId = 1; }
 }
 
-// ---- AUTH ----
-function handleAdmin(){isAdmin?logout():openModal()}
-function openModal(){
-  document.getElementById('login-modal').classList.add('open');
-  document.getElementById('l-login').value='';
-  document.getElementById('l-pass').value='';
-  document.getElementById('l-err').classList.remove('show');
-  setTimeout(()=>document.getElementById('l-login').focus(),100);
-}
-function closeModal(){document.getElementById('login-modal').classList.remove('open')}
-function doLogin(){
-  const l=document.getElementById('l-login').value.trim();
-  const p=document.getElementById('l-pass').value;
-  if(l===ADMIN_L&&p===ADMIN_P){
-    isAdmin=true;closeModal();
-    const btn=document.getElementById('admin-btn');
-    btn.textContent='⚙ Chiqish';btn.style.background='#1a1a1a';btn.style.color='#fff';
-    notify('Admin ✓');render(navStack[navStack.length-1]);
-  }else{document.getElementById('l-err').classList.add('show');document.getElementById('l-pass').value='';}
-}
-function logout(){
-  isAdmin=false;
-  const btn=document.getElementById('admin-btn');
-  btn.textContent='⚙ Admin';btn.style.background='';btn.style.color='';
-  notify('Chiqildi');render(navStack[navStack.length-1]);
+function saveData() {
+  localStorage.setItem('umatizim_sections', JSON.stringify({ sections: sections, nextId: nextId }));
 }
 
-// ---- SECTIONS ----
-function renderSections(){
-  const g=document.getElementById('sections-grid');
-  let h='';
-  db.sections.forEach(s=>{
-    h+=`<div class="nav-card" onclick="openSection('${s.id}')">
-      ${isAdmin?`<div class="nav-card-actions" onclick="event.stopPropagation()">
-        <button class="abtn" onclick="editSection('${s.id}')">✏</button>
-        <button class="abtn abtn-red" onclick="delSection('${s.id}')">✕</button>
-      </div>`:''}
-      <div class="nav-card-title">${esc(s.title)}</div>
-      <div class="nav-card-arrow">→</div>
-    </div>`;
-  });
-  if(isAdmin) h+=`<button class="add-btn" onclick="showSecForm()">＋ Bo'lim</button>`;
-  g.innerHTML=h;
-  document.getElementById('section-form').innerHTML='';
-}
-function openSection(id){curSection=id;goTo('p-section')}
-function showSecForm(id){
-  const sec=id?db.sections.find(s=>s.id===id):null;
-  document.getElementById('section-form').innerHTML=`<div class="form-box fade">
-    <div class="frow"><label class="flbl">Nomi</label><input class="fi" id="sf-title" value="${esc(sec?.title||'')}" placeholder="Bo'lim nomi..."></div>
-    <div class="fbtns">
-      <button class="fsave" onclick="saveSection('${id||''}')">Saqlash</button>
-      <button class="fcancel" onclick="renderSections()">Bekor</button>
-    </div>
-  </div>`;
-  document.getElementById('sf-title').focus();
-}
-function saveSection(id){
-  const title=document.getElementById('sf-title').value.trim();
-  if(!title){notify('Nom kiriting!');return;}
-  if(id){const s=db.sections.find(x=>x.id===id);if(s)s.title=title;}
-  else db.sections.push({id:'s'+Date.now(),title,cats:[]});
-  save();notify('Saqlandi ✓');renderSections();
-}
-function editSection(id){showSecForm(id)}
-function delSection(id){
-  if(!confirm('O\'chirasizmi?'))return;
-  db.sections=db.sections.filter(s=>s.id!==id);
-  save();notify("O'chirildi ✓");renderSections();
-}
-
-// ---- CATS ----
-function renderCats(){
-  const sec=db.sections.find(s=>s.id===curSection);if(!sec)return;
-  document.getElementById('section-title').textContent=sec.title;
-  const q=(document.getElementById('search-cats')?.value||'').trim().toLowerCase();
-  const filtered=q?sec.cats.filter(c=>c.title.toLowerCase().includes(q)):sec.cats;
-  let h='';
-  filtered.forEach((c,i)=>{
-    h+=`<div class="section-item" onclick="openCat('${c.id}')">
-      <div style="display:flex;align-items:center">
-        <div class="section-num">${String(i+1).padStart(2,'0')}</div>
-        <div class="section-name">${esc(c.title)}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        ${isAdmin?`<div class="action-btns">
-          <button class="abtn" onclick="event.stopPropagation();editCat('${c.id}')">✏</button>
-          <button class="abtn abtn-red" onclick="event.stopPropagation();delCat('${c.id}')">✕</button>
-        </div>`:''}
-        <span class="chevron">›</span>
-      </div>
-    </div>`;
-  });
-  if(!filtered.length) h=`<div style="text-align:center;padding:24px;color:var(--hint);font-size:13px">${q?'Topilmadi':'Kategoriyalar yo\'q'}</div>`;
-  document.getElementById('cats-list').innerHTML=h;
-  if(isAdmin) document.getElementById('cat-form').innerHTML=`<button class="add-item-btn" onclick="showCatForm()">＋ Kategoriya qo'shish</button>`;
-  else document.getElementById('cat-form').innerHTML='';
-}
-function openCat(id){curCat=id;goTo('p-cat')}
-function showCatForm(id){
-  const sec=db.sections.find(s=>s.id===curSection);
-  const cat=id?sec?.cats.find(c=>c.id===id):null;
-  document.getElementById('cat-form').innerHTML=`<div class="form-box fade">
-    <div class="frow"><label class="flbl">Nomi</label><input class="fi" id="cf-title" value="${esc(cat?.title||'')}" placeholder="Kategoriya nomi..."></div>
-    <div class="fbtns">
-      <button class="fsave" onclick="saveCat('${id||''}')">Saqlash</button>
-      <button class="fcancel" onclick="renderCats()">Bekor</button>
-    </div>
-  </div>`;
-  document.getElementById('cf-title').focus();
-}
-function saveCat(id){
-  const sec=db.sections.find(s=>s.id===curSection);if(!sec)return;
-  const title=document.getElementById('cf-title').value.trim();
-  if(!title){notify('Nom kiriting!');return;}
-  if(id){const c=sec.cats.find(x=>x.id===id);if(c)c.title=title;}
-  else sec.cats.push({id:'c'+Date.now(),title,flows:[]});
-  save();notify('Saqlandi ✓');renderCats();
-}
-function editCat(id){showCatForm(id)}
-function delCat(id){
-  if(!confirm('O\'chirasizmi?'))return;
-  const sec=db.sections.find(s=>s.id===curSection);if(!sec)return;
-  sec.cats=sec.cats.filter(c=>c.id!==id);
-  save();notify("O'chirildi ✓");renderCats();
-}
-
-// ---- FLOWS ----
-function getCat(){const sec=db.sections.find(s=>s.id===curSection);return sec?.cats.find(c=>c.id===curCat);}
-function renderFlows(){
-  const cat=getCat();if(!cat)return;
-  document.getElementById('cat-title').textContent=cat.title;
-  const q=(document.getElementById('search-flows')?.value||'').trim().toLowerCase();
-  const filtered=q?cat.flows.filter(f=>f.title.toLowerCase().includes(q)):cat.flows;
-  let h='';
-  filtered.forEach((f,i)=>{
-    h+=`<div class="section-item" onclick="openFlow('${f.id}')">
-      <div style="display:flex;align-items:center">
-        <div class="section-num">${String(i+1).padStart(2,'0')}</div>
-        <div class="section-name">${esc(f.title)}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        ${isAdmin?`<div class="action-btns">
-          <button class="abtn" onclick="event.stopPropagation();editFlowItem('${f.id}')">✏</button>
-          <button class="abtn abtn-red" onclick="event.stopPropagation();delFlowItem('${f.id}')">✕</button>
-        </div>`:''}
-        <span class="chevron">›</span>
-      </div>
-    </div>`;
-  });
-  if(!filtered.length) h=`<div style="text-align:center;padding:24px;color:var(--hint);font-size:13px">${q?'Topilmadi':'Jarayonlar yo\'q'}</div>`;
-  document.getElementById('flows-list').innerHTML=h;
-  if(isAdmin) document.getElementById('flow-form').innerHTML=`<button class="add-item-btn" onclick="showFlowForm()">＋ Jarayon qo'shish</button>`;
-  else document.getElementById('flow-form').innerHTML='';
-}
-function openFlow(id){curFlow=id;goTo('p-flow')}
-function showFlowForm(id){
-  const cat=getCat();
-  const flow=id?cat?.flows.find(f=>f.id===id):null;
-  document.getElementById('flow-form').innerHTML=`<div class="form-box fade">
-    <div class="frow"><label class="flbl">Nomi</label><input class="fi" id="ff-title" value="${esc(flow?.title||'')}" placeholder="Jarayon nomi..."></div>
-    <div class="fbtns">
-      <button class="fsave" onclick="saveFlowItem('${id||''}')">Saqlash</button>
-      <button class="fcancel" onclick="renderFlows()">Bekor</button>
-    </div>
-  </div>`;
-  document.getElementById('ff-title').focus();
-}
-function saveFlowItem(id){
-  const cat=getCat();if(!cat)return;
-  const title=document.getElementById('ff-title').value.trim();
-  if(!title){notify('Nom kiriting!');return;}
-  if(id){const f=cat.flows.find(x=>x.id===id);if(f)f.title=title;}
-  else cat.flows.push({id:'f'+Date.now(),title,nodes:[]});
-  save();notify('Saqlandi ✓');renderFlows();
-}
-function editFlowItem(id){showFlowForm(id)}
-function delFlowItem(id){
-  if(!confirm('O\'chirasizmi?'))return;
-  const cat=getCat();if(!cat)return;
-  cat.flows=cat.flows.filter(f=>f.id!==id);
-  save();notify("O'chirildi ✓");renderFlows();
-}
-
-// ---- TREE ----
-function getFlow(){const cat=getCat();return cat?.flows.find(f=>f.id===curFlow);}
-function renderTree(){
-  const flow=getFlow();if(!flow)return;
-  document.getElementById('flow-title').textContent=flow.title;
-  const fab=document.getElementById('flow-admin-btns');
-  fab.style.display=isAdmin?'flex':'none';
-  document.getElementById('flow-name-form').style.display='none';
-  document.getElementById('root-form').innerHTML='';
-  let h='<div class="tree-col">';
-  flow.nodes.forEach((n,i)=>h+=nodeHTML(n,String(i+1).padStart(2,'0')));
-  h+='</div>';
-  if(isAdmin) h+=`<button class="add-root-btn" onclick="showNodeForm(null,null)">＋ Harakat qo'shish</button>`;
-  document.getElementById('tree-wrap').innerHTML=h;
-}
-function nodeHTML(n,num){
-  const ab=isAdmin?`<div class="node-corner">
-    ${n.link?`<button class="corner-btn always" onclick="navigator.clipboard.writeText('${esc(n.link)}').then(()=>notify('Link nusxa ✓'))">🔗</button>`:''}
-    ${n.img?`<button class="corner-btn always" onclick="openImg('${n.id}')">🖼</button>`:''}
-    <button class="corner-btn" onclick="showNodeForm('${n.id}',null,true)">✏</button>
-    <button class="corner-btn" style="color:#dc2626" onclick="delNode('${n.id}')">✕</button>
-  </div>`:(n.link||n.img?`<div class="node-corner">
-    ${n.link?`<button class="corner-btn always" onclick="navigator.clipboard.writeText('${esc(n.link)}').then(()=>notify('Link nusxa ✓'))">🔗</button>`:''}
-    ${n.img?`<button class="corner-btn always" onclick="openImg('${n.id}')">🖼</button>`:''}
-  </div>`:'');
-  let card=`<div class="node-card" id="nc-${n.id}">
-    <div class="node-num">${num}</div>
-    ${ab}
-    <div class="node-name">${esc(n.name)}</div>
-    ${n.msg?`<div class="node-msg">${esc(n.msg)}<button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('nm-${n.id}').textContent).then(()=>notify('Nusxa ✓'))">⧉</button><span id="nm-${n.id}" style="display:none">${esc(n.msg)}</span></div>`:''}
-    ${n.link?`<div class="node-link">🔗 <a href="${esc(n.link)}" target="_blank">${esc(n.link)}</a></div>`:''}
-  </div>`;
-  const hasC=n.children?.length>0;
-  let ch='';
-  if(hasC||isAdmin){
-    ch+=`<div class="connector"><div class="vbar-wrap"><div class="vbar"></div></div><div class="children-col">`;
-    n.children?.forEach((c,ci)=>{ch+=`<div class="child-row"><div class="hbar"></div>${nodeHTML(c,String(ci+1).padStart(2,'0'))}</div>`;});
-    if(isAdmin) ch+=`<div style="display:flex;align-items:center"><div class="hbar"></div><button class="add-child-btn" onclick="showNodeForm('${n.id}',null)">＋ Variant</button></div><div id="cf-${n.id}"></div>`;
-    ch+=`</div></div>`;
+function render() {
+  var list = document.getElementById('sections-list');
+  if (!sections.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">🌿</div><div class="empty-text">Ҳали бўлим йўқ</div><div class="empty-sub">+ тугмасини босиб қўшинг</div></div>';
+    return;
   }
-  return `<div class="node-row" id="nr-${n.id}"><div style="display:flex;flex-direction:column">${card}<div id="ef-${n.id}"></div></div>${ch}</div>`;
-}
-function editFlowName(){
-  const flow=getFlow();if(!flow)return;
-  const f=document.getElementById('flow-name-form');f.style.display='block';
-  f.innerHTML=`<div class="form-box fade">
-    <div class="frow"><input class="fi" id="fn-title" value="${esc(flow.title)}"></div>
-    <div class="fbtns"><button class="fsave" onclick="saveFlowName()">Saqlash</button><button class="fcancel" onclick="document.getElementById('flow-name-form').style.display='none'">Bekor</button></div>
-  </div>`;
-  document.getElementById('fn-title').focus();
-}
-function saveFlowName(){
-  const flow=getFlow();if(!flow)return;
-  const t=document.getElementById('fn-title').value.trim();if(!t)return;
-  flow.title=t;save();document.getElementById('flow-title').textContent=t;
-  document.getElementById('flow-name-form').style.display='none';
-  notify('Saqlandi ✓');updateBc();
-}
-function deleteFlow(){
-  if(!confirm('O\'chirasizmi?'))return;
-  const cat=getCat();if(!cat)return;
-  cat.flows=cat.flows.filter(f=>f.id!==curFlow);
-  curFlow=null;save();notify("O'chirildi ✓");goBack('p-cat');
-}
-function showNodeForm(pid,_,edit){
-  const isE=!!edit;
-  const flow=getFlow();
-  const node=isE?findNode(flow.nodes,pid):null;
-  const fid=isE?`ef-${pid}`:(pid&&pid!=='null'?`cf-${pid}`:'root-form');
-  const t=document.getElementById(fid);if(!t)return;
-  t.innerHTML=`<div class="node-form fade">
-    <div class="frow"><label class="flbl">Nomi</label><input class="fi" id="${fid}_n" value="${esc(node?.name||'')}"></div>
-    <div class="frow"><label class="flbl">Xabar matni</label><textarea class="fi" id="${fid}_m" style="min-height:60px;resize:vertical;font-size:11px">${esc(node?.msg||'')}</textarea></div>
-    <div class="frow"><label class="flbl">Link</label><input class="fi" id="${fid}_l" value="${esc(node?.link||'')}" placeholder="https://..."></div>
-    <div class="frow"><label class="flbl">Rasm</label><input type="file" accept="image/*" id="${fid}_i" style="font-size:11px;width:100%">${node?.img?'<div style="font-size:11px;color:var(--hint);margin-top:3px">✓ Rasm bor</div>':''}</div>
-    <div class="fbtns">
-      <button class="fsave" onclick="${isE?`saveEditNode('${pid}','${fid}')`:`saveNewNode('${pid}','${fid}')`}">Saqlash</button>
-      <button class="fcancel" onclick="renderTree()">Bekor</button>
-    </div>
-  </div>`;
-  document.getElementById(fid+'_n').focus();
-}
-function saveNewNode(pid,fid){
-  const name=document.getElementById(fid+'_n').value.trim();
-  const msg=document.getElementById(fid+'_m').value.trim();
-  const link=document.getElementById(fid+'_l').value.trim();
-  if(!name){notify('Nom kiriting!');return;}
-  const imgF=document.getElementById(fid+'_i')?.files[0];
-  const go=(img)=>{
-    const n={id:'n'+Date.now(),name,msg,link,img:img||'',children:[]};
-    const flow=getFlow();
-    if(!pid||pid==='null') flow.nodes.push(n);
-    else{const p=findNode(flow.nodes,pid);if(p)p.children.push(n);}
-    save();notify('Saqlandi ✓');renderTree();
-  };
-  if(imgF){const r=new FileReader();r.onload=e=>go(e.target.result);r.readAsDataURL(imgF);}else go('');
-}
-function saveEditNode(nid,fid){
-  const name=document.getElementById(fid+'_n').value.trim();
-  const msg=document.getElementById(fid+'_m').value.trim();
-  const link=document.getElementById(fid+'_l').value.trim();
-  if(!name){notify('Nom kiriting!');return;}
-  const imgF=document.getElementById(fid+'_i')?.files[0];
-  const flow=getFlow();const n=findNode(flow.nodes,nid);if(!n)return;
-  const go=(img)=>{n.name=name;n.msg=msg;n.link=link;if(img)n.img=img;save();notify('Saqlandi ✓');renderTree();};
-  if(imgF){const r=new FileReader();r.onload=e=>go(e.target.result);r.readAsDataURL(imgF);}else go('');
-}
-function delNode(id){
-  if(!confirm('O\'chirasizmi?'))return;
-  const flow=getFlow();
-  flow.nodes=rmNode(flow.nodes,id);
-  save();notify("O'chirildi ✓");renderTree();
-}
-function findNode(ns,id){for(const n of ns){if(n.id===id)return n;const f=findNode(n.children||[],id);if(f)return f;}return null;}
-function rmNode(ns,id){return ns.filter(n=>n.id!==id).map(n=>({...n,children:rmNode(n.children||[],id)}));}
-function openImg(nid){
-  const flow=getFlow();const n=findNode(flow.nodes,nid);if(!n?.img)return;
-  document.getElementById('img-src').src=n.img;document.getElementById('img-modal').classList.add('open');
-}
-function closeImg(){document.getElementById('img-modal').classList.remove('open');document.getElementById('img-src').src='';}
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function notify(m){const n=document.getElementById('notif');n.textContent=m;n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2000);}
-document.getElementById('login-modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+  var html = '';
+  for (var i = 0; i < sections.length; i++) {
+    var s = sections[i];
+    html += '<div class="section-card" id="card-' + i + '" draggable="true">';
+    html += '<div class="drag-handle">⋮⋮</div>';
+    html += '<div class="section-icon">' + s.icon + '</div>';
+    html += '<div class="section-info"><div class="section-name">' + s.name + '</div>';
+    if (!s.is_active) html += '<span class="badge-inactive">Ўчирилган</span>';
+    html += '</div>';
+    html += '<div class="section-actions">';
+    html += '<button class="btn-icon" data-edit="' + i + '">✏️</button>';
+    html += '<button class="btn-icon danger" data-del="' + i + '">🗑️</button>';
+    html += '</div>';
+    html += '<span class="section-arrow">›</span>';
+    html += '</div>';
+  }
+  list.innerHTML = html;
 
-load();renderSections();
+  for (var j = 0; j < sections.length; j++) {
+    (function(idx) {
+      var card = document.getElementById('card-' + idx);
+      card.addEventListener('click', function() { openInner(idx); });
+      card.querySelector('[data-edit]').addEventListener('click', function(e) { e.stopPropagation(); openEdit(idx); });
+      card.querySelector('[data-del]').addEventListener('click', function(e) { e.stopPropagation(); deleteSection(idx); });
+      card.addEventListener('dragstart', function() { dragSrc = idx; this.style.opacity = '0.5'; });
+      card.addEventListener('dragend', function() { this.style.opacity = '1'; document.querySelectorAll('.section-card').forEach(function(c) { c.style.borderColor = ''; }); });
+      card.addEventListener('dragover', function(e) { e.preventDefault(); this.style.borderColor = '#558237'; });
+      card.addEventListener('dragleave', function() { this.style.borderColor = ''; });
+      card.addEventListener('drop', function(e) {
+        e.preventDefault(); this.style.borderColor = '';
+        if (dragSrc !== null && dragSrc !== idx) {
+          var moved = sections.splice(dragSrc, 1)[0];
+          sections.splice(idx, 0, moved);
+          saveData(); render(); showToast('Ўрин сақланди ✓');
+        }
+        dragSrc = null;
+      });
+    })(j);
+  }
+}
+
+function openInner(idx) {
+  var s = sections[idx];
+  document.getElementById('inner-title').textContent = s.name;
+  document.getElementById('inner-icon').textContent = s.icon;
+  document.getElementById('inner-name-text').textContent = s.name;
+  document.getElementById('home-page').classList.add('hidden');
+  document.getElementById('inner-page').classList.add('active');
+}
+
+document.getElementById('btn-back').addEventListener('click', function() {
+  document.getElementById('inner-page').classList.remove('active');
+  document.getElementById('home-page').classList.remove('hidden');
+});
+
+function buildEmojiGrid() {
+  var html = '';
+  for (var i = 0; i < EMOJIS.length; i++) {
+    var e = EMOJIS[i];
+    html += '<button class="emoji-btn' + (e === selectedEmoji ? ' selected' : '') + '" data-emoji="' + e + '">' + e + '</button>';
+  }
+  document.getElementById('emoji-grid').innerHTML = html;
+  document.querySelectorAll('.emoji-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      selectedEmoji = this.getAttribute('data-emoji');
+      document.querySelectorAll('.emoji-btn').forEach(function(b) { b.classList.remove('selected'); });
+      this.classList.add('selected');
+    });
+  });
+}
+
+function openModal() {
+  editingId = null; selectedEmoji = '💚'; isActive = true;
+  document.getElementById('modal-title').textContent = 'Янги бўлим';
+  document.getElementById('input-name').value = '';
+  document.getElementById('toggle-active').className = 'toggle on';
+  buildEmojiGrid();
+  document.getElementById('modal').classList.add('open');
+  setTimeout(function() { document.getElementById('input-name').focus(); }, 150);
+}
+
+function openEdit(idx) {
+  var s = sections[idx];
+  editingId = idx; selectedEmoji = s.icon; isActive = s.is_active;
+  document.getElementById('modal-title').textContent = 'Таҳрир';
+  document.getElementById('input-name').value = s.name;
+  document.getElementById('toggle-active').className = 'toggle' + (isActive ? ' on' : '');
+  buildEmojiGrid();
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+function deleteSection(idx) {
+  if (!confirm('Ўчиришни тасдиқлайсизми?')) return;
+  sections.splice(idx, 1); saveData(); render(); showToast('Ўчирилди');
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2500);
+}
+
+document.getElementById('btn-add').addEventListener('click', openModal);
+document.getElementById('btn-cancel').addEventListener('click', closeModal);
+document.getElementById('toggle-active').addEventListener('click', function() {
+  isActive = !isActive;
+  this.className = 'toggle' + (isActive ? ' on' : '');
+});
+document.getElementById('btn-save').addEventListener('click', function() {
+  var name = document.getElementById('input-name').value.trim();
+  if (!name) { document.getElementById('input-name').focus(); return; }
+  if (editingId !== null) {
+    sections[editingId].name = name; sections[editingId].icon = selectedEmoji; sections[editingId].is_active = isActive;
+    showToast('Сақланди ✓');
+  } else {
+    sections.push({ id: nextId++, name: name, icon: selectedEmoji, is_active: isActive });
+    showToast('Қўшилди ✓');
+  }
+  saveData(); render(); closeModal();
+});
+
+loadData(); render();
 </script>
 </body>
 </html>
