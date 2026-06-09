@@ -7,52 +7,50 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
-    --bg: #f0f3ee;
-    --bg2: #ffffff;
-    --bg3: #e2e8de;
-    --accent: #558237;
-    --accent2: #a4b83f;
-    --dark: #1e5927;
-    --mid: #7a9669;
-    --light: #a9b7a3;
-    --text: #1e2e1a;
-    --text2: #558237;
-    --text3: #7a9669;
-    --danger: #c0392b;
-    --radius: 14px;
-    --radius-sm: 8px;
+    --bg: #f0f3ee; --bg2: #ffffff; --bg3: #e2e8de;
+    --accent: #558237; --accent2: #a4b83f; --dark: #1e5927;
+    --light: #a9b7a3; --text: #1e2e1a; --text2: #558237; --text3: #7a9669;
+    --danger: #c0392b; --warn: #AA7B08; --radius: 14px; --radius-sm: 8px;
   }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; padding-bottom: 40px; }
-
-  /* HEADER */
   .header { background: var(--bg2); padding: 16px 20px; border-bottom: 1px solid var(--bg3); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
   .header-left { display: flex; align-items: center; gap: 10px; }
   .back-btn { width: 32px; height: 32px; background: var(--bg3); border: none; border-radius: 8px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .logo { width: 36px; height: 36px; background: var(--dark); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
   .header-title { font-size: 17px; font-weight: 600; color: var(--dark); }
   .header-sub { font-size: 12px; color: var(--text3); margin-top: 1px; }
-
-  /* BREADCRUMB */
+  .btn-add { width: 36px; height: 36px; background: var(--accent); border: none; border-radius: 10px; color: white; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .breadcrumb { padding: 10px 16px; display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text3); overflow-x: auto; white-space: nowrap; background: var(--bg2); border-bottom: 1px solid var(--bg3); }
   .breadcrumb span { cursor: pointer; }
   .breadcrumb span:hover { color: var(--accent); }
-
   .main { padding: 20px 16px; }
   .page-title { font-size: 13px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; font-weight: 500; }
-
-  /* CARDS */
-  .list { display: flex; flex-direction: column; gap: 10px; }
-  .card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: box-shadow 0.15s; }
-  .card:active { box-shadow: 0 2px 12px rgba(85,130,55,0.15); }
+  .card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 10px; transition: opacity 0.15s; }
+  .card:active { opacity: 0.8; }
   .card-icon { width: 44px; height: 44px; background: var(--bg3); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
   .card-info { flex: 1; }
   .card-name { font-size: 15px; font-weight: 500; color: var(--text); }
   .card-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
   .card-arrow { color: var(--light); font-size: 20px; }
 
-  /* DAY CARD */
+  /* ZAPAS */
+  .zapas-item { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: opacity 0.15s; }
+  .zapas-item:active { opacity: 0.8; }
+  .zapas-icon { font-size: 28px; flex-shrink: 0; }
+  .zapas-info { flex: 1; }
+  .zapas-name { font-size: 15px; font-weight: 500; color: var(--text); }
+  .zapas-raw { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .zapas-right { text-align: right; flex-shrink: 0; }
+  .zapas-days { font-size: 20px; font-weight: 600; }
+  .zapas-days-lbl { font-size: 11px; color: var(--text3); margin-top: 1px; }
+  .status-green { color: var(--accent); }
+  .status-warn { color: var(--warn); }
+  .status-red { color: var(--danger); }
+  .progress-bar { height: 4px; background: var(--bg3); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 2px; }
+
+  /* DAY */
   .day-card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 10px; }
-  .day-card:active { box-shadow: 0 2px 12px rgba(85,130,55,0.15); }
   .day-date { width: 50px; text-align: center; flex-shrink: 0; }
   .day-date-num { font-size: 22px; font-weight: 600; color: var(--dark); line-height: 1; }
   .day-date-month { font-size: 11px; color: var(--text3); margin-top: 2px; }
@@ -62,115 +60,153 @@
   .day-menu { font-size: 12px; color: var(--text3); margin-top: 2px; }
   .day-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: #e8f0e0; color: var(--accent); font-weight: 500; }
   .today-badge { background: var(--accent); color: white; }
-
-  /* MEAL DETAIL */
-  .meal-section { margin-bottom: 16px; }
   .meal-header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: var(--bg2); border-bottom: 1px solid var(--bg3); }
   .meal-icon-wrap { width: 36px; height: 36px; background: var(--bg3); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-  .meal-title { font-size: 15px; font-weight: 500; color: var(--text); }
-  .meal-items { background: var(--bg2); }
-  .meal-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--bg3); }
+  .meal-title-text { font-size: 15px; font-weight: 500; color: var(--text); }
+  .meal-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--bg3); background: var(--bg2); }
   .meal-item:last-child { border-bottom: none; }
   .meal-item-name { font-size: 14px; color: var(--text); }
   .meal-item-amount { font-size: 13px; color: var(--text3); background: var(--bg3); padding: 3px 10px; border-radius: 20px; }
-
-  /* NUTRITION SUMMARY */
   .nutrition-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 16px; background: var(--bg2); border-bottom: 1px solid var(--bg3); margin-bottom: 16px; }
   .nut-item { text-align: center; background: var(--bg); border-radius: var(--radius-sm); padding: 10px 4px; }
   .nut-val { font-size: 18px; font-weight: 600; color: var(--dark); }
   .nut-lbl { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .meal-section { margin-bottom: 16px; }
 
-  /* EMPTY */
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: flex-end; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg2); border-radius: var(--radius) var(--radius) 0 0; padding: 20px 20px 40px; width: 100%; max-width: 500px; border-top: 2px solid var(--accent2); max-height: 85vh; overflow-y: auto; }
+  .modal-handle { width: 36px; height: 4px; background: var(--bg3); border-radius: 2px; margin: 0 auto 16px; }
+  .modal-title { font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 16px; }
+  .search-input { width: 100%; background: var(--bg); border: 1px solid var(--bg3); border-radius: var(--radius-sm); padding: 10px 14px; color: var(--text); font-size: 15px; outline: none; margin-bottom: 12px; }
+  .search-input:focus { border-color: var(--accent); }
+  .product-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .product-btn { background: var(--bg); border: 1px solid var(--bg3); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; text-align: left; width: 100%; }
+  .product-btn:active { background: var(--bg3); }
+  .product-btn.selected { border-color: var(--accent); background: #e8f0e0; }
+  .product-btn-icon { font-size: 22px; }
+  .product-btn-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .product-btn-unit { font-size: 12px; color: var(--text3); }
+  .amount-section { display: none; border-top: 1px solid var(--bg3); margin-top: 12px; padding-top: 14px; }
+  .amount-section.show { display: block; }
+  .form-label { font-size: 13px; color: var(--text3); margin-bottom: 6px; display: block; font-weight: 500; }
+  .amount-row { display: flex; align-items: center; gap: 10px; }
+  .form-input { flex: 1; background: var(--bg); border: 1px solid var(--bg3); border-radius: var(--radius-sm); padding: 12px 14px; color: var(--text); font-size: 20px; font-weight: 600; outline: none; text-align: center; }
+  .form-input:focus { border-color: var(--accent); }
+  .unit-label { font-size: 15px; color: var(--text3); font-weight: 500; min-width: 30px; }
+  .coef-info { font-size: 13px; color: var(--text3); margin-top: 8px; padding: 8px 12px; background: var(--bg); border-radius: var(--radius-sm); }
+  .modal-btns { display: flex; gap: 10px; margin-top: 16px; }
+  .btn-cancel { flex: 1; padding: 14px; background: var(--bg3); border: none; border-radius: var(--radius-sm); color: var(--text3); font-size: 15px; cursor: pointer; }
+  .btn-save { flex: 2; padding: 14px; background: var(--accent); border: none; border-radius: var(--radius-sm); color: white; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .btn-danger { flex: 1; padding: 14px; background: #fdecea; border: none; border-radius: var(--radius-sm); color: var(--danger); font-size: 15px; font-weight: 600; cursor: pointer; }
+
   .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
   .empty-icon { font-size: 48px; margin-bottom: 12px; }
   .empty-text { font-size: 15px; margin-bottom: 6px; color: var(--text2); }
-
+  .empty-sub { font-size: 13px; }
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--dark); color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 500; z-index: 300; transition: transform 0.25s; pointer-events: none; }
   .toast.show { transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
-
 <div id="app"></div>
+
+<!-- ADD MODAL -->
+<div class="modal-overlay" id="modal-add">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Маҳсулот қўшиш</div>
+    <input class="search-input" id="search-input" placeholder="🔍 Қидириш...">
+    <div class="product-list" id="product-list"></div>
+    <div class="amount-section" id="amount-section">
+      <label class="form-label" id="amount-label">Миқдор</label>
+      <div class="amount-row">
+        <input class="form-input" id="amount-input" type="number" placeholder="0" min="0">
+        <span class="unit-label" id="unit-label">г</span>
+      </div>
+      <div class="coef-info" id="coef-info" style="display:none"></div>
+      <div class="modal-btns">
+        <button class="btn-cancel" id="btn-cancel-add">Бекор</button>
+        <button class="btn-save" id="btn-save-add">Қўшиш</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="edit-modal-title">Миқдорни янгилаш</div>
+    <label class="form-label" id="edit-amount-label">Миқдор</label>
+    <div class="amount-row">
+      <input class="form-input" id="edit-amount-input" type="number" placeholder="0" min="0">
+      <span class="unit-label" id="edit-unit-label">г</span>
+    </div>
+    <div class="coef-info" id="edit-coef-info" style="display:none;margin-top:8px"></div>
+    <div class="modal-btns" style="margin-top:16px">
+      <button class="btn-danger" id="btn-delete-edit">Ўчириш</button>
+      <button class="btn-cancel" id="btn-cancel-edit">Бекор</button>
+      <button class="btn-save" id="btn-save-edit">Сақлаш</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-// =====================
-// DATA
-// =====================
+var UZ_DAYS = ['Якшанба','Душанба','Сешанба','Чоршанба','Пайшанба','Жума','Шанба'];
+var UZ_MONTHS = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+
 var KLASSIKA = {
-  name: 'Классика',
   meals: [
-    {
-      icon: '🌅', name: 'Нонушта',
-      items: [{ name: 'Тухум', amount: '5 та' }],
-      kcal: 350, protein: 30, fat: 24, carb: 2
-    },
-    {
-      icon: '☀️', name: 'Обед',
-      items: [
-        { name: 'Товуқ', amount: '220г' },
-        { name: 'Гуруч', amount: '250г' },
-        { name: 'Брокколи', amount: '1 та' }
-      ],
-      kcal: 589, protein: 58, fat: 6, carb: 54
-    },
-    {
-      icon: '🌙', name: 'Ужин',
-      items: [
-        { name: 'Товуқ', amount: '220г' },
-        { name: 'Гуруч', amount: '250г' },
-        { name: 'Брокколи', amount: '1 та' }
-      ],
-      kcal: 589, protein: 58, fat: 6, carb: 54
-    },
-    {
-      icon: '🌛', name: 'Кечга',
-      items: [{ name: 'Tvorog', amount: '200г' }],
-      kcal: 180, protein: 36, fat: 1, carb: 6
-    }
+    { icon: '🌅', name: 'Нонушта', items: [{ name: 'Тухум', amount: '5 та' }], kcal: 350, protein: 30, fat: 24, carb: 2 },
+    { icon: '☀️', name: 'Обед', items: [{ name: 'Товуқ', amount: '220г' }, { name: 'Гуруч', amount: '250г' }, { name: 'Брокколи', amount: '1 та' }], kcal: 589, protein: 58, fat: 6, carb: 54 },
+    { icon: '🌙', name: 'Ужин', items: [{ name: 'Товуқ', amount: '220г' }, { name: 'Гуруч', amount: '250г' }, { name: 'Брокколи', amount: '1 та' }], kcal: 589, protein: 58, fat: 6, carb: 54 },
+    { icon: '🌛', name: 'Кечга', items: [{ name: 'Tvorog', amount: '200г' }], kcal: 180, protein: 36, fat: 1, carb: 6 }
   ],
   totalKcal: 1708, totalProtein: 182, totalFat: 37, totalCarb: 116
 };
 
-var UZ_DAYS = ['Якшанба','Душанба','Сешанба','Чоршанба','Пайшанба','Жума','Шанба'];
-var UZ_MONTHS = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+var DEFAULT_PRODUCTS = [
+  { id: 'tovuq',   name: 'Товуқ',    icon: '🥩', unit: 'г',  coef: 0.72, coefLabel: '100г хом → 72г пишган',  dailyCooked: 440 },
+  { id: 'tuxum',   name: 'Тухум',    icon: '🥚', unit: 'та', coef: 1,    coefLabel: null,                      dailyRaw: 5 },
+  { id: 'tvorog',  name: 'Tvorog',   icon: '🥛', unit: 'та', coef: 1,    coefLabel: null,                      dailyRaw: 1 },
+  { id: 'guruch',  name: 'Гуруч',    icon: '🌾', unit: 'г',  coef: 2.14, coefLabel: '100г хом → 214г пишган', dailyCooked: 500 },
+  { id: 'grechka', name: 'Гречка',   icon: '🌾', unit: 'г',  coef: 2.5,  coefLabel: '100г хом → 250г пишган', dailyCooked: 600 },
+  { id: 'brokoli', name: 'Брокколи', icon: '🥦', unit: 'та', coef: 1,    coefLabel: null,                      dailyRaw: 2 },
+];
 
-// Navigation: array of page names
 var pageStack = ['home'];
 var selectedDate = null;
+var zapas = [];
+var selectedProduct = null;
+var editingZapasIdx = null;
 
-// =====================
-// HELPERS
-// =====================
+function loadZapas() { try { var r = localStorage.getItem('umatizim_zapas'); if (r) zapas = JSON.parse(r); } catch(e) { zapas = []; } }
+function saveZapas() { localStorage.setItem('umatizim_zapas', JSON.stringify(zapas)); }
+
 function getDays() {
-  var days = [];
-  var today = new Date();
-  today.setHours(0,0,0,0);
-  for (var i = 0; i < 7; i++) {
-    var d = new Date(today);
-    d.setDate(today.getDate() + i);
-    days.push(d);
-  }
+  var days = []; var today = new Date(); today.setHours(0,0,0,0);
+  for (var i = 0; i < 7; i++) { var d = new Date(today); d.setDate(today.getDate() + i); days.push(d); }
   return days;
 }
+function isToday(d) { var t = new Date(); t.setHours(0,0,0,0); return d.getTime() === t.getTime(); }
 
-function formatDate(d) {
-  return ('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth()+1)).slice(-2);
+function calcDaysLeft(item) {
+  var prod = DEFAULT_PRODUCTS.find(function(p) { return p.id === item.productId; });
+  if (!prod) return 0;
+  var daily = prod.dailyRaw ? prod.dailyRaw : (prod.dailyCooked / prod.coef);
+  return Math.round((item.rawAmount / daily) * 10) / 10;
 }
+function statusClass(d) { return d >= 3 ? 'status-green' : d >= 1 ? 'status-warn' : 'status-red'; }
+function statusColor(d) { return d >= 3 ? '#558237' : d >= 1 ? '#AA7B08' : '#c0392b'; }
 
-function isToday(d) {
-  var t = new Date(); t.setHours(0,0,0,0);
-  return d.getTime() === t.getTime();
-}
-
-// =====================
-// RENDER
-// =====================
+// =================== RENDER ===================
 function render() {
   var page = pageStack[pageStack.length - 1];
   var app = document.getElementById('app');
-
   if (page === 'home') renderHome(app);
   else if (page === 'soglik') renderSoglik(app);
   else if (page === 'ovqatlanish') renderOvqatlanish(app);
@@ -180,140 +216,247 @@ function render() {
   else if (page === 'harid') renderHarid(app);
 }
 
-function header(titleHTML, showBack) {
-  var backBtn = showBack ? '<button class="back-btn" id="btn-back">←</button>' : '<div class="logo">🌿</div>';
-  return '<div class="header"><div class="header-left">' + backBtn +
-    '<div><div class="header-title">' + titleHTML + '</div></div></div></div>';
+function mkHeader(title, showBack, showAdd) {
+  var left = showBack
+    ? '<button class="back-btn" id="btn-back">←</button><div><div class="header-title">' + title + '</div></div>'
+    : '<div class="logo">🌿</div><div><div class="header-title">' + title + '</div><div class="header-sub">Соғлиқ ва спорт</div></div>';
+  var right = showAdd ? '<button class="btn-add" id="btn-add-z">+</button>' : '';
+  return '<div class="header"><div class="header-left">' + left + '</div>' + right + '</div>';
 }
 
-function breadcrumb() {
+function mkBc() {
+  var lb = { home:'🏠', soglik:'💚 Соғлиқ', ovqatlanish:'🥗 Овқатланиш', ratsion:'📋 Рацион', zapas:'📦 Запас', harid:'🛒 Харид' };
   if (pageStack.length <= 1) return '';
-  var labels = { home: '🏠', soglik: '💚 Соғлиқ', ovqatlanish: '🥗 Овқатланиш', ratsion: '📋 Рацион', zapas: '📦 Запас', harid: '🛒 Харид' };
-  var html = '<div class="breadcrumb">';
+  var h = '<div class="breadcrumb">';
   for (var i = 0; i < pageStack.length - 1; i++) {
-    html += '<span data-idx="' + i + '">' + (labels[pageStack[i]] || pageStack[i]) + '</span>';
-    html += '<span style="color:var(--light)"> › </span>';
+    h += '<span data-idx="' + i + '">' + (lb[pageStack[i]]||'') + '</span><span style="color:var(--light)"> › </span>';
   }
-  html += '<span style="color:var(--text2)">' + (labels[pageStack[pageStack.length-1]] || '') + '</span>';
-  html += '</div>';
-  return html;
+  h += '<span style="color:var(--text2)">' + (lb[pageStack[pageStack.length-1]]||'') + '</span></div>';
+  return h;
 }
 
-function renderHome(app) {
-  app.innerHTML = header('Umatizim', false) +
-  '<div class="main"><div class="page-title">Бўлимлар</div><div class="list">' +
-  '<div class="card" id="go-soglik"><div class="card-icon">💚</div><div class="card-info"><div class="card-name">Соғлиқ</div><div class="card-sub">Спорт ва тўғри овқатланиш</div></div><span class="card-arrow">›</span></div>' +
-  '</div></div>';
-  document.getElementById('go-soglik').addEventListener('click', function() { pageStack.push('soglik'); render(); });
-}
-
-function renderSoglik(app) {
-  app.innerHTML = header('💚 Соғлиқ', true) + breadcrumb() +
-  '<div class="main"><div class="page-title">Бўлимлар</div><div class="list">' +
-  '<div class="card" id="go-sport"><div class="card-icon">🏋️</div><div class="card-info"><div class="card-name">Спорт</div><div class="card-sub">Машқлар ва тренировка</div></div><span class="card-arrow">›</span></div>' +
-  '<div class="card" id="go-ovqat"><div class="card-icon">🥗</div><div class="card-info"><div class="card-name">Тўғри овқатланиш</div><div class="card-sub">Рацион, запас, харид</div></div><span class="card-arrow">›</span></div>' +
-  '</div></div>';
-  document.getElementById('go-sport').addEventListener('click', function() { showToast('Яқинда қўшилади'); });
-  document.getElementById('go-ovqat').addEventListener('click', function() { pageStack.push('ovqatlanish'); render(); });
-  document.getElementById('btn-back').addEventListener('click', goBack);
-}
-
-function renderOvqatlanish(app) {
-  app.innerHTML = header('🥗 Овқатланиш', true) + breadcrumb() +
-  '<div class="main"><div class="page-title">Бўлимлар</div><div class="list">' +
-  '<div class="card" id="go-ratsion"><div class="card-icon">📋</div><div class="card-info"><div class="card-name">Кунлик рацион</div><div class="card-sub">7 кунлик овқат режаси</div></div><span class="card-arrow">›</span></div>' +
-  '<div class="card" id="go-zapas"><div class="card-icon">📦</div><div class="card-info"><div class="card-name">Запас</div><div class="card-sub">Нима бор, неча кунга</div></div><span class="card-arrow">›</span></div>' +
-  '<div class="card" id="go-harid"><div class="card-icon">🛒</div><div class="card-info"><div class="card-name">Харид режаси</div><div class="card-sub">Нима олиш керак</div></div><span class="card-arrow">›</span></div>' +
-  '</div></div>';
-  document.getElementById('go-ratsion').addEventListener('click', function() { pageStack.push('ratsion'); render(); });
-  document.getElementById('go-zapas').addEventListener('click', function() { pageStack.push('zapas'); render(); });
-  document.getElementById('go-harid').addEventListener('click', function() { pageStack.push('harid'); render(); });
-  document.getElementById('btn-back').addEventListener('click', goBack);
-}
-
-function renderRatsion(app) {
-  var days = getDays();
-  var html = header('📋 Кунлик рацион', true) + breadcrumb() + '<div class="main"><div class="page-title">7 кун</div>';
-  for (var i = 0; i < days.length; i++) {
-    var d = days[i];
-    var today = isToday(d);
-    html += '<div class="day-card" data-ts="' + d.getTime() + '">';
-    html += '<div class="day-date"><div class="day-date-num">' + d.getDate() + '</div><div class="day-date-month">' + UZ_MONTHS[d.getMonth()] + '</div></div>';
-    html += '<div class="day-divider"></div>';
-    html += '<div class="day-info"><div class="day-name">' + UZ_DAYS[d.getDay()] + '</div>';
-    html += '<div class="day-menu">Классика</div></div>';
-    if (today) html += '<span class="day-badge today-badge">Бугун</span>';
-    else html += '<span class="day-badge">📋</span>';
-    html += '<span class="card-arrow">›</span></div>';
-  }
-  html += '</div>';
-  app.innerHTML = html;
-  document.getElementById('btn-back').addEventListener('click', goBack);
-  document.querySelectorAll('.day-card').forEach(function(card) {
-    card.addEventListener('click', function() {
-      selectedDate = new Date(parseInt(this.getAttribute('data-ts')));
-      pageStack.push('day');
+function bindCommon() {
+  var b = document.getElementById('btn-back');
+  if (b) b.addEventListener('click', goBack);
+  document.querySelectorAll('.breadcrumb [data-idx]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      pageStack = pageStack.slice(0, parseInt(this.getAttribute('data-idx')) + 1);
       render();
     });
   });
 }
 
+function renderHome(app) {
+  app.innerHTML = mkHeader('Umatizim', false, false) +
+    '<div class="main"><div class="page-title">Бўлимлар</div>' +
+    '<div class="card" id="go-soglik"><div class="card-icon">💚</div><div class="card-info"><div class="card-name">Соғлиқ</div><div class="card-sub">Спорт ва тўғри овқатланиш</div></div><span class="card-arrow">›</span></div></div>';
+  document.getElementById('go-soglik').addEventListener('click', function() { pageStack.push('soglik'); render(); });
+}
+
+function renderSoglik(app) {
+  app.innerHTML = mkHeader('💚 Соғлиқ', true, false) + mkBc() +
+    '<div class="main"><div class="page-title">Бўлимлар</div>' +
+    '<div class="card" id="go-sport"><div class="card-icon">🏋️</div><div class="card-info"><div class="card-name">Спорт</div><div class="card-sub">Машқлар ва тренировка</div></div><span class="card-arrow">›</span></div>' +
+    '<div class="card" id="go-ovqat"><div class="card-icon">🥗</div><div class="card-info"><div class="card-name">Тўғри овқатланиш</div><div class="card-sub">Рацион, запас, харид</div></div><span class="card-arrow">›</span></div></div>';
+  bindCommon();
+  document.getElementById('go-sport').addEventListener('click', function() { showToast('Яқинда қўшилади'); });
+  document.getElementById('go-ovqat').addEventListener('click', function() { pageStack.push('ovqatlanish'); render(); });
+}
+
+function renderOvqatlanish(app) {
+  app.innerHTML = mkHeader('🥗 Овқатланиш', true, false) + mkBc() +
+    '<div class="main"><div class="page-title">Бўлимлар</div>' +
+    '<div class="card" id="go-r"><div class="card-icon">📋</div><div class="card-info"><div class="card-name">Кунлик рацион</div><div class="card-sub">7 кунлик овқат режаси</div></div><span class="card-arrow">›</span></div>' +
+    '<div class="card" id="go-z"><div class="card-icon">📦</div><div class="card-info"><div class="card-name">Запас</div><div class="card-sub">Нима бор, неча кунга</div></div><span class="card-arrow">›</span></div>' +
+    '<div class="card" id="go-h"><div class="card-icon">🛒</div><div class="card-info"><div class="card-name">Харид режаси</div><div class="card-sub">Нима олиш керак</div></div><span class="card-arrow">›</span></div></div>';
+  bindCommon();
+  document.getElementById('go-r').addEventListener('click', function() { pageStack.push('ratsion'); render(); });
+  document.getElementById('go-z').addEventListener('click', function() { pageStack.push('zapas'); render(); });
+  document.getElementById('go-h').addEventListener('click', function() { pageStack.push('harid'); render(); });
+}
+
+function renderRatsion(app) {
+  var days = getDays();
+  var h = mkHeader('📋 Кунлик рацион', true, false) + mkBc() + '<div class="main"><div class="page-title">7 кун</div>';
+  for (var i = 0; i < days.length; i++) {
+    var d = days[i]; var tod = isToday(d);
+    h += '<div class="day-card" data-ts="' + d.getTime() + '">';
+    h += '<div class="day-date"><div class="day-date-num">' + d.getDate() + '</div><div class="day-date-month">' + UZ_MONTHS[d.getMonth()] + '</div></div>';
+    h += '<div class="day-divider"></div><div class="day-info"><div class="day-name">' + UZ_DAYS[d.getDay()] + '</div><div class="day-menu">Классика</div></div>';
+    h += tod ? '<span class="day-badge today-badge">Бугун</span>' : '<span class="day-badge">📋</span>';
+    h += '<span class="card-arrow">›</span></div>';
+  }
+  h += '</div>';
+  app.innerHTML = h;
+  bindCommon();
+  document.querySelectorAll('.day-card').forEach(function(c) {
+    c.addEventListener('click', function() { selectedDate = new Date(parseInt(this.getAttribute('data-ts'))); pageStack.push('day'); render(); });
+  });
+}
+
 function renderDay(app) {
   var d = selectedDate;
-  var title = ('0'+d.getDate()).slice(-2) + '.' + ('0'+(d.getMonth()+1)).slice(-2) + ' ' + UZ_DAYS[d.getDay()];
-  var html = header(title, true) + breadcrumb();
-
-  // Nutrition summary
-  html += '<div class="nutrition-bar">';
-  html += '<div class="nut-item"><div class="nut-val">' + KLASSIKA.totalKcal + '</div><div class="nut-lbl">Ккал</div></div>';
-  html += '<div class="nut-item"><div class="nut-val" style="color:#185FA5">' + KLASSIKA.totalProtein + 'г</div><div class="nut-lbl">Оқсил</div></div>';
-  html += '<div class="nut-item"><div class="nut-val" style="color:#854F0B">' + KLASSIKA.totalFat + 'г</div><div class="nut-lbl">Ёғ</div></div>';
-  html += '<div class="nut-item"><div class="nut-val" style="color:#3B6D11">' + KLASSIKA.totalCarb + 'г</div><div class="nut-lbl">Кар.</div></div>';
-  html += '</div>';
-
+  var title = ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+' '+UZ_DAYS[d.getDay()];
+  var h = mkHeader(title, true, false) + mkBc();
+  h += '<div class="nutrition-bar">';
+  h += '<div class="nut-item"><div class="nut-val">'+KLASSIKA.totalKcal+'</div><div class="nut-lbl">Ккал</div></div>';
+  h += '<div class="nut-item"><div class="nut-val" style="color:#185FA5">'+KLASSIKA.totalProtein+'г</div><div class="nut-lbl">Оқсил</div></div>';
+  h += '<div class="nut-item"><div class="nut-val" style="color:#854F0B">'+KLASSIKA.totalFat+'г</div><div class="nut-lbl">Ёғ</div></div>';
+  h += '<div class="nut-item"><div class="nut-val" style="color:#3B6D11">'+KLASSIKA.totalCarb+'г</div><div class="nut-lbl">Кар.</div></div>';
+  h += '</div>';
   for (var i = 0; i < KLASSIKA.meals.length; i++) {
-    var meal = KLASSIKA.meals[i];
-    html += '<div class="meal-section">';
-    html += '<div class="meal-header"><div class="meal-icon-wrap">' + meal.icon + '</div><div class="meal-title">' + meal.name + '</div><span style="margin-left:auto;font-size:12px;color:var(--text3)">' + meal.kcal + ' ккал</span></div>';
-    html += '<div class="meal-items">';
-    for (var j = 0; j < meal.items.length; j++) {
-      html += '<div class="meal-item"><span class="meal-item-name">' + meal.items[j].name + '</span><span class="meal-item-amount">' + meal.items[j].amount + '</span></div>';
+    var m = KLASSIKA.meals[i];
+    h += '<div class="meal-section"><div class="meal-header"><div class="meal-icon-wrap">'+m.icon+'</div><div class="meal-title-text">'+m.name+'</div><span style="margin-left:auto;font-size:12px;color:var(--text3)">'+m.kcal+' ккал</span></div><div>';
+    for (var j = 0; j < m.items.length; j++) {
+      h += '<div class="meal-item"><span class="meal-item-name">'+m.items[j].name+'</span><span class="meal-item-amount">'+m.items[j].amount+'</span></div>';
     }
-    html += '</div></div>';
+    h += '</div></div>';
   }
-
-  app.innerHTML = html;
-  document.getElementById('btn-back').addEventListener('click', goBack);
+  app.innerHTML = h;
+  bindCommon();
 }
 
 function renderZapas(app) {
-  app.innerHTML = header('📦 Запас', true) + breadcrumb() +
-  '<div class="main"><div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">Яқинда қўшилади</div></div></div>';
-  document.getElementById('btn-back').addEventListener('click', goBack);
+  var h = mkHeader('📦 Запас', true, true) + mkBc() + '<div class="main"><div class="page-title">Маҳсулотлар</div>';
+  if (!zapas.length) {
+    h += '<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">Ҳали маҳсулот йўқ</div><div class="empty-sub">+ тугмасини босиб қўшинг</div></div>';
+  } else {
+    for (var i = 0; i < zapas.length; i++) {
+      var item = zapas[i];
+      var prod = DEFAULT_PRODUCTS.find(function(p) { return p.id === item.productId; });
+      if (!prod) continue;
+      var days = calcDaysLeft(item);
+      var sc = statusClass(days); var clr = statusColor(days);
+      var pct = Math.min(100, Math.round((days / 7) * 100));
+      var cooked = prod.coef !== 1 ? ' → ' + Math.round(item.rawAmount * prod.coef) + prod.unit + ' пишган' : '';
+      h += '<div class="zapas-item" data-idx="' + i + '">';
+      h += '<div class="zapas-icon">' + prod.icon + '</div>';
+      h += '<div class="zapas-info"><div class="zapas-name">' + prod.name + '</div>';
+      h += '<div class="zapas-raw">' + item.rawAmount + prod.unit + ' хом' + cooked + '</div>';
+      h += '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%;background:' + clr + '"></div></div></div>';
+      h += '<div class="zapas-right"><div class="zapas-days ' + sc + '">' + days + '</div><div class="zapas-days-lbl">кун</div></div>';
+      h += '</div>';
+    }
+  }
+  h += '</div>';
+  app.innerHTML = h;
+  bindCommon();
+  var ab = document.getElementById('btn-add-z');
+  if (ab) ab.addEventListener('click', openAddModal);
+  document.querySelectorAll('.zapas-item').forEach(function(el) {
+    el.addEventListener('click', function() {
+      openEditModal(parseInt(this.getAttribute('data-idx')));
+    });
+  });
 }
 
 function renderHarid(app) {
-  app.innerHTML = header('🛒 Харид режаси', true) + breadcrumb() +
-  '<div class="main"><div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-text">Яқинда қўшилади</div></div></div>';
-  document.getElementById('btn-back').addEventListener('click', goBack);
+  app.innerHTML = mkHeader('🛒 Харид режаси', true, false) + mkBc() +
+    '<div class="main"><div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-text">Яқинда қўшилади</div></div></div>';
+  bindCommon();
 }
 
-function goBack() {
-  pageStack.pop();
+// =================== ADD MODAL ===================
+function buildProductList() {
+  var q = document.getElementById('search-input').value.toLowerCase();
+  var filtered = DEFAULT_PRODUCTS.filter(function(p) { return p.name.toLowerCase().includes(q); });
+  var h = '';
+  filtered.forEach(function(p) {
+    h += '<button class="product-btn' + (selectedProduct && selectedProduct.id === p.id ? ' selected' : '') + '" data-id="' + p.id + '">';
+    h += '<span class="product-btn-icon">' + p.icon + '</span>';
+    h += '<span><div class="product-btn-name">' + p.name + '</div><div class="product-btn-unit">' + (p.coefLabel || p.unit) + '</div></span>';
+    h += '</button>';
+  });
+  if (!h) h = '<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">Топилмади</div>';
+  document.getElementById('product-list').innerHTML = h;
+  document.querySelectorAll('.product-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      selectedProduct = DEFAULT_PRODUCTS.find(function(p) { return p.id === btn.getAttribute('data-id'); });
+      buildProductList();
+      var as = document.getElementById('amount-section');
+      as.classList.add('show');
+      document.getElementById('amount-label').textContent = selectedProduct.name + ' (' + selectedProduct.unit + ', хом)';
+      document.getElementById('unit-label').textContent = selectedProduct.unit;
+      var ci = document.getElementById('coef-info');
+      if (selectedProduct.coefLabel) { ci.style.display = 'block'; ci.textContent = '📌 ' + selectedProduct.coefLabel; }
+      else ci.style.display = 'none';
+      document.getElementById('amount-input').value = '';
+      document.getElementById('amount-input').focus();
+    });
+  });
+}
+
+function openAddModal() {
+  selectedProduct = null;
+  document.getElementById('search-input').value = '';
+  document.getElementById('amount-input').value = '';
+  document.getElementById('amount-section').classList.remove('show');
+  buildProductList();
+  document.getElementById('modal-add').classList.add('open');
+}
+
+document.getElementById('search-input').addEventListener('input', buildProductList);
+document.getElementById('btn-cancel-add').addEventListener('click', function() { document.getElementById('modal-add').classList.remove('open'); });
+document.getElementById('btn-save-add').addEventListener('click', function() {
+  if (!selectedProduct) return;
+  var amt = parseFloat(document.getElementById('amount-input').value);
+  if (!amt || amt <= 0) { document.getElementById('amount-input').focus(); return; }
+  var ex = zapas.find(function(z) { return z.productId === selectedProduct.id; });
+  if (ex) { ex.rawAmount = Math.round((ex.rawAmount + amt) * 10) / 10; }
+  else { zapas.push({ productId: selectedProduct.id, rawAmount: amt }); }
+  saveZapas();
+  document.getElementById('modal-add').classList.remove('open');
   render();
+  showToast(selectedProduct.name + ' қўшилди ✓');
+});
+
+// =================== EDIT MODAL ===================
+function openEditModal(idx) {
+  editingZapasIdx = idx;
+  var item = zapas[idx];
+  var prod = DEFAULT_PRODUCTS.find(function(p) { return p.id === item.productId; });
+  document.getElementById('edit-modal-title').textContent = prod.icon + ' ' + prod.name;
+  document.getElementById('edit-amount-label').textContent = 'Миқдор (' + prod.unit + ', хом)';
+  document.getElementById('edit-unit-label').textContent = prod.unit;
+  document.getElementById('edit-amount-input').value = item.rawAmount;
+  var ci = document.getElementById('edit-coef-info');
+  if (prod.coefLabel) { ci.style.display = 'block'; ci.textContent = '📌 ' + prod.coefLabel; }
+  else ci.style.display = 'none';
+  document.getElementById('modal-edit').classList.add('open');
+  setTimeout(function() { document.getElementById('edit-amount-input').focus(); document.getElementById('edit-amount-input').select(); }, 150);
 }
 
+document.getElementById('btn-cancel-edit').addEventListener('click', function() { document.getElementById('modal-edit').classList.remove('open'); });
+
+document.getElementById('btn-save-edit').addEventListener('click', function() {
+  var amt = parseFloat(document.getElementById('edit-amount-input').value);
+  if (!amt || amt <= 0) { document.getElementById('edit-amount-input').focus(); return; }
+  zapas[editingZapasIdx].rawAmount = amt;
+  saveZapas();
+  document.getElementById('modal-edit').classList.remove('open');
+  render();
+  showToast('Янгиланди ✓');
+});
+
+document.getElementById('btn-delete-edit').addEventListener('click', function() {
+  var prod = DEFAULT_PRODUCTS.find(function(p) { return p.id === zapas[editingZapasIdx].productId; });
+  if (!confirm(prod.name + ' ни ўчиришни тасдиқлайсизми?')) return;
+  zapas.splice(editingZapasIdx, 1);
+  saveZapas();
+  document.getElementById('modal-edit').classList.remove('open');
+  render();
+  showToast('Ўчирилди');
+});
+
+function goBack() { pageStack.pop(); render(); }
 function showToast(msg) {
   var t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   setTimeout(function() { t.classList.remove('show'); }, 2500);
 }
 
-if (window.Telegram && window.Telegram.WebApp) {
-  Telegram.WebApp.ready();
-  Telegram.WebApp.expand();
-}
-
+if (window.Telegram && window.Telegram.WebApp) { Telegram.WebApp.ready(); Telegram.WebApp.expand(); }
+loadZapas();
 render();
 </script>
 </body>
