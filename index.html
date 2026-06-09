@@ -25,47 +25,37 @@
   }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; padding-bottom: 40px; }
 
-  /* HEADER */
   .header { background: var(--bg2); padding: 16px 20px; border-bottom: 1px solid var(--bg3); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
   .header-left { display: flex; align-items: center; gap: 10px; }
   .back-btn { width: 32px; height: 32px; background: var(--bg3); border: none; border-radius: 8px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .logo { width: 36px; height: 36px; background: var(--dark); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-  .app-name { font-size: 17px; font-weight: 600; color: var(--dark); }
-  .app-sub { font-size: 12px; color: var(--text3); margin-top: 1px; }
+  .header-title { font-size: 17px; font-weight: 600; color: var(--dark); }
+  .header-sub { font-size: 12px; color: var(--text3); margin-top: 1px; }
   .btn-add { width: 36px; height: 36px; background: var(--accent); border: none; border-radius: 10px; color: white; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
 
-  /* MAIN */
+  /* BREADCRUMB */
+  .breadcrumb { padding: 10px 16px; display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text3); overflow-x: auto; white-space: nowrap; background: var(--bg2); border-bottom: 1px solid var(--bg3); }
+  .breadcrumb span { cursor: pointer; }
+  .breadcrumb span:hover { color: var(--accent); }
+  .breadcrumb-sep { color: var(--light); }
+
   .main { padding: 20px 16px; }
   .page-title { font-size: 13px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; font-weight: 500; }
 
-  /* SECTION CARDS */
   .sections-list { display: flex; flex-direction: column; gap: 10px; }
-  .section-card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: box-shadow 0.15s; }
+  .section-card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: box-shadow 0.15s; }
   .section-card:active { box-shadow: 0 2px 12px rgba(85,130,55,0.15); }
-  .drag-handle { color: var(--light); font-size: 18px; cursor: grab; padding: 4px; }
-  .section-icon { width: 46px; height: 46px; background: var(--bg3); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
-  .section-info { flex: 1; }
-  .section-name { font-size: 16px; font-weight: 500; color: var(--text); }
-  .section-arrow { color: var(--light); font-size: 18px; margin-right: 4px; }
-  .badge-inactive { font-size: 11px; background: var(--bg3); color: var(--text3); padding: 2px 8px; border-radius: 20px; margin-top: 4px; display: inline-block; }
-  .section-actions { display: flex; gap: 6px; }
-  .btn-icon { width: 32px; height: 32px; border: 1px solid var(--bg3); background: var(--bg3); border-radius: var(--radius-sm); color: var(--text3); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .drag-handle { color: var(--light); font-size: 16px; cursor: grab; padding: 2px 4px; flex-shrink: 0; }
+  .section-icon { width: 44px; height: 44px; background: var(--bg3); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+  .section-info { flex: 1; min-width: 0; }
+  .section-name { font-size: 15px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .section-count { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .section-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .btn-icon { width: 30px; height: 30px; border: 1px solid var(--bg3); background: var(--bg3); border-radius: var(--radius-sm); color: var(--text3); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .btn-icon.danger { color: var(--danger); }
+  .section-arrow { color: var(--light); font-size: 20px; font-weight: 300; }
+  .badge-inactive { font-size: 11px; background: var(--lightest); color: var(--text3); padding: 2px 8px; border-radius: 20px; margin-top: 3px; display: inline-block; }
 
-  /* INNER PAGE */
-  .inner-page { display: none; }
-  .inner-page.active { display: block; }
-  .home-page { display: block; }
-  .home-page.hidden { display: none; }
-
-  .inner-header-title { font-size: 17px; font-weight: 600; color: var(--dark); }
-  .inner-content { padding: 20px 16px; }
-  .coming-soon { text-align: center; padding: 60px 20px; color: var(--text3); }
-  .coming-soon-icon { font-size: 48px; margin-bottom: 12px; }
-  .coming-soon-text { font-size: 16px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
-  .coming-soon-sub { font-size: 13px; }
-
-  /* EMPTY */
   .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
   .empty-icon { font-size: 48px; margin-bottom: 12px; }
   .empty-text { font-size: 15px; margin-bottom: 6px; color: var(--text2); }
@@ -92,51 +82,27 @@
   .toggle::after { content: ''; position: absolute; width: 20px; height: 20px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: left 0.2s; }
   .toggle.on::after { left: 25px; }
   .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
-  .btn-cancel { flex: 1; padding: 14px; background: var(--bg3); border: none; border-radius: var(--radius-sm); color: var(--text3); font-size: 15px; cursor: pointer; font-weight: 500; }
+  .btn-cancel { flex: 1; padding: 14px; background: var(--bg3); border: none; border-radius: var(--radius-sm); color: var(--text3); font-size: 15px; cursor: pointer; }
   .btn-save { flex: 2; padding: 14px; background: var(--accent); border: none; border-radius: var(--radius-sm); color: white; font-size: 15px; font-weight: 600; cursor: pointer; }
 
-  /* TOAST */
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--dark); color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 500; z-index: 300; transition: transform 0.25s; pointer-events: none; }
   .toast.show { transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
 
-<!-- HOME PAGE -->
-<div id="home-page" class="home-page">
-  <div class="header">
-    <div class="header-left">
-      <div class="logo">🌿</div>
-      <div>
-        <div class="app-name">Umatizim</div>
-        <div class="app-sub">Соғлиқ ва спорт</div>
-      </div>
-    </div>
+<div id="app">
+  <!-- header -->
+  <div class="header" id="header">
+    <div class="header-left" id="header-left"></div>
     <button class="btn-add" id="btn-add">+</button>
   </div>
+  <!-- breadcrumb -->
+  <div class="breadcrumb" id="breadcrumb" style="display:none"></div>
+  <!-- main -->
   <div class="main">
-    <div class="page-title">Бўлимлар</div>
+    <div class="page-title" id="page-title">Бўлимлар</div>
     <div id="sections-list" class="sections-list"></div>
-  </div>
-</div>
-
-<!-- INNER PAGE -->
-<div id="inner-page" class="inner-page">
-  <div class="header">
-    <div class="header-left">
-      <button class="back-btn" id="btn-back">←</button>
-      <div>
-        <div class="inner-header-title" id="inner-title">Бўлим</div>
-      </div>
-    </div>
-    <button class="btn-add" id="btn-add-inner" style="display:none">+</button>
-  </div>
-  <div class="inner-content">
-    <div class="coming-soon">
-      <div class="coming-soon-icon" id="inner-icon">📋</div>
-      <div class="coming-soon-text" id="inner-name-text">Бўлим</div>
-      <div class="coming-soon-sub">Мазмун яқинда қўшилади</div>
-    </div>
   </div>
 </div>
 
@@ -168,52 +134,120 @@
 
 <script>
 var EMOJIS = ['💚','🏋️','🥗','🏃','💪','🧘','🍎','🥦','🏊','⚽','🎯','📋','📦','🛒','💊','🩺','🧠','❤️','🔥','⚡','🌿','🌱','🥩','🍳','💧','😴','📊','🏆'];
-var sections = [];
+
+// Data structure: { id, name, icon, is_active, children: [] }
+var db = { root: [] };
+var nextId = 1;
+
+// Navigation stack: array of { id, name, icon } — null means root
+var navStack = [];
 var editingId = null;
 var selectedEmoji = '💚';
 var isActive = true;
-var nextId = 1;
 var dragSrc = null;
 
 function loadData() {
   try {
-    var raw = localStorage.getItem('umatizim_sections');
-    if (raw) { var p = JSON.parse(raw); sections = p.sections || []; nextId = p.nextId || 1; }
-  } catch(e) { sections = []; nextId = 1; }
+    var raw = localStorage.getItem('umatizim_v2');
+    if (raw) { var p = JSON.parse(raw); db = p.db || { root: [] }; nextId = p.nextId || 1; }
+  } catch(e) { db = { root: [] }; nextId = 1; }
 }
 
 function saveData() {
-  localStorage.setItem('umatizim_sections', JSON.stringify({ sections: sections, nextId: nextId }));
+  localStorage.setItem('umatizim_v2', JSON.stringify({ db: db, nextId: nextId }));
 }
 
+// Get current sections array based on navStack
+function getCurrentList() {
+  if (!navStack.length) return db.root;
+  return findNode(db.root, navStack[navStack.length - 1].id).children;
+}
+
+function findNode(list, id) {
+  for (var i = 0; i < list.length; i++) {
+    if (list[i].id === id) return list[i];
+    if (list[i].children && list[i].children.length) {
+      var found = findNode(list[i].children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function countChildren(node) {
+  return (node.children && node.children.length) ? node.children.length : 0;
+}
+
+// RENDER
 function render() {
+  renderHeader();
+  renderBreadcrumb();
+  renderList();
+}
+
+function renderHeader() {
+  var left = document.getElementById('header-left');
+  if (!navStack.length) {
+    left.innerHTML = '<div class="logo">🌿</div><div><div class="header-title">Umatizim</div><div class="header-sub">Соғлиқ ва спорт</div></div>';
+  } else {
+    var cur = navStack[navStack.length - 1];
+    left.innerHTML = '<button class="back-btn" id="btn-back">←</button><div><div class="header-title">' + cur.icon + ' ' + cur.name + '</div></div>';
+    document.getElementById('btn-back').addEventListener('click', goBack);
+  }
+  document.getElementById('page-title').textContent = navStack.length ? 'Бўлимлар' : 'Бўлимлар';
+}
+
+function renderBreadcrumb() {
+  var bc = document.getElementById('breadcrumb');
+  if (!navStack.length) { bc.style.display = 'none'; return; }
+  bc.style.display = 'flex';
+  var html = '<span data-idx="-1">🏠 Бош</span>';
+  for (var i = 0; i < navStack.length; i++) {
+    html += '<span class="breadcrumb-sep"> › </span>';
+    html += '<span data-idx="' + i + '">' + navStack[i].icon + ' ' + navStack[i].name + '</span>';
+  }
+  bc.innerHTML = html;
+  bc.querySelectorAll('[data-idx]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var idx = parseInt(this.getAttribute('data-idx'));
+      if (idx === -1) { navStack = []; }
+      else { navStack = navStack.slice(0, idx + 1); }
+      render();
+    });
+  });
+}
+
+function renderList() {
   var list = document.getElementById('sections-list');
-  if (!sections.length) {
+  var items = getCurrentList();
+  if (!items || !items.length) {
     list.innerHTML = '<div class="empty-state"><div class="empty-icon">🌿</div><div class="empty-text">Ҳали бўлим йўқ</div><div class="empty-sub">+ тугмасини босиб қўшинг</div></div>';
     return;
   }
   var html = '';
-  for (var i = 0; i < sections.length; i++) {
-    var s = sections[i];
+  for (var i = 0; i < items.length; i++) {
+    var s = items[i];
+    var cnt = countChildren(s);
     html += '<div class="section-card" id="card-' + i + '" draggable="true">';
     html += '<div class="drag-handle">⋮⋮</div>';
     html += '<div class="section-icon">' + s.icon + '</div>';
     html += '<div class="section-info"><div class="section-name">' + s.name + '</div>';
+    if (cnt > 0) html += '<div class="section-count">' + cnt + ' та бўлим</div>';
     if (!s.is_active) html += '<span class="badge-inactive">Ўчирилган</span>';
     html += '</div>';
-    html += '<div class="section-actions">';
+    html += '<div class="section-right">';
     html += '<button class="btn-icon" data-edit="' + i + '">✏️</button>';
     html += '<button class="btn-icon danger" data-del="' + i + '">🗑️</button>';
-    html += '</div>';
     html += '<span class="section-arrow">›</span>';
-    html += '</div>';
+    html += '</div></div>';
   }
   list.innerHTML = html;
 
-  for (var j = 0; j < sections.length; j++) {
+  for (var j = 0; j < items.length; j++) {
     (function(idx) {
       var card = document.getElementById('card-' + idx);
-      card.addEventListener('click', function() { openInner(idx); });
+      var items2 = getCurrentList();
+      card.addEventListener('click', function() { enterSection(items2[idx]); });
       card.querySelector('[data-edit]').addEventListener('click', function(e) { e.stopPropagation(); openEdit(idx); });
       card.querySelector('[data-del]').addEventListener('click', function(e) { e.stopPropagation(); deleteSection(idx); });
       card.addEventListener('dragstart', function() { dragSrc = idx; this.style.opacity = '0.5'; });
@@ -223,8 +257,9 @@ function render() {
       card.addEventListener('drop', function(e) {
         e.preventDefault(); this.style.borderColor = '';
         if (dragSrc !== null && dragSrc !== idx) {
-          var moved = sections.splice(dragSrc, 1)[0];
-          sections.splice(idx, 0, moved);
+          var cur = getCurrentList();
+          var moved = cur.splice(dragSrc, 1)[0];
+          cur.splice(idx, 0, moved);
           saveData(); render(); showToast('Ўрин сақланди ✓');
         }
         dragSrc = null;
@@ -233,20 +268,17 @@ function render() {
   }
 }
 
-function openInner(idx) {
-  var s = sections[idx];
-  document.getElementById('inner-title').textContent = s.name;
-  document.getElementById('inner-icon').textContent = s.icon;
-  document.getElementById('inner-name-text').textContent = s.name;
-  document.getElementById('home-page').classList.add('hidden');
-  document.getElementById('inner-page').classList.add('active');
+function enterSection(s) {
+  navStack.push({ id: s.id, name: s.name, icon: s.icon });
+  render();
 }
 
-document.getElementById('btn-back').addEventListener('click', function() {
-  document.getElementById('inner-page').classList.remove('active');
-  document.getElementById('home-page').classList.remove('hidden');
-});
+function goBack() {
+  navStack.pop();
+  render();
+}
 
+// MODAL
 function buildEmojiGrid() {
   var html = '';
   for (var i = 0; i < EMOJIS.length; i++) {
@@ -274,7 +306,7 @@ function openModal() {
 }
 
 function openEdit(idx) {
-  var s = sections[idx];
+  var s = getCurrentList()[idx];
   editingId = idx; selectedEmoji = s.icon; isActive = s.is_active;
   document.getElementById('modal-title').textContent = 'Таҳрир';
   document.getElementById('input-name').value = s.name;
@@ -287,7 +319,8 @@ function closeModal() { document.getElementById('modal').classList.remove('open'
 
 function deleteSection(idx) {
   if (!confirm('Ўчиришни тасдиқлайсизми?')) return;
-  sections.splice(idx, 1); saveData(); render(); showToast('Ўчирилди');
+  getCurrentList().splice(idx, 1);
+  saveData(); render(); showToast('Ўчирилди');
 }
 
 function showToast(msg) {
@@ -302,14 +335,22 @@ document.getElementById('toggle-active').addEventListener('click', function() {
   isActive = !isActive;
   this.className = 'toggle' + (isActive ? ' on' : '');
 });
+
 document.getElementById('btn-save').addEventListener('click', function() {
   var name = document.getElementById('input-name').value.trim();
   if (!name) { document.getElementById('input-name').focus(); return; }
+  var cur = getCurrentList();
   if (editingId !== null) {
-    sections[editingId].name = name; sections[editingId].icon = selectedEmoji; sections[editingId].is_active = isActive;
+    cur[editingId].name = name;
+    cur[editingId].icon = selectedEmoji;
+    cur[editingId].is_active = isActive;
+    if (navStack.length && navStack[navStack.length-1].id === cur[editingId].id) {
+      navStack[navStack.length-1].name = name;
+      navStack[navStack.length-1].icon = selectedEmoji;
+    }
     showToast('Сақланди ✓');
   } else {
-    sections.push({ id: nextId++, name: name, icon: selectedEmoji, is_active: isActive });
+    cur.push({ id: nextId++, name: name, icon: selectedEmoji, is_active: isActive, children: [] });
     showToast('Қўшилди ✓');
   }
   saveData(); render(); closeModal();
