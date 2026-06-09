@@ -15,7 +15,6 @@
     --dark: #1e5927;
     --mid: #7a9669;
     --light: #a9b7a3;
-    --lightest: #dadfe2;
     --text: #1e2e1a;
     --text2: #558237;
     --text3: #7a9669;
@@ -25,65 +24,66 @@
   }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; padding-bottom: 40px; }
 
+  /* HEADER */
   .header { background: var(--bg2); padding: 16px 20px; border-bottom: 1px solid var(--bg3); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
   .header-left { display: flex; align-items: center; gap: 10px; }
   .back-btn { width: 32px; height: 32px; background: var(--bg3); border: none; border-radius: 8px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .logo { width: 36px; height: 36px; background: var(--dark); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
   .header-title { font-size: 17px; font-weight: 600; color: var(--dark); }
   .header-sub { font-size: 12px; color: var(--text3); margin-top: 1px; }
-  .btn-add { width: 36px; height: 36px; background: var(--accent); border: none; border-radius: 10px; color: white; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
 
   /* BREADCRUMB */
   .breadcrumb { padding: 10px 16px; display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text3); overflow-x: auto; white-space: nowrap; background: var(--bg2); border-bottom: 1px solid var(--bg3); }
   .breadcrumb span { cursor: pointer; }
   .breadcrumb span:hover { color: var(--accent); }
-  .breadcrumb-sep { color: var(--light); }
 
   .main { padding: 20px 16px; }
   .page-title { font-size: 13px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; font-weight: 500; }
 
-  .sections-list { display: flex; flex-direction: column; gap: 10px; }
-  .section-card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: box-shadow 0.15s; }
-  .section-card:active { box-shadow: 0 2px 12px rgba(85,130,55,0.15); }
-  .drag-handle { color: var(--light); font-size: 16px; cursor: grab; padding: 2px 4px; flex-shrink: 0; }
-  .section-icon { width: 44px; height: 44px; background: var(--bg3); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
-  .section-info { flex: 1; min-width: 0; }
-  .section-name { font-size: 15px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .section-count { font-size: 12px; color: var(--text3); margin-top: 2px; }
-  .section-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-  .btn-icon { width: 30px; height: 30px; border: 1px solid var(--bg3); background: var(--bg3); border-radius: var(--radius-sm); color: var(--text3); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-  .btn-icon.danger { color: var(--danger); }
-  .section-arrow { color: var(--light); font-size: 20px; font-weight: 300; }
-  .badge-inactive { font-size: 11px; background: var(--lightest); color: var(--text3); padding: 2px 8px; border-radius: 20px; margin-top: 3px; display: inline-block; }
+  /* CARDS */
+  .list { display: flex; flex-direction: column; gap: 10px; }
+  .card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: box-shadow 0.15s; }
+  .card:active { box-shadow: 0 2px 12px rgba(85,130,55,0.15); }
+  .card-icon { width: 44px; height: 44px; background: var(--bg3); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+  .card-info { flex: 1; }
+  .card-name { font-size: 15px; font-weight: 500; color: var(--text); }
+  .card-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .card-arrow { color: var(--light); font-size: 20px; }
 
+  /* DAY CARD */
+  .day-card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 10px; }
+  .day-card:active { box-shadow: 0 2px 12px rgba(85,130,55,0.15); }
+  .day-date { width: 50px; text-align: center; flex-shrink: 0; }
+  .day-date-num { font-size: 22px; font-weight: 600; color: var(--dark); line-height: 1; }
+  .day-date-month { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .day-divider { width: 1px; height: 40px; background: var(--bg3); flex-shrink: 0; }
+  .day-info { flex: 1; }
+  .day-name { font-size: 15px; font-weight: 500; color: var(--text); }
+  .day-menu { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .day-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: #e8f0e0; color: var(--accent); font-weight: 500; }
+  .today-badge { background: var(--accent); color: white; }
+
+  /* MEAL DETAIL */
+  .meal-section { margin-bottom: 16px; }
+  .meal-header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: var(--bg2); border-bottom: 1px solid var(--bg3); }
+  .meal-icon-wrap { width: 36px; height: 36px; background: var(--bg3); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .meal-title { font-size: 15px; font-weight: 500; color: var(--text); }
+  .meal-items { background: var(--bg2); }
+  .meal-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--bg3); }
+  .meal-item:last-child { border-bottom: none; }
+  .meal-item-name { font-size: 14px; color: var(--text); }
+  .meal-item-amount { font-size: 13px; color: var(--text3); background: var(--bg3); padding: 3px 10px; border-radius: 20px; }
+
+  /* NUTRITION SUMMARY */
+  .nutrition-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 16px; background: var(--bg2); border-bottom: 1px solid var(--bg3); margin-bottom: 16px; }
+  .nut-item { text-align: center; background: var(--bg); border-radius: var(--radius-sm); padding: 10px 4px; }
+  .nut-val { font-size: 18px; font-weight: 600; color: var(--dark); }
+  .nut-lbl { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* EMPTY */
   .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
   .empty-icon { font-size: 48px; margin-bottom: 12px; }
   .empty-text { font-size: 15px; margin-bottom: 6px; color: var(--text2); }
-  .empty-sub { font-size: 13px; }
-
-  /* MODAL */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: flex-end; justify-content: center; }
-  .modal-overlay.open { display: flex; }
-  .modal { background: var(--bg2); border-radius: var(--radius) var(--radius) 0 0; padding: 24px 20px 40px; width: 100%; max-width: 500px; border-top: 2px solid var(--accent2); }
-  .modal-handle { width: 36px; height: 4px; background: var(--bg3); border-radius: 2px; margin: 0 auto 20px; }
-  .modal-title { font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 20px; }
-  .form-group { margin-bottom: 16px; }
-  .form-label { font-size: 13px; color: var(--text3); margin-bottom: 6px; display: block; font-weight: 500; }
-  .form-input { width: 100%; background: var(--bg); border: 1px solid var(--bg3); border-radius: var(--radius-sm); padding: 12px 14px; color: var(--text); font-size: 15px; outline: none; }
-  .form-input:focus { border-color: var(--accent); }
-  .form-input::placeholder { color: var(--light); }
-  .emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-top: 8px; }
-  .emoji-btn { width: 100%; aspect-ratio: 1; background: var(--bg); border: 2px solid transparent; border-radius: var(--radius-sm); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-  .emoji-btn.selected { border-color: var(--accent); background: #e8f0e0; }
-  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid var(--bg3); margin-top: 4px; }
-  .toggle-label { font-size: 15px; color: var(--text2); }
-  .toggle { width: 48px; height: 26px; background: var(--light); border-radius: 13px; border: none; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
-  .toggle.on { background: var(--accent); }
-  .toggle::after { content: ''; position: absolute; width: 20px; height: 20px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: left 0.2s; }
-  .toggle.on::after { left: 25px; }
-  .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
-  .btn-cancel { flex: 1; padding: 14px; background: var(--bg3); border: none; border-radius: var(--radius-sm); color: var(--text3); font-size: 15px; cursor: pointer; }
-  .btn-save { flex: 2; padding: 14px; background: var(--accent); border: none; border-radius: var(--radius-sm); color: white; font-size: 15px; font-weight: 600; cursor: pointer; }
 
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--dark); color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 500; z-index: 300; transition: transform 0.25s; pointer-events: none; }
   .toast.show { transform: translateX(-50%) translateY(0); }
@@ -91,236 +91,216 @@
 </head>
 <body>
 
-<div id="app">
-  <!-- header -->
-  <div class="header" id="header">
-    <div class="header-left" id="header-left"></div>
-    <button class="btn-add" id="btn-add">+</button>
-  </div>
-  <!-- breadcrumb -->
-  <div class="breadcrumb" id="breadcrumb" style="display:none"></div>
-  <!-- main -->
-  <div class="main">
-    <div class="page-title" id="page-title">Бўлимлар</div>
-    <div id="sections-list" class="sections-list"></div>
-  </div>
-</div>
-
-<!-- MODAL -->
-<div class="modal-overlay" id="modal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="modal-title">Янги бўлим</div>
-    <div class="form-group">
-      <label class="form-label">Номи</label>
-      <input class="form-input" id="input-name" type="text" placeholder="Масалан: Соғлиқ" maxlength="30">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Белги</label>
-      <div class="emoji-grid" id="emoji-grid"></div>
-    </div>
-    <div class="toggle-row">
-      <span class="toggle-label">Фаол</span>
-      <button class="toggle on" id="toggle-active"></button>
-    </div>
-    <div class="modal-btns">
-      <button class="btn-cancel" id="btn-cancel">Бекор</button>
-      <button class="btn-save" id="btn-save">Сақлаш</button>
-    </div>
-  </div>
-</div>
-
+<div id="app"></div>
 <div class="toast" id="toast"></div>
 
 <script>
-var EMOJIS = ['💚','🏋️','🥗','🏃','💪','🧘','🍎','🥦','🏊','⚽','🎯','📋','📦','🛒','💊','🩺','🧠','❤️','🔥','⚡','🌿','🌱','🥩','🍳','💧','😴','📊','🏆'];
-
-// Data structure: { id, name, icon, is_active, children: [] }
-var db = { root: [] };
-var nextId = 1;
-
-// Navigation stack: array of { id, name, icon } — null means root
-var navStack = [];
-var editingId = null;
-var selectedEmoji = '💚';
-var isActive = true;
-var dragSrc = null;
-
-function loadData() {
-  try {
-    var raw = localStorage.getItem('umatizim_v2');
-    if (raw) { var p = JSON.parse(raw); db = p.db || { root: [] }; nextId = p.nextId || 1; }
-  } catch(e) { db = { root: [] }; nextId = 1; }
-}
-
-function saveData() {
-  localStorage.setItem('umatizim_v2', JSON.stringify({ db: db, nextId: nextId }));
-}
-
-// Get current sections array based on navStack
-function getCurrentList() {
-  if (!navStack.length) return db.root;
-  return findNode(db.root, navStack[navStack.length - 1].id).children;
-}
-
-function findNode(list, id) {
-  for (var i = 0; i < list.length; i++) {
-    if (list[i].id === id) return list[i];
-    if (list[i].children && list[i].children.length) {
-      var found = findNode(list[i].children, id);
-      if (found) return found;
+// =====================
+// DATA
+// =====================
+var KLASSIKA = {
+  name: 'Классика',
+  meals: [
+    {
+      icon: '🌅', name: 'Нонушта',
+      items: [{ name: 'Тухум', amount: '5 та' }],
+      kcal: 350, protein: 30, fat: 24, carb: 2
+    },
+    {
+      icon: '☀️', name: 'Обед',
+      items: [
+        { name: 'Товуқ', amount: '220г' },
+        { name: 'Гуруч', amount: '250г' },
+        { name: 'Брокколи', amount: '1 та' }
+      ],
+      kcal: 589, protein: 58, fat: 6, carb: 54
+    },
+    {
+      icon: '🌙', name: 'Ужин',
+      items: [
+        { name: 'Товуқ', amount: '220г' },
+        { name: 'Гуруч', amount: '250г' },
+        { name: 'Брокколи', amount: '1 та' }
+      ],
+      kcal: 589, protein: 58, fat: 6, carb: 54
+    },
+    {
+      icon: '🌛', name: 'Кечга',
+      items: [{ name: 'Tvorog', amount: '200г' }],
+      kcal: 180, protein: 36, fat: 1, carb: 6
     }
+  ],
+  totalKcal: 1708, totalProtein: 182, totalFat: 37, totalCarb: 116
+};
+
+var UZ_DAYS = ['Якшанба','Душанба','Сешанба','Чоршанба','Пайшанба','Жума','Шанба'];
+var UZ_MONTHS = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+
+// Navigation: array of page names
+var pageStack = ['home'];
+var selectedDate = null;
+
+// =====================
+// HELPERS
+// =====================
+function getDays() {
+  var days = [];
+  var today = new Date();
+  today.setHours(0,0,0,0);
+  for (var i = 0; i < 7; i++) {
+    var d = new Date(today);
+    d.setDate(today.getDate() + i);
+    days.push(d);
   }
-  return null;
+  return days;
 }
 
-function countChildren(node) {
-  return (node.children && node.children.length) ? node.children.length : 0;
+function formatDate(d) {
+  return ('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth()+1)).slice(-2);
 }
 
+function isToday(d) {
+  var t = new Date(); t.setHours(0,0,0,0);
+  return d.getTime() === t.getTime();
+}
+
+// =====================
 // RENDER
+// =====================
 function render() {
-  renderHeader();
-  renderBreadcrumb();
-  renderList();
+  var page = pageStack[pageStack.length - 1];
+  var app = document.getElementById('app');
+
+  if (page === 'home') renderHome(app);
+  else if (page === 'soglik') renderSoglik(app);
+  else if (page === 'ovqatlanish') renderOvqatlanish(app);
+  else if (page === 'ratsion') renderRatsion(app);
+  else if (page === 'day') renderDay(app);
+  else if (page === 'zapas') renderZapas(app);
+  else if (page === 'harid') renderHarid(app);
 }
 
-function renderHeader() {
-  var left = document.getElementById('header-left');
-  if (!navStack.length) {
-    left.innerHTML = '<div class="logo">🌿</div><div><div class="header-title">Umatizim</div><div class="header-sub">Соғлиқ ва спорт</div></div>';
-  } else {
-    var cur = navStack[navStack.length - 1];
-    left.innerHTML = '<button class="back-btn" id="btn-back">←</button><div><div class="header-title">' + cur.icon + ' ' + cur.name + '</div></div>';
-    document.getElementById('btn-back').addEventListener('click', goBack);
-  }
-  document.getElementById('page-title').textContent = navStack.length ? 'Бўлимлар' : 'Бўлимлар';
+function header(titleHTML, showBack) {
+  var backBtn = showBack ? '<button class="back-btn" id="btn-back">←</button>' : '<div class="logo">🌿</div>';
+  return '<div class="header"><div class="header-left">' + backBtn +
+    '<div><div class="header-title">' + titleHTML + '</div></div></div></div>';
 }
 
-function renderBreadcrumb() {
-  var bc = document.getElementById('breadcrumb');
-  if (!navStack.length) { bc.style.display = 'none'; return; }
-  bc.style.display = 'flex';
-  var html = '<span data-idx="-1">🏠 Бош</span>';
-  for (var i = 0; i < navStack.length; i++) {
-    html += '<span class="breadcrumb-sep"> › </span>';
-    html += '<span data-idx="' + i + '">' + navStack[i].icon + ' ' + navStack[i].name + '</span>';
+function breadcrumb() {
+  if (pageStack.length <= 1) return '';
+  var labels = { home: '🏠', soglik: '💚 Соғлиқ', ovqatlanish: '🥗 Овқатланиш', ratsion: '📋 Рацион', zapas: '📦 Запас', harid: '🛒 Харид' };
+  var html = '<div class="breadcrumb">';
+  for (var i = 0; i < pageStack.length - 1; i++) {
+    html += '<span data-idx="' + i + '">' + (labels[pageStack[i]] || pageStack[i]) + '</span>';
+    html += '<span style="color:var(--light)"> › </span>';
   }
-  bc.innerHTML = html;
-  bc.querySelectorAll('[data-idx]').forEach(function(el) {
-    el.addEventListener('click', function() {
-      var idx = parseInt(this.getAttribute('data-idx'));
-      if (idx === -1) { navStack = []; }
-      else { navStack = navStack.slice(0, idx + 1); }
+  html += '<span style="color:var(--text2)">' + (labels[pageStack[pageStack.length-1]] || '') + '</span>';
+  html += '</div>';
+  return html;
+}
+
+function renderHome(app) {
+  app.innerHTML = header('Umatizim', false) +
+  '<div class="main"><div class="page-title">Бўлимлар</div><div class="list">' +
+  '<div class="card" id="go-soglik"><div class="card-icon">💚</div><div class="card-info"><div class="card-name">Соғлиқ</div><div class="card-sub">Спорт ва тўғри овқатланиш</div></div><span class="card-arrow">›</span></div>' +
+  '</div></div>';
+  document.getElementById('go-soglik').addEventListener('click', function() { pageStack.push('soglik'); render(); });
+}
+
+function renderSoglik(app) {
+  app.innerHTML = header('💚 Соғлиқ', true) + breadcrumb() +
+  '<div class="main"><div class="page-title">Бўлимлар</div><div class="list">' +
+  '<div class="card" id="go-sport"><div class="card-icon">🏋️</div><div class="card-info"><div class="card-name">Спорт</div><div class="card-sub">Машқлар ва тренировка</div></div><span class="card-arrow">›</span></div>' +
+  '<div class="card" id="go-ovqat"><div class="card-icon">🥗</div><div class="card-info"><div class="card-name">Тўғри овқатланиш</div><div class="card-sub">Рацион, запас, харид</div></div><span class="card-arrow">›</span></div>' +
+  '</div></div>';
+  document.getElementById('go-sport').addEventListener('click', function() { showToast('Яқинда қўшилади'); });
+  document.getElementById('go-ovqat').addEventListener('click', function() { pageStack.push('ovqatlanish'); render(); });
+  document.getElementById('btn-back').addEventListener('click', goBack);
+}
+
+function renderOvqatlanish(app) {
+  app.innerHTML = header('🥗 Овқатланиш', true) + breadcrumb() +
+  '<div class="main"><div class="page-title">Бўлимлар</div><div class="list">' +
+  '<div class="card" id="go-ratsion"><div class="card-icon">📋</div><div class="card-info"><div class="card-name">Кунлик рацион</div><div class="card-sub">7 кунлик овқат режаси</div></div><span class="card-arrow">›</span></div>' +
+  '<div class="card" id="go-zapas"><div class="card-icon">📦</div><div class="card-info"><div class="card-name">Запас</div><div class="card-sub">Нима бор, неча кунга</div></div><span class="card-arrow">›</span></div>' +
+  '<div class="card" id="go-harid"><div class="card-icon">🛒</div><div class="card-info"><div class="card-name">Харид режаси</div><div class="card-sub">Нима олиш керак</div></div><span class="card-arrow">›</span></div>' +
+  '</div></div>';
+  document.getElementById('go-ratsion').addEventListener('click', function() { pageStack.push('ratsion'); render(); });
+  document.getElementById('go-zapas').addEventListener('click', function() { pageStack.push('zapas'); render(); });
+  document.getElementById('go-harid').addEventListener('click', function() { pageStack.push('harid'); render(); });
+  document.getElementById('btn-back').addEventListener('click', goBack);
+}
+
+function renderRatsion(app) {
+  var days = getDays();
+  var html = header('📋 Кунлик рацион', true) + breadcrumb() + '<div class="main"><div class="page-title">7 кун</div>';
+  for (var i = 0; i < days.length; i++) {
+    var d = days[i];
+    var today = isToday(d);
+    html += '<div class="day-card" data-ts="' + d.getTime() + '">';
+    html += '<div class="day-date"><div class="day-date-num">' + d.getDate() + '</div><div class="day-date-month">' + UZ_MONTHS[d.getMonth()] + '</div></div>';
+    html += '<div class="day-divider"></div>';
+    html += '<div class="day-info"><div class="day-name">' + UZ_DAYS[d.getDay()] + '</div>';
+    html += '<div class="day-menu">Классика</div></div>';
+    if (today) html += '<span class="day-badge today-badge">Бугун</span>';
+    else html += '<span class="day-badge">📋</span>';
+    html += '<span class="card-arrow">›</span></div>';
+  }
+  html += '</div>';
+  app.innerHTML = html;
+  document.getElementById('btn-back').addEventListener('click', goBack);
+  document.querySelectorAll('.day-card').forEach(function(card) {
+    card.addEventListener('click', function() {
+      selectedDate = new Date(parseInt(this.getAttribute('data-ts')));
+      pageStack.push('day');
       render();
     });
   });
 }
 
-function renderList() {
-  var list = document.getElementById('sections-list');
-  var items = getCurrentList();
-  if (!items || !items.length) {
-    list.innerHTML = '<div class="empty-state"><div class="empty-icon">🌿</div><div class="empty-text">Ҳали бўлим йўқ</div><div class="empty-sub">+ тугмасини босиб қўшинг</div></div>';
-    return;
-  }
-  var html = '';
-  for (var i = 0; i < items.length; i++) {
-    var s = items[i];
-    var cnt = countChildren(s);
-    html += '<div class="section-card" id="card-' + i + '" draggable="true">';
-    html += '<div class="drag-handle">⋮⋮</div>';
-    html += '<div class="section-icon">' + s.icon + '</div>';
-    html += '<div class="section-info"><div class="section-name">' + s.name + '</div>';
-    if (cnt > 0) html += '<div class="section-count">' + cnt + ' та бўлим</div>';
-    if (!s.is_active) html += '<span class="badge-inactive">Ўчирилган</span>';
-    html += '</div>';
-    html += '<div class="section-right">';
-    html += '<button class="btn-icon" data-edit="' + i + '">✏️</button>';
-    html += '<button class="btn-icon danger" data-del="' + i + '">🗑️</button>';
-    html += '<span class="section-arrow">›</span>';
+function renderDay(app) {
+  var d = selectedDate;
+  var title = ('0'+d.getDate()).slice(-2) + '.' + ('0'+(d.getMonth()+1)).slice(-2) + ' ' + UZ_DAYS[d.getDay()];
+  var html = header(title, true) + breadcrumb();
+
+  // Nutrition summary
+  html += '<div class="nutrition-bar">';
+  html += '<div class="nut-item"><div class="nut-val">' + KLASSIKA.totalKcal + '</div><div class="nut-lbl">Ккал</div></div>';
+  html += '<div class="nut-item"><div class="nut-val" style="color:#185FA5">' + KLASSIKA.totalProtein + 'г</div><div class="nut-lbl">Оқсил</div></div>';
+  html += '<div class="nut-item"><div class="nut-val" style="color:#854F0B">' + KLASSIKA.totalFat + 'г</div><div class="nut-lbl">Ёғ</div></div>';
+  html += '<div class="nut-item"><div class="nut-val" style="color:#3B6D11">' + KLASSIKA.totalCarb + 'г</div><div class="nut-lbl">Кар.</div></div>';
+  html += '</div>';
+
+  for (var i = 0; i < KLASSIKA.meals.length; i++) {
+    var meal = KLASSIKA.meals[i];
+    html += '<div class="meal-section">';
+    html += '<div class="meal-header"><div class="meal-icon-wrap">' + meal.icon + '</div><div class="meal-title">' + meal.name + '</div><span style="margin-left:auto;font-size:12px;color:var(--text3)">' + meal.kcal + ' ккал</span></div>';
+    html += '<div class="meal-items">';
+    for (var j = 0; j < meal.items.length; j++) {
+      html += '<div class="meal-item"><span class="meal-item-name">' + meal.items[j].name + '</span><span class="meal-item-amount">' + meal.items[j].amount + '</span></div>';
+    }
     html += '</div></div>';
   }
-  list.innerHTML = html;
 
-  for (var j = 0; j < items.length; j++) {
-    (function(idx) {
-      var card = document.getElementById('card-' + idx);
-      var items2 = getCurrentList();
-      card.addEventListener('click', function() { enterSection(items2[idx]); });
-      card.querySelector('[data-edit]').addEventListener('click', function(e) { e.stopPropagation(); openEdit(idx); });
-      card.querySelector('[data-del]').addEventListener('click', function(e) { e.stopPropagation(); deleteSection(idx); });
-      card.addEventListener('dragstart', function() { dragSrc = idx; this.style.opacity = '0.5'; });
-      card.addEventListener('dragend', function() { this.style.opacity = '1'; document.querySelectorAll('.section-card').forEach(function(c) { c.style.borderColor = ''; }); });
-      card.addEventListener('dragover', function(e) { e.preventDefault(); this.style.borderColor = '#558237'; });
-      card.addEventListener('dragleave', function() { this.style.borderColor = ''; });
-      card.addEventListener('drop', function(e) {
-        e.preventDefault(); this.style.borderColor = '';
-        if (dragSrc !== null && dragSrc !== idx) {
-          var cur = getCurrentList();
-          var moved = cur.splice(dragSrc, 1)[0];
-          cur.splice(idx, 0, moved);
-          saveData(); render(); showToast('Ўрин сақланди ✓');
-        }
-        dragSrc = null;
-      });
-    })(j);
-  }
+  app.innerHTML = html;
+  document.getElementById('btn-back').addEventListener('click', goBack);
 }
 
-function enterSection(s) {
-  navStack.push({ id: s.id, name: s.name, icon: s.icon });
-  render();
+function renderZapas(app) {
+  app.innerHTML = header('📦 Запас', true) + breadcrumb() +
+  '<div class="main"><div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">Яқинда қўшилади</div></div></div>';
+  document.getElementById('btn-back').addEventListener('click', goBack);
+}
+
+function renderHarid(app) {
+  app.innerHTML = header('🛒 Харид режаси', true) + breadcrumb() +
+  '<div class="main"><div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-text">Яқинда қўшилади</div></div></div>';
+  document.getElementById('btn-back').addEventListener('click', goBack);
 }
 
 function goBack() {
-  navStack.pop();
+  pageStack.pop();
   render();
-}
-
-// MODAL
-function buildEmojiGrid() {
-  var html = '';
-  for (var i = 0; i < EMOJIS.length; i++) {
-    var e = EMOJIS[i];
-    html += '<button class="emoji-btn' + (e === selectedEmoji ? ' selected' : '') + '" data-emoji="' + e + '">' + e + '</button>';
-  }
-  document.getElementById('emoji-grid').innerHTML = html;
-  document.querySelectorAll('.emoji-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      selectedEmoji = this.getAttribute('data-emoji');
-      document.querySelectorAll('.emoji-btn').forEach(function(b) { b.classList.remove('selected'); });
-      this.classList.add('selected');
-    });
-  });
-}
-
-function openModal() {
-  editingId = null; selectedEmoji = '💚'; isActive = true;
-  document.getElementById('modal-title').textContent = 'Янги бўлим';
-  document.getElementById('input-name').value = '';
-  document.getElementById('toggle-active').className = 'toggle on';
-  buildEmojiGrid();
-  document.getElementById('modal').classList.add('open');
-  setTimeout(function() { document.getElementById('input-name').focus(); }, 150);
-}
-
-function openEdit(idx) {
-  var s = getCurrentList()[idx];
-  editingId = idx; selectedEmoji = s.icon; isActive = s.is_active;
-  document.getElementById('modal-title').textContent = 'Таҳрир';
-  document.getElementById('input-name').value = s.name;
-  document.getElementById('toggle-active').className = 'toggle' + (isActive ? ' on' : '');
-  buildEmojiGrid();
-  document.getElementById('modal').classList.add('open');
-}
-
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
-
-function deleteSection(idx) {
-  if (!confirm('Ўчиришни тасдиқлайсизми?')) return;
-  getCurrentList().splice(idx, 1);
-  saveData(); render(); showToast('Ўчирилди');
 }
 
 function showToast(msg) {
@@ -329,34 +309,12 @@ function showToast(msg) {
   setTimeout(function() { t.classList.remove('show'); }, 2500);
 }
 
-document.getElementById('btn-add').addEventListener('click', openModal);
-document.getElementById('btn-cancel').addEventListener('click', closeModal);
-document.getElementById('toggle-active').addEventListener('click', function() {
-  isActive = !isActive;
-  this.className = 'toggle' + (isActive ? ' on' : '');
-});
+if (window.Telegram && window.Telegram.WebApp) {
+  Telegram.WebApp.ready();
+  Telegram.WebApp.expand();
+}
 
-document.getElementById('btn-save').addEventListener('click', function() {
-  var name = document.getElementById('input-name').value.trim();
-  if (!name) { document.getElementById('input-name').focus(); return; }
-  var cur = getCurrentList();
-  if (editingId !== null) {
-    cur[editingId].name = name;
-    cur[editingId].icon = selectedEmoji;
-    cur[editingId].is_active = isActive;
-    if (navStack.length && navStack[navStack.length-1].id === cur[editingId].id) {
-      navStack[navStack.length-1].name = name;
-      navStack[navStack.length-1].icon = selectedEmoji;
-    }
-    showToast('Сақланди ✓');
-  } else {
-    cur.push({ id: nextId++, name: name, icon: selectedEmoji, is_active: isActive, children: [] });
-    showToast('Қўшилди ✓');
-  }
-  saveData(); render(); closeModal();
-});
-
-loadData(); render();
+render();
 </script>
 </body>
 </html>
