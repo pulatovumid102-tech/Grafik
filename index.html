@@ -425,11 +425,18 @@ function bc(){
 }
 
 function renderHome(app){
-  app.innerHTML=mkH('Uma-tizim',false,null)+'<div class="main"><div class="page-title">Bo\'limlar</div>'+
+  app.innerHTML='<div class="header"><div class="header-left"><div class="logo">🌿</div><div><div class="header-title">Uma-tizim</div><div class="header-sub">Shaxsiy rivojlanish</div></div></div><button id="logout-btn" style="background:var(--bg3);border:none;border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text3);cursor:pointer;">⚙ Chiqish</button></div>'+
+    '<div class="main"><div class="page-title">Bo\'limlar</div>'+
     '<div class="card" id="gs"><div class="card-icon">💚</div><div class="card-info"><div class="card-name">Sog\'liq</div><div class="card-sub">Sport va to\'g\'ri ovqatlanish</div></div><span class="card-arrow">›</span></div>'+
     '<div class="card" id="gb"><div class="card-icon">🧠</div><div class="card-info"><div class="card-name">Bilim va rivojlanish</div><div class="card-sub">Kitob va darslar</div></div><span class="card-arrow">›</span></div></div>';
   document.getElementById('gs').addEventListener('click',function(){pageStack.push('soglik');render();});
   document.getElementById('gb').addEventListener('click',function(){pageStack.push('bilim');render();});
+  document.getElementById('logout-btn').addEventListener('click',function(){
+    localStorage.removeItem('uma_login');
+    USER_ID='guest';
+    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('app').style.display='none';
+  });
 }
 function renderSoglik(app){
   app.innerHTML=mkH("💚 Sog'liq",true,null)+mkBc()+'<div class="main"><div class="page-title">Bo\'limlar</div><div class="card" id="g1"><div class="card-icon">🏋️</div><div class="card-info"><div class="card-name">Sport</div><div class="card-sub">Mashqlar va trenirovka</div></div><span class="card-arrow">›</span></div><div class="card" id="g2"><div class="card-icon">🥗</div><div class="card-info"><div class="card-name">To\'g\'ri ovqatlanish</div><div class="card-sub">Ratsion, zaxira, xarid</div></div><span class="card-arrow">›</span></div></div>';
@@ -786,30 +793,33 @@ function checkLogin() {
       var u = JSON.parse(saved);
       if (u && u.login && USERS[u.login] && USERS[u.login] === u.parol) {
         USER_ID = 'user_' + u.login;
-        console.log('Logged in as:', USER_ID);
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('app').style.display = '';
         return true;
       }
     } catch(e) { localStorage.removeItem('uma_login'); }
   }
-  console.log('Showing login screen');
+  return false;
+}
+
+function startApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = '';
+  loadData();
+  render();
+  sbLoad().then(function(ok){ if(ok) render(); }).catch(function(e){ console.error('SB error:',e); });
+}
+
+function showLogin() {
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
-  return false;
 }
 
 document.getElementById('login-btn').addEventListener('click', function() {
   var login = document.getElementById('login-input').value.trim().toLowerCase();
   var parol = document.getElementById('parol-input').value;
   if (USERS[login] && USERS[login] === parol) {
-    localStorage.setItem('uma_login', JSON.stringify({login: login, parol: parol}));
+    localStorage.setItem('uma_login', JSON.stringify({login:login, parol:parol}));
     USER_ID = 'user_' + login;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = '';
-    loadData();
-    render();
-    sbLoad().then(function(ok){ if(ok) render(); });
+    startApp();
   } else {
     document.getElementById('login-error').style.display = 'block';
     document.getElementById('parol-input').value = '';
@@ -820,27 +830,20 @@ document.getElementById('parol-input').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') document.getElementById('login-btn').click();
 });
 
-if(window.Telegram&&window.Telegram.WebApp){
+// INIT
+if(window.Telegram && window.Telegram.WebApp){
   Telegram.WebApp.ready();
   Telegram.WebApp.expand();
   var tgUser = window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user;
-  if(tgUser && tgUser.id) {
-    USER_ID = 'tg_' + String(tgUser.id);
-  }
+  if(tgUser && tgUser.id) USER_ID = 'tg_' + String(tgUser.id);
 }
-// Har doim checkLogin — agar Telegram ID bo'lsa ham login ekrani o'chirilgan bo'ladi
+
 if(USER_ID !== 'guest') {
-  // Telegram ID bilan kirilgan
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = '';
-  loadData();
-  render();
-  sbLoad().then(function(ok){ if(ok) render(); }).catch(function(e){ console.error('SB init error:', e); });
+  startApp();
 } else if(checkLogin()) {
-  document.getElementById('app').style.display = '';
-  loadData();
-  render();
-  sbLoad().then(function(ok){ if(ok) render(); }).catch(function(e){ console.error('SB init error:', e); });
+  startApp();
+} else {
+  showLogin();
 }
 </script>
 </body>
