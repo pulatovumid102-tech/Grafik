@@ -802,9 +802,13 @@ if(window.Telegram&&window.Telegram.WebApp){
   var tgUser = window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user;
   if(tgUser && tgUser.id) USER_ID = String(tgUser.id);
 }
-// Show loading
-document.getElementById('app').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:80vh;flex-direction:column;gap:12px;"><div style="width:28px;height:28px;border:2px solid #e2e8de;border-top-color:#558237;border-radius:50%;animation:spin 0.7s linear infinite;"></div><div style="font-size:14px;color:#7a9669;">Yuklanmoqda...</div></div>';
-loadDataWithSync().then(function(){ render(); });
+// Load from localStorage immediately, then sync from Supabase
+loadData();
+render();
+// Then try to sync from Supabase in background
+loadFromSupabase().then(function(ok){
+  if(ok){ render(); }
+}).catch(function(e){ console.error('Supabase sync failed:', e); });
 </script>
 </body>
 </html>
