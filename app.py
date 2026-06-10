@@ -1,11 +1,17 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import httpx
 import os
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://qtrniovpkrwimeohamkc.supabase.co")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "sb_publishable_XwiSTQrkI0d1Wfj2nLqdLg_qPn48OEu")
@@ -25,28 +31,26 @@ async def get_data(user_id: str):
         )
         rows = r.json()
         if rows and rows[0].get("data"):
-            return JSONResponse(rows[0]["data"])
-        return JSONResponse({})
+            return rows[0]["data"]
+        return {}
 
 @app.post("/api/data/{user_id}")
 async def save_data(user_id: str, request: Request):
     body = await request.json()
     async with httpx.AsyncClient() as client:
-        # Check if row exists
+        # Check if exists
         r = await client.get(
             f"{SUPABASE_URL}/rest/v1/uma_data?id=eq.{user_id}",
             headers=HEADERS
         )
         rows = r.json()
         if rows:
-            # PATCH existing row
             r2 = await client.patch(
                 f"{SUPABASE_URL}/rest/v1/uma_data?id=eq.{user_id}",
                 headers=HEADERS,
                 json={"data": body}
             )
         else:
-            # INSERT new row
             r2 = await client.post(
                 f"{SUPABASE_URL}/rest/v1/uma_data",
                 headers=HEADERS,
@@ -54,7 +58,11 @@ async def save_data(user_id: str, request: Request):
             )
         if r2.status_code not in (200, 201, 204):
             raise HTTPException(status_code=500, detail=r2.text)
-        return JSONResponse({"ok": True})
+        return {"ok": True}
+
+@app.get("/")
+async def root():
+    return FileResponse("index.html")
 
 @app.get("/{full_path:path}")
 async def frontend(full_path: str):
@@ -62,4 +70,5 @@ async def frontend(full_path: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+    port = int(os.getenv("PORT", 8080))
+    uvicorn.run(app, host="0.0.0.0", port=port)
