@@ -270,19 +270,22 @@ var USER_ID = 'guest';
 async function sbSave(){
   var payload = {zapas:zapas,ovqatlar:ovqatlar,dayPlans:dayPlans,kitoblar:kitoblar};
   try{
-    await fetch(SB_URL+'/rest/v1/uma_data?id=eq.'+USER_ID,{
-      method:'PATCH',
-      headers:Object.assign({},SB_H,{'Prefer':'return=minimal'}),
-      body:JSON.stringify({data:payload})
+    var r = await fetch(SB_URL+'/rest/v1/uma_data',{
+      method:'POST',
+      headers:Object.assign({},SB_H,{'Prefer':'resolution=merge-duplicates,return=minimal'}),
+      body:JSON.stringify({id:USER_ID, data:payload})
     });
+    console.log('SB saved for USER_ID:', USER_ID, 'status:', r.status);
   }catch(e){ console.error('SB save error:',e); }
 }
 
 async function sbLoad(){
   try{
+    console.log('SB loading for USER_ID:', USER_ID);
     var r = await fetch(SB_URL+'/rest/v1/uma_data?id=eq.'+USER_ID, {headers:SB_H});
     var rows = await r.json();
-    if(rows&&rows.length&&rows[0].data&&Object.keys(rows[0].data).length){
+    console.log('SB rows:', JSON.stringify(rows).substring(0,100));
+    if(rows&&rows.length&&rows[0].data&&rows[0].data.kitoblar!==undefined){
       var d = rows[0].data;
       zapas = d.zapas||[];
       ovqatlar = d.ovqatlar||[];
@@ -290,17 +293,21 @@ async function sbLoad(){
       dayPlans = d.dayPlans||{};
       kitoblar = d.kitoblar||[];
       localStorage.setItem(STORAGE_KEY, JSON.stringify({zapas:zapas,ovqatlar:ovqatlar,dayPlans:dayPlans,kitoblar:kitoblar}));
+      console.log('SB load success, kitoblar:', kitoblar.length);
       return true;
     }
-    // Row exists but empty — insert our data
+    // No data yet — push localStorage to Supabase
     var localRaw = localStorage.getItem(STORAGE_KEY);
     if(localRaw){
       var local = JSON.parse(localRaw);
-      await fetch(SB_URL+'/rest/v1/uma_data?id=eq.'+USER_ID,{
-        method:'PATCH',
-        headers:Object.assign({},SB_H,{'Prefer':'return=minimal'}),
-        body:JSON.stringify({data:local})
-      });
+      if(local.kitoblar&&local.kitoblar.length){
+        console.log('Pushing localStorage to SB');
+        await fetch(SB_URL+'/rest/v1/uma_data',{
+          method:'POST',
+          headers:Object.assign({},SB_H,{'Prefer':'resolution=merge-duplicates,return=minimal'}),
+          body:JSON.stringify({id:USER_ID, data:local})
+        });
+      }
     }
     return false;
   }catch(e){ console.error('SB load error:',e); return false; }
@@ -732,15 +739,24 @@ if(window.Telegram&&window.Telegram.WebApp){
   var tgUser = window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user;
   if(tgUser && tgUser.id) USER_ID = String(tgUser.id);
 }
-// Init: localStorage first (instant), then Supabase in background
+// Fallback: if no Telegram user, use persistent device ID
+if(USER_ID === 'guest'){
+  var deviceId = localStorage.getItem('uma_device_id');
+  if(!deviceId){
+    deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+    localStorage.setItem('uma_device_id', deviceId);
+  }
+  USER_ID = deviceId;
+}
+console.log('USER_ID at init:', USER_ID);
+// Load from localStorage first (instant render)
 loadData();
 render();
-// Background sync from Supabase
-setTimeout(function(){
-  sbLoad().then(function(ok){
-    if(ok){ render(); }
-  }).catch(function(e){ console.error('SB init error:', e); });
-}, 100);
+// Then load from Supabase and re-render if newer data
+sbLoad().then(function(ok){
+  console.log('sbLoad result:', ok);
+  if(ok) render();
+}).catch(function(e){ console.error('SB init error:', e); });
 </script>
 </body>
 </html>
