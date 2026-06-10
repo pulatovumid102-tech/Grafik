@@ -824,14 +824,20 @@ if(window.Telegram&&window.Telegram.WebApp){
   Telegram.WebApp.ready();
   Telegram.WebApp.expand();
   var tgUser = window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user;
-  if(tgUser && tgUser.id) USER_ID = String(tgUser.id);
-}
-// Check login
-if (checkLogin()) {
-  document.getElementById('app').style.display = '';
-  loadData();
-  render();
-  sbLoad().then(function(ok){ if(ok) render(); }).catch(function(e){ console.error('SB init error:', e); });
+  if(tgUser && tgUser.id) {
+    USER_ID = 'tg_' + String(tgUser.id);
+    // Telegram user — login shart emas
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = '';
+    loadData();
+    render();
+    sbLoad().then(function(ok){ if(ok) render(); });
+  } else if (checkLogin()) {
+    document.getElementById('app').style.display = '';
+    loadData();
+    render();
+      sbLoad().then(function(ok){ if(ok) render(); }).catch(function(e){ console.error('SB init error:', e); });
+  }
 }
 </script>
 </body>
