@@ -237,6 +237,21 @@
   </div>
 </div>
 
+<!-- IZOH TAHRIRLASH -->
+<div class="modal-overlay" id="modal-izoh-edit">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="izoh-edit-title">Izohni tahrirlash</div>
+    <div class="form-group">
+      <textarea class="form-textarea" id="izoh-edit-text" placeholder="Izoh..."></textarea>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="izoh-edit-cancel">Bekor</button>
+      <button class="btn-save blue" id="izoh-edit-save">Saqlash</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -423,23 +438,27 @@ function renderKitobDetail(app){
   h+='<button class="kitob-btn edit" id="btn-kitob-edit">✏️ Tahrirlash</button>';
   h+='</div>';
 
-  // O'qish tarixi
-  if(k.tarix&&k.tarix.length){
+  // O'qish tarixi + yakuniy taassurot
+  var allTarix=(k.tarix||[]).slice();
+  if(k.tassurot){allTarix.push({sana:k.tugatilgan||todayDateStr(),izoh:k.tassurot,isFinal:true,avval:0,hozir:0,farq:0});}
+  if(allTarix.length){
     h+='<div class="tarix-section"><div class="tarix-title">O\'qish tarixi</div>';
-    var sorted=k.tarix.slice().reverse();
-    sorted.forEach(function(t,i){
+    var sortedT=allTarix.slice().reverse();
+    sortedT.forEach(function(t,i){
+      var isFinal=t.isFinal;
       h+='<div class="tarix-item">';
-      h+='<div class="tarix-meta"><span>📅 '+fmtDateStr(t.sana)+'</span></div>';
-      h+='<div class="tarix-bet">'+t.avval+' → '+t.hozir+' bet (+'+t.farq+' bet)</div>';
-      if(t.izoh){
-        h+='<div class="tarix-izoh" data-tarix="'+i+'" title="To\'liq o\'qish">'+t.izoh+' ›</div>';
-      }
-      h+='</div>';
+      h+='<div class="tarix-meta"><span>📅 '+fmtDateStr(t.sana)+'</span>'+(isFinal?'<span style="font-size:11px;background:#e8f5e0;color:var(--accent);padding:1px 6px;border-radius:10px;margin-left:4px;">Yakuniy</span>':'')+'</div>';
+      if(!isFinal)h+='<div class="tarix-bet">'+t.avval+' → '+t.hozir+' bet (+'+t.farq+' bet)</div>';
+      h+='<div style="display:flex;align-items:center;gap:6px;margin-top:3px;">';
+      if(t.izoh)h+='<div style="flex:1;font-size:13px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+t.izoh+'</div>';
+      else h+='<div style="flex:1;font-size:12px;color:var(--light);font-style:italic;">Izoh yo\'q</div>';
+      h+='<button class="tarix-edit-btn" data-tidx="'+i+'" style="flex-shrink:0;border:none;background:var(--bg3);color:var(--text3);font-size:12px;padding:3px 8px;border-radius:6px;cursor:pointer;">✏️</button>';
+      h+='</div></div>';
     });
     h+='</div>';
   }
 
-  h+='</div>';
+    h+='</div>';
   app.innerHTML=h; bc();
 
   var bo=document.getElementById('btn-oqidim');
@@ -447,11 +466,15 @@ function renderKitobDetail(app){
   var be=document.getElementById('btn-kitob-edit');
   if(be)be.addEventListener('click',function(){openKitobModal(k.id);});
 
-  document.querySelectorAll('.tarix-izoh').forEach(function(el){
-    el.addEventListener('click',function(){
-      var idx=parseInt(this.getAttribute('data-tarix'));
-      var sorted=k.tarix.slice().reverse();
-      openIzohFull(sorted[idx]);
+  // Tarix edit buttons
+  var allT2=(k.tarix||[]).slice();
+  if(k.tassurot)allT2.push({sana:k.tugatilgan||todayDateStr(),izoh:k.tassurot,isFinal:true,avval:0,hozir:0,farq:0});
+  var sortedT2=allT2.slice().reverse();
+  document.querySelectorAll('.tarix-edit-btn').forEach(function(btn){
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var tidx=parseInt(this.getAttribute('data-tidx'));
+      openIzohEdit(sortedT2[tidx],k,allT2.length-1-tidx);
     });
   });
 }
@@ -613,6 +636,25 @@ function openIzohFull(t){
 }
 document.getElementById('modal-izoh').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
 document.getElementById('izoh-close').addEventListener('click',function(){document.getElementById('modal-izoh').classList.remove('open');});
+
+// IZOH TAHRIRLASH
+var editingIzohKitob=null,editingIzohIdx=null,editingIzohIsFinal=false;
+function openIzohEdit(t,k,realIdx){
+  editingIzohKitob=k;editingIzohIdx=realIdx;editingIzohIsFinal=!!t.isFinal;
+  document.getElementById('izoh-edit-title').textContent=t.isFinal?'Yakuniy taassurot':'Izohni tahrirlash';
+  document.getElementById('izoh-edit-text').value=t.izoh||'';
+  document.getElementById('modal-izoh-edit').classList.add('open');
+  setTimeout(function(){document.getElementById('izoh-edit-text').focus();},150);
+}
+document.getElementById('modal-izoh-edit').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+document.getElementById('izoh-edit-cancel').addEventListener('click',function(){document.getElementById('modal-izoh-edit').classList.remove('open');});
+document.getElementById('izoh-edit-save').addEventListener('click',function(){
+  var val=document.getElementById('izoh-edit-text').value.trim();
+  var k=editingIzohKitob;
+  if(editingIzohIsFinal){k.tassurot=val;}
+  else{if(k.tarix&&k.tarix[editingIzohIdx]!==undefined)k.tarix[editingIzohIdx].izoh=val;}
+  saveData();document.getElementById('modal-izoh-edit').classList.remove('open');render();showToast('Saqlandi ✓');
+});
 
 // =================== ZAPAS ===================
 function buildZaddList(){var q=document.getElementById('zadd-search').value.toLowerCase();var filtered=DEFAULT_PRODUCTS.filter(function(p){return p.name.toLowerCase().includes(q);});var h='';filtered.forEach(function(p){h+='<button class="product-btn'+(selectedZapasProduct&&selectedZapasProduct.id===p.id?' selected':'')+'" data-id="'+p.id+'"><span class="product-btn-icon">'+p.icon+'</span><span><div class="product-btn-name">'+p.name+'</div><div class="product-btn-unit">'+(p.coefLabel||p.unit)+'</div></span></button>';});if(!h)h='<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">Topilmadi</div>';document.getElementById('zadd-list').innerHTML=h;document.querySelectorAll('#zadd-list .product-btn').forEach(function(btn){btn.addEventListener('click',function(){selectedZapasProduct=getProd(btn.getAttribute('data-id'));buildZaddList();document.getElementById('zadd-amount').classList.add('show');document.getElementById('zadd-label').textContent=selectedZapasProduct.name+' ('+selectedZapasProduct.unit+', xom)';document.getElementById('zadd-unit').textContent=selectedZapasProduct.unit;var ci=document.getElementById('zadd-coef');if(selectedZapasProduct.coefLabel){ci.style.display='block';ci.textContent='📌 '+selectedZapasProduct.coefLabel;}else ci.style.display='none';document.getElementById('zadd-input').value='';setTimeout(function(){document.getElementById('zadd-input').focus();document.getElementById('zadd-amount').scrollIntoView({behavior:'smooth',block:'end'});},100);});});}
