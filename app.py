@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 import httpx
 import os
 
@@ -22,12 +21,6 @@ HEADERS = {
     "Prefer": "return=representation"
 }
 
-app.mount("/static", StaticFiles(directory=".", html=True), name="static")
-
-@app.get("/")
-async def root():
-    return FileResponse("index.html")
-
 @app.get("/api/data/{user_id}")
 async def get_data(user_id: str):
     async with httpx.AsyncClient() as client:
@@ -37,8 +30,8 @@ async def get_data(user_id: str):
         )
         rows = r.json()
         if rows and rows[0].get("data"):
-            return rows[0]["data"]
-        return {}
+            return JSONResponse(rows[0]["data"])
+        return JSONResponse({})
 
 @app.post("/api/data/{user_id}")
 async def save_data(user_id: str, request: Request):
@@ -51,7 +44,11 @@ async def save_data(user_id: str, request: Request):
         )
         if r.status_code not in (200, 201, 204):
             raise HTTPException(status_code=500, detail=f"Supabase error: {r.text}")
-        return {"ok": True}
+        return JSONResponse({"ok": True})
+
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str):
+    return FileResponse("index.html")
 
 if __name__ == "__main__":
     import uvicorn
