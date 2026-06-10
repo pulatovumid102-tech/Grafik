@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Umatizim</title>
+<title>Uma-tizim</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
@@ -11,6 +11,7 @@
     --accent: #558237; --accent2: #a4b83f; --dark: #1e5927;
     --light: #a9b7a3; --text: #1e2e1a; --text2: #558237; --text3: #7a9669;
     --danger: #c0392b; --warn: #AA7B08; --radius: 14px; --radius-sm: 8px;
+    --blue: #1a6fb5; --blue-bg: #eaf2fb;
   }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; padding-bottom: 40px; }
   .header { background: var(--bg2); padding: 16px 20px; border-bottom: 1px solid var(--bg3); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
@@ -20,6 +21,7 @@
   .header-title { font-size: 17px; font-weight: 600; color: var(--dark); }
   .header-sub { font-size: 12px; color: var(--text3); margin-top: 1px; }
   .btn-add { width: 36px; height: 36px; background: var(--accent); border: none; border-radius: 10px; color: white; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .btn-add.blue { background: var(--blue); }
   .breadcrumb { padding: 10px 16px; display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text3); overflow-x: auto; white-space: nowrap; background: var(--bg2); border-bottom: 1px solid var(--bg3); }
   .breadcrumb span { cursor: pointer; }
   .breadcrumb span:hover { color: var(--accent); }
@@ -35,8 +37,7 @@
   .card-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
   .card.danger .card-sub { color: var(--danger); }
   .card-arrow { color: var(--light); font-size: 20px; }
-  .day-card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 10px; transition: opacity 0.15s; }
-  .day-card:active { opacity: 0.8; }
+  .day-card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 10px; }
   .day-card.warn-red { border-color: var(--danger); background: #fdf2f2; }
   .day-date { width: 44px; text-align: center; flex-shrink: 0; }
   .day-date-num { font-size: 20px; font-weight: 600; color: var(--dark); line-height: 1; }
@@ -48,8 +49,7 @@
   .day-warn { font-size: 11px; color: var(--danger); margin-top: 2px; }
   .today-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: var(--accent); color: white; font-weight: 500; flex-shrink: 0; }
   .past-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: #fdecea; color: var(--danger); font-weight: 500; flex-shrink: 0; }
-  .meal-card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: opacity 0.15s; }
-  .meal-card:active { opacity: 0.8; }
+  .meal-card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; cursor: pointer; }
   .meal-card.missing { border-color: var(--danger); background: #fdf2f2; }
   .meal-card-header { display: flex; align-items: center; gap: 10px; }
   .meal-card-icon { font-size: 22px; flex-shrink: 0; }
@@ -59,7 +59,6 @@
   .meal-card.missing .meal-card-name { color: var(--danger); }
   .meal-card-arrow { color: var(--light); font-size: 18px; }
   .meal-card-items { font-size: 12px; color: var(--text3); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--bg3); }
-  .meal-card.missing .meal-card-items { border-top-color: #f0c0c0; }
   .meal-card-missing { font-size: 12px; color: var(--danger); margin-top: 4px; font-weight: 500; }
   .zapas-item { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
   .zapas-icon { font-size: 28px; flex-shrink: 0; }
@@ -75,18 +74,54 @@
   .status-red { color: var(--danger); }
   .progress-bar { height: 4px; background: var(--bg3); border-radius: 2px; margin-top: 8px; overflow: hidden; }
   .progress-fill { height: 100%; border-radius: 2px; }
-  .section-divider { font-size: 12px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; padding: 16px 0 8px; border-top: 1px solid var(--bg3); margin-top: 8px; }
   .xarid-item { background: #fdf2f2; border: 1px solid #f0c0c0; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
   .xarid-icon { font-size: 28px; flex-shrink: 0; }
   .xarid-info { flex: 1; }
   .xarid-name { font-size: 15px; font-weight: 500; color: var(--text); }
   .xarid-amount { font-size: 13px; color: var(--danger); margin-top: 2px; }
+
+  /* KITOB */
+  .kitob-card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 16px; margin-bottom: 10px; cursor: pointer; }
+  .kitob-card:active { opacity: 0.8; }
+  .kitob-header { display: flex; align-items: flex-start; gap: 12px; }
+  .kitob-emoji { font-size: 30px; flex-shrink: 0; }
+  .kitob-info { flex: 1; }
+  .kitob-label { font-size: 12px; color: var(--text3); }
+  .kitob-name { font-size: 16px; font-weight: 600; color: var(--text); margin-top: 2px; }
+  .kitob-author { font-size: 13px; color: var(--text3); margin-top: 2px; }
+  .kitob-dates { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .kitob-progress { margin-top: 12px; }
+  .kitob-progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text3); margin-bottom: 4px; }
+  .kitob-progress-bar { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+  .kitob-progress-fill { height: 100%; background: var(--blue); border-radius: 3px; transition: width 0.3s; }
+  .kitob-done .kitob-progress-fill { background: var(--accent); }
+  .done-badge { font-size: 11px; padding: 2px 10px; border-radius: 20px; background: #e8f5e0; color: var(--accent); font-weight: 500; margin-top: 8px; display: inline-block; }
+  .kitob-tassurot { font-size: 13px; color: var(--text2); margin-top: 8px; font-style: italic; padding: 8px 10px; background: var(--bg); border-radius: var(--radius-sm); border-left: 3px solid var(--accent2); }
+
+  /* O'QISH TARIXI */
+  .tarix-section { margin-top: 16px; border-top: 1px solid var(--bg3); padding-top: 12px; }
+  .tarix-title { font-size: 12px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+  .tarix-item { padding: 10px 0; border-bottom: 1px solid var(--bg3); }
+  .tarix-item:last-child { border-bottom: none; }
+  .tarix-meta { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text3); margin-bottom: 4px; }
+  .tarix-bet { font-size: 13px; font-weight: 500; color: var(--text); }
+  .tarix-izoh { font-size: 13px; color: var(--text2); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+  .tarix-izoh:hover { color: var(--blue); }
+
+  /* KITOB ACTION BTNS */
+  .kitob-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .kitob-btn { flex: 1; padding: 10px; background: var(--bg); border: 1px solid var(--bg3); border-radius: var(--radius-sm); color: var(--text); font-size: 13px; cursor: pointer; text-align: center; font-weight: 500; }
+  .kitob-btn:active { background: var(--bg3); }
+  .kitob-btn.blue { background: var(--blue-bg); color: var(--blue); border-color: #b5d4f4; }
+  .kitob-btn.edit { color: var(--text3); font-size: 12px; }
+
   .ovqat-card { background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
   .ovqat-icon { width: 44px; height: 44px; background: var(--bg3); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
   .ovqat-info { flex: 1; }
   .ovqat-name { font-size: 15px; font-weight: 500; color: var(--text); }
   .ovqat-items { font-size: 12px; color: var(--text3); margin-top: 2px; }
   .btn-sm { width: 30px; height: 30px; border: 1px solid var(--bg3); background: var(--bg3); border-radius: var(--radius-sm); color: var(--text3); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: flex-end; justify-content: center; }
   .modal-overlay.open { display: flex; }
   .modal { background: var(--bg2); border-radius: var(--radius) var(--radius) 0 0; padding: 20px 20px 40px; width: 100%; max-width: 500px; border-top: 2px solid var(--accent2); max-height: 85vh; overflow-y: auto; }
@@ -98,6 +133,8 @@
   .form-label { font-size: 13px; color: var(--text3); margin-bottom: 6px; display: block; font-weight: 500; }
   .form-input { width: 100%; background: var(--bg); border: 1px solid var(--bg3); border-radius: var(--radius-sm); padding: 12px 14px; color: var(--text); font-size: 15px; outline: none; }
   .form-input:focus { border-color: var(--accent); }
+  .form-textarea { width: 100%; background: var(--bg); border: 1px solid var(--bg3); border-radius: var(--radius-sm); padding: 12px 14px; color: var(--text); font-size: 15px; outline: none; resize: none; min-height: 80px; font-family: inherit; }
+  .form-textarea:focus { border-color: var(--accent); }
   .amount-row { display: flex; align-items: center; gap: 10px; }
   .amount-input { flex: 1; background: var(--bg); border: 1px solid var(--bg3); border-radius: var(--radius-sm); padding: 12px 14px; color: var(--text); font-size: 20px; font-weight: 600; outline: none; text-align: center; }
   .amount-input:focus { border-color: var(--accent); }
@@ -106,10 +143,10 @@
   .modal-btns { display: flex; gap: 10px; margin-top: 16px; }
   .btn-cancel { flex: 1; padding: 14px; background: var(--bg3); border: none; border-radius: var(--radius-sm); color: var(--text3); font-size: 15px; cursor: pointer; }
   .btn-save { flex: 2; padding: 14px; background: var(--accent); border: none; border-radius: var(--radius-sm); color: white; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .btn-save.blue { background: var(--blue); }
   .btn-danger-full { flex: 1; padding: 14px; background: #fdecea; border: none; border-radius: var(--radius-sm); color: var(--danger); font-size: 15px; font-weight: 600; cursor: pointer; }
   .product-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
   .product-btn { background: var(--bg); border: 1px solid var(--bg3); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; text-align: left; width: 100%; }
-  .product-btn:active { background: var(--bg3); }
   .product-btn.selected { border-color: var(--accent); background: #e8f0e0; }
   .product-btn-icon { font-size: 22px; }
   .product-btn-name { font-size: 14px; font-weight: 500; color: var(--text); }
@@ -121,7 +158,6 @@
   .ing-amount { font-size: 13px; color: var(--text3); background: var(--bg3); padding: 3px 10px; border-radius: 20px; }
   .ing-del { width: 24px; height: 24px; border: none; background: none; color: var(--light); font-size: 16px; cursor: pointer; }
   .meal-option { background: var(--bg); border: 1px solid var(--bg3); border-radius: var(--radius-sm); padding: 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 8px; }
-  .meal-option:active { background: var(--bg3); }
   .meal-option.selected { border-color: var(--accent); background: #e8f0e0; }
   .meal-option-icon { font-size: 24px; }
   .meal-option-name { font-size: 15px; font-weight: 500; color: var(--text); flex: 1; }
@@ -133,109 +169,71 @@
   .empty-sub { font-size: 13px; }
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--dark); color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 500; z-index: 300; transition: transform 0.25s; pointer-events: none; }
   .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* FULL IZOH MODAL */
+  .izoh-full { font-size: 15px; color: var(--text); line-height: 1.6; padding: 8px 0; }
 </style>
 </head>
 <body>
 <div id="app"></div>
 
-<div class="modal-overlay" id="modal-zadd">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">Mahsulot qo'shish</div>
-    <input class="search-input" id="zadd-search" placeholder="🔍 Qidirish...">
-    <div class="product-list" id="zadd-list"></div>
-    <div class="amount-section" id="zadd-amount">
-      <label class="form-label" id="zadd-label">Miqdor</label>
-      <div class="amount-row">
-        <input class="amount-input" id="zadd-input" type="number" placeholder="0" min="0">
-        <span class="unit-lbl" id="zadd-unit">g</span>
-      </div>
-      <div class="coef-info" id="zadd-coef" style="display:none"></div>
-      <div class="modal-btns">
-        <button class="btn-cancel" id="zadd-cancel">Bekor</button>
-        <button class="btn-save" id="zadd-save">Qo'shish</button>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- ZAPAS ADD -->
+<div class="modal-overlay" id="modal-zadd"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Mahsulot qo'shish</div><input class="search-input" id="zadd-search" placeholder="🔍 Qidirish..."><div class="product-list" id="zadd-list"></div><div class="amount-section" id="zadd-amount"><label class="form-label" id="zadd-label">Miqdor</label><div class="amount-row"><input class="amount-input" id="zadd-input" type="number" placeholder="0" min="0"><span class="unit-lbl" id="zadd-unit">g</span></div><div class="coef-info" id="zadd-coef" style="display:none"></div><div class="modal-btns"><button class="btn-cancel" id="zadd-cancel">Bekor</button><button class="btn-save" id="zadd-save">Qo'shish</button></div></div></div></div>
 
-<div class="modal-overlay" id="modal-zedit">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="zedit-title">Yangilash</div>
-    <label class="form-label" id="zedit-label">Miqdor</label>
-    <div class="amount-row">
-      <input class="amount-input" id="zedit-input" type="number" placeholder="0" min="0">
-      <span class="unit-lbl" id="zedit-unit">g</span>
-    </div>
-    <div class="coef-info" id="zedit-coef" style="display:none;margin-top:8px"></div>
-    <div class="modal-btns" style="margin-top:16px">
-      <button class="btn-danger-full" id="zedit-del">O'chirish</button>
-      <button class="btn-cancel" id="zedit-cancel">Bekor</button>
-      <button class="btn-save" id="zedit-save">Saqlash</button>
-    </div>
-  </div>
-</div>
+<!-- ZAPAS EDIT -->
+<div class="modal-overlay" id="modal-zedit"><div class="modal"><div class="modal-handle"></div><div class="modal-title" id="zedit-title">Yangilash</div><label class="form-label" id="zedit-label">Miqdor</label><div class="amount-row"><input class="amount-input" id="zedit-input" type="number" placeholder="0" min="0"><span class="unit-lbl" id="zedit-unit">g</span></div><div class="coef-info" id="zedit-coef" style="display:none;margin-top:8px"></div><div class="modal-btns" style="margin-top:16px"><button class="btn-danger-full" id="zedit-del">O'chirish</button><button class="btn-cancel" id="zedit-cancel">Bekor</button><button class="btn-save" id="zedit-save">Saqlash</button></div></div></div>
 
-<div class="modal-overlay" id="modal-meal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="meal-modal-title">Ovqat tanlash</div>
-    <div class="confirm-box" id="meal-confirm-box" style="display:none"></div>
-    <div id="meal-options"></div>
-    <div class="modal-btns">
-      <button class="btn-cancel" id="meal-cancel">Bekor</button>
-      <button class="btn-save" id="meal-confirm-yes" style="display:none">Ha, o'zgartirish</button>
-    </div>
-  </div>
-</div>
+<!-- MEAL SELECT -->
+<div class="modal-overlay" id="modal-meal"><div class="modal"><div class="modal-handle"></div><div class="modal-title" id="meal-modal-title">Ovqat tanlash</div><div class="confirm-box" id="meal-confirm-box" style="display:none"></div><div id="meal-options"></div><div class="modal-btns"><button class="btn-cancel" id="meal-cancel">Bekor</button><button class="btn-save" id="meal-confirm-yes" style="display:none">Ha, o'zgartirish</button></div></div></div>
 
-<div class="modal-overlay" id="modal-ovqat">
+<!-- OVQAT CREATE -->
+<div class="modal-overlay" id="modal-ovqat"><div class="modal"><div class="modal-handle"></div><div class="modal-title" id="ovqat-modal-title">Yangi ovqat</div><div class="form-group"><label class="form-label">Nomi</label><input class="form-input" id="ovqat-name" type="text" placeholder="Masalan: Sho'rva" maxlength="30"></div><div class="form-group"><label class="form-label">Belgi</label><div style="display:flex;gap:8px;flex-wrap:wrap;" id="ovqat-emoji-grid"></div></div><div class="form-group"><label class="form-label">Tarkibi (xom miqdorda)</label><div id="ovqat-ings"></div><button class="product-btn" id="ovqat-add-ing" style="margin-top:8px"><span class="product-btn-icon">➕</span><span class="product-btn-name">Mahsulot qo'shish</span></button></div><div class="modal-btns"><button class="btn-danger-full" id="ovqat-del" style="display:none">O'chirish</button><button class="btn-cancel" id="ovqat-cancel">Bekor</button><button class="btn-save" id="ovqat-save">Saqlash</button></div></div></div>
+
+<!-- ING SELECT -->
+<div class="modal-overlay" id="modal-ing"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Mahsulot tanlash</div><input class="search-input" id="ing-search" placeholder="🔍 Qidirish..."><div class="product-list" id="ing-list"></div><div class="amount-section" id="ing-amount"><label class="form-label" id="ing-label">Miqdor (xom)</label><div class="amount-row"><input class="amount-input" id="ing-input" type="number" placeholder="0" min="0"><span class="unit-lbl" id="ing-unit">g</span></div><div class="coef-info" id="ing-coef-info" style="display:none;margin-top:8px"></div><div class="modal-btns"><button class="btn-cancel" id="ing-cancel">Bekor</button><button class="btn-save" id="ing-save">Qo'shish</button></div></div></div></div>
+
+<!-- KITOB ADD/EDIT -->
+<div class="modal-overlay" id="modal-kitob"><div class="modal"><div class="modal-handle"></div><div class="modal-title" id="kitob-modal-title">Yangi kitob</div><div class="form-group"><label class="form-label">Kitob nomi</label><input class="form-input" id="kitob-nom" type="text" placeholder="Masalan: Atomic Habits" maxlength="60"></div><div class="form-group"><label class="form-label">Muallif</label><input class="form-input" id="kitob-muallif" type="text" placeholder="Masalan: James Clear" maxlength="60"></div><div class="form-group"><label class="form-label">Jami sahifalar</label><input class="form-input" id="kitob-sahifa" type="number" placeholder="320" min="1"></div><div class="form-group"><label class="form-label">Boshlangan sana</label><input class="form-input" id="kitob-boshsana" type="date"></div><div class="form-group"><label class="form-label">Taxminiy tugash sanasi</label><input class="form-input" id="kitob-tugsana" type="date"></div><div class="modal-btns"><button class="btn-danger-full" id="kitob-del" style="display:none">O'chirish</button><button class="btn-cancel" id="kitob-cancel">Bekor</button><button class="btn-save blue" id="kitob-save">Saqlash</button></div></div></div>
+
+<!-- O'QIDIM MODAL -->
+<div class="modal-overlay" id="modal-oqidim">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title" id="ovqat-modal-title">Yangi ovqat</div>
+    <div class="modal-title" id="oqidim-title">O'qidim</div>
     <div class="form-group">
-      <label class="form-label">Nomi</label>
-      <input class="form-input" id="ovqat-name" type="text" placeholder="Masalan: Sho'rva" maxlength="30">
+      <label class="form-label" id="oqidim-label">Qaysi betgacha o'qidingiz?</label>
+      <div class="amount-row"><input class="amount-input" id="oqidim-bet" type="number" placeholder="0" min="1"><span class="unit-lbl">bet</span></div>
+      <div style="font-size:12px;color:var(--text3);margin-top:6px;" id="oqidim-hint"></div>
     </div>
     <div class="form-group">
-      <label class="form-label">Belgi</label>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="ovqat-emoji-grid"></div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Tarkibi (xom miqdorda)</label>
-      <div id="ovqat-ings"></div>
-      <button class="product-btn" id="ovqat-add-ing" style="margin-top:8px">
-        <span class="product-btn-icon">➕</span>
-        <span class="product-btn-name">Mahsulot qo'shish</span>
-      </button>
+      <label class="form-label">Izoh (ixtiyoriy)</label>
+      <textarea class="form-textarea" id="oqidim-izoh" placeholder="Bu sahifalar haqida fikringiz..."></textarea>
     </div>
     <div class="modal-btns">
-      <button class="btn-danger-full" id="ovqat-del" style="display:none">O'chirish</button>
-      <button class="btn-cancel" id="ovqat-cancel">Bekor</button>
-      <button class="btn-save" id="ovqat-save">Saqlash</button>
+      <button class="btn-cancel" id="oqidim-cancel">Bekor</button>
+      <button class="btn-save blue" id="oqidim-save">Saqlash</button>
     </div>
   </div>
 </div>
 
-<div class="modal-overlay" id="modal-ing">
+<!-- TAASSUROT -->
+<div class="modal-overlay" id="modal-taassurot">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">Mahsulot tanlash</div>
-    <input class="search-input" id="ing-search" placeholder="🔍 Qidirish...">
-    <div class="product-list" id="ing-list"></div>
-    <div class="amount-section" id="ing-amount">
-      <label class="form-label" id="ing-label">Miqdor (xom)</label>
-      <div class="amount-row">
-        <input class="amount-input" id="ing-input" type="number" placeholder="0" min="0">
-        <span class="unit-lbl" id="ing-unit">g</span>
-      </div>
-      <div class="coef-info" id="ing-coef-info" style="display:none;margin-top:8px"></div>
-      <div class="modal-btns">
-        <button class="btn-cancel" id="ing-cancel">Bekor</button>
-        <button class="btn-save" id="ing-save">Qo'shish</button>
-      </div>
-    </div>
+    <div class="modal-title" id="taassurot-title">🎉 Tabriklaymiz!</div>
+    <p style="font-size:14px;color:var(--text3);margin-bottom:16px;">Kitobni tugatdingiz! Umumiy taassurotingizni yozing.</p>
+    <div class="form-group"><label class="form-label">Taassurot</label><textarea class="form-textarea" id="taassurot-text" placeholder="Bu kitob haqida nima o'yladingiz?"></textarea></div>
+    <div class="modal-btns"><button class="btn-cancel" id="taassurot-skip">O'tkazib yuborish</button><button class="btn-save" id="taassurot-save">Saqlash</button></div>
+  </div>
+</div>
+
+<!-- TO'LIQ IZOH -->
+<div class="modal-overlay" id="modal-izoh">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="izoh-title">Izoh</div>
+    <div class="izoh-full" id="izoh-text"></div>
+    <div class="modal-btns" style="margin-top:20px"><button class="btn-cancel" id="izoh-close">Yopish</button></div>
   </div>
 </div>
 
@@ -243,287 +241,227 @@
 
 <script>
 var STORAGE_KEY = 'umatizim_data';
-
 var UZ_DAYS = ['Yakshanba','Dushanba','Seshanba','Chorshanba','Payshanba','Juma','Shanba'];
 var UZ_MONTHS = ['Yan','Fev','Mar','Apr','May','Iyun','Iyul','Avg','Sen','Okt','Noy','Dek'];
-
 var MEAL_TIMES = [
-  { key: 'nonushta',   icon: '🌅', name: 'Nonushta' },
-  { key: 'snack',      icon: '🍎', name: 'Oraliq ovqat' },
-  { key: 'obed',       icon: '☀️', name: 'Tushlik' },
-  { key: 'ujin',       icon: '🌙', name: 'Kechki ovqat' },
-  { key: 'kechga',     icon: '🌛', name: 'Kechga' }
+  {key:'nonushta',icon:'🌅',name:'Nonushta'},
+  {key:'snack',icon:'🍎',name:'Oraliq ovqat'},
+  {key:'obed',icon:'☀️',name:'Tushlik'},
+  {key:'ujin',icon:'🌙',name:'Kechki ovqat'},
+  {key:'kechga',icon:'🌛',name:'Kechga'}
 ];
-
 var DEFAULT_PRODUCTS = [
-  { id: 'tovuq',    name: 'Tovuq',    icon: '🥩', unit: 'g',  coef: 0.72, coefLabel: '100g xom → 72g pishgan',  dailyCooked: 440 },
-  { id: 'tuxum',    name: 'Tuxum',    icon: '🥚', unit: 'ta', coef: 1,    coefLabel: null, dailyRaw: 5 },
-  { id: 'tvorog',   name: 'Tvorog',   icon: '🥛', unit: 'ta', coef: 1,    coefLabel: null, dailyRaw: 1 },
-  { id: 'guruch',   name: 'Guruch',   icon: '🌾', unit: 'g',  coef: 2.14, coefLabel: '100g xom → 214g pishgan', dailyCooked: 500 },
-  { id: 'grechka',  name: 'Grechka',  icon: '🌾', unit: 'g',  coef: 2.5,  coefLabel: '100g xom → 250g pishgan', dailyCooked: 600 },
-  { id: 'brokoli',  name: 'Brokoli',  icon: '🥦', unit: 'ta', coef: 1,    coefLabel: null, dailyRaw: 2 },
-  { id: 'olma',     name: 'Olma',     icon: '🍎', unit: 'ta', coef: 1,    coefLabel: null, dailyRaw: 1 },
-  { id: 'banan',    name: 'Banan',    icon: '🍌', unit: 'ta', coef: 1,    coefLabel: null, dailyRaw: 1 },
-  { id: 'ovsyanka', name: 'Ovsyanka', icon: '🥣', unit: 'g',  coef: 1,    coefLabel: null, dailyRaw: 100 },
+  {id:'tovuq',name:'Tovuq',icon:'🥩',unit:'g',coef:0.72,coefLabel:'100g xom → 72g pishgan',dailyCooked:440},
+  {id:'tuxum',name:'Tuxum',icon:'🥚',unit:'ta',coef:1,coefLabel:null,dailyRaw:5},
+  {id:'tvorog',name:'Tvorog',icon:'🥛',unit:'ta',coef:1,coefLabel:null,dailyRaw:1},
+  {id:'guruch',name:'Guruch',icon:'🌾',unit:'g',coef:2.14,coefLabel:'100g xom → 214g pishgan',dailyCooked:500},
+  {id:'grechka',name:'Grechka',icon:'🌾',unit:'g',coef:2.5,coefLabel:'100g xom → 250g pishgan',dailyCooked:600},
+  {id:'brokoli',name:'Brokoli',icon:'🥦',unit:'ta',coef:1,coefLabel:null,dailyRaw:2},
+  {id:'olma',name:'Olma',icon:'🍎',unit:'ta',coef:1,coefLabel:null,dailyRaw:1},
+  {id:'banan',name:'Banan',icon:'🍌',unit:'ta',coef:1,coefLabel:null,dailyRaw:1},
+  {id:'ovsyanka',name:'Ovsyanka',icon:'🥣',unit:'g',coef:1,coefLabel:null,dailyRaw:100}
 ];
-
 var DEFAULT_OVQATLAR = [
-  { id: 'klassika',   name: 'Klassika', icon: '🍱', ingredients: [
-    { productId: 'tovuq',   rawAmount: 305, cookedAmount: 220 },
-    { productId: 'guruch',  rawAmount: 117, cookedAmount: 250 },
-    { productId: 'brokoli', rawAmount: 1,   cookedAmount: 1 }
-  ]},
-  { id: 'tuxum_meal', name: 'Tuxum',  icon: '🍳', ingredients: [{ productId: 'tuxum',  rawAmount: 5, cookedAmount: 5 }] },
-  { id: 'tvorog_meal',name: 'Tvorog', icon: '🥛', ingredients: [{ productId: 'tvorog', rawAmount: 1, cookedAmount: 1 }] },
-  { id: 'olma_meal',  name: 'Olma',   icon: '🍎', ingredients: [{ productId: 'olma',   rawAmount: 1, cookedAmount: 1 }] },
+  {id:'klassika',name:'Klassika',icon:'🍱',ingredients:[{productId:'tovuq',rawAmount:305,cookedAmount:220},{productId:'guruch',rawAmount:117,cookedAmount:250},{productId:'brokoli',rawAmount:1,cookedAmount:1}]},
+  {id:'tuxum_meal',name:'Tuxum',icon:'🍳',ingredients:[{productId:'tuxum',rawAmount:5,cookedAmount:5}]},
+  {id:'tvorog_meal',name:'Tvorog',icon:'🥛',ingredients:[{productId:'tvorog',rawAmount:1,cookedAmount:1}]},
+  {id:'olma_meal',name:'Olma',icon:'🍎',ingredients:[{productId:'olma',rawAmount:1,cookedAmount:1}]}
 ];
+var DEFAULT_DAY_PLAN = {nonushta:'tuxum_meal',snack:'olma_meal',obed:'klassika',ujin:'klassika',kechga:'tvorog_meal'};
 
-var DEFAULT_DAY_PLAN = {
-  nonushta: 'tuxum_meal',
-  snack:    'olma_meal',
-  obed:     'klassika',
-  ujin:     'klassika',
-  kechga:   'tvorog_meal'
-};
+var pageStack=['home'];
+var selectedDate=null,zapas=[],ovqatlar=[],dayPlans={},kitoblar=[];
+var selectedZapasProduct=null,editingZapasIdx=null;
+var editingMealTime=null,pendingMealChange=null;
+var editingOvqatId=null,tempIngredients=[],ingSelectedProduct=null;
+var editingKitobId=null,activeKitobId=null,finishingKitobId=null;
 
-var pageStack = ['home'];
-var selectedDate = null;
-var zapas = [];
-var ovqatlar = [];
-var dayPlans = {};
-var selectedZapasProduct = null;
-var editingZapasIdx = null;
-var editingMealTime = null;
-var pendingMealChange = null;
-var editingOvqatId = null;
-var tempIngredients = [];
-var ingSelectedProduct = null;
-
-function loadData() {
-  try {
-    var d = localStorage.getItem(STORAGE_KEY);
-    if (d) { var p = JSON.parse(d); zapas = p.zapas||[]; ovqatlar = p.ovqatlar||[]; dayPlans = p.dayPlans||{}; }
-    if (!ovqatlar.length) ovqatlar = JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));
-  } catch(e) { zapas = []; ovqatlar = JSON.parse(JSON.stringify(DEFAULT_OVQATLAR)); dayPlans = {}; }
+function loadData(){
+  try{var d=localStorage.getItem(STORAGE_KEY);if(d){var p=JSON.parse(d);zapas=p.zapas||[];ovqatlar=p.ovqatlar||[];dayPlans=p.dayPlans||{};kitoblar=p.kitoblar||[];}if(!ovqatlar.length)ovqatlar=JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));}
+  catch(e){zapas=[];ovqatlar=JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));dayPlans={};kitoblar=[];}
 }
-function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify({ zapas:zapas, ovqatlar:ovqatlar, dayPlans:dayPlans })); }
-function dateStr(d) { return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
-function fmtDate(d) { return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2); }
-function getDayPlan(d) { return dayPlans[dateStr(d)] || JSON.parse(JSON.stringify(DEFAULT_DAY_PLAN)); }
+function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify({zapas:zapas,ovqatlar:ovqatlar,dayPlans:dayPlans,kitoblar:kitoblar}));}
+function dateStr(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+function fmtDate(d){return('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2);}
+function fmtDateStr(s){if(!s)return'';var p=s.split('-');return p[2]+'.'+p[1];}
+function todayDateStr(){return dateStr(new Date());}
+function getDayPlan(d){return dayPlans[dateStr(d)]||JSON.parse(JSON.stringify(DEFAULT_DAY_PLAN));}
+function getDays(){var days=[];var t=new Date();t.setHours(0,0,0,0);var yest=new Date(t);yest.setDate(t.getDate()-1);days.push(yest);for(var i=0;i<7;i++){var d=new Date(t);d.setDate(t.getDate()+i);days.push(d);}return days;}
+function isToday(d){var t=new Date();t.setHours(0,0,0,0);return d.getTime()===t.getTime();}
+function isYesterday(d){var t=new Date();t.setHours(0,0,0,0);var y=new Date(t);y.setDate(t.getDate()-1);return d.getTime()===y.getTime();}
+function isPast(d){var t=new Date();t.setHours(0,0,0,0);return d.getTime()<t.getTime();}
+function getOvqat(id){if(!id)return null;return ovqatlar.find(function(o){return o.id===id;})||null;}
+function getProd(id){return DEFAULT_PRODUCTS.find(function(p){return p.id===id;})||null;}
+function getRawNeeded(ing){if(ing.rawAmount!==undefined)return ing.rawAmount;var prod=getProd(ing.productId);if(!prod)return ing.amount||0;return prod.coef!==1?ing.amount/prod.coef:ing.amount;}
+function getCookedAmount(ing){if(ing.cookedAmount!==undefined)return ing.cookedAmount;var prod=getProd(ing.productId);if(!prod)return ing.amount||0;return prod.coef!==1?Math.round(ing.rawAmount*prod.coef):ing.rawAmount;}
 
-function getDays() {
-  var days = []; var t = new Date(); t.setHours(0,0,0,0);
-  var yest = new Date(t); yest.setDate(t.getDate()-1); days.push(yest);
-  for (var i=0; i<7; i++) { var d=new Date(t); d.setDate(t.getDate()+i); days.push(d); }
-  return days;
-}
-function isToday(d) { var t=new Date(); t.setHours(0,0,0,0); return d.getTime()===t.getTime(); }
-function isYesterday(d) { var t=new Date(); t.setHours(0,0,0,0); var y=new Date(t); y.setDate(t.getDate()-1); return d.getTime()===y.getTime(); }
-function isPast(d) { var t=new Date(); t.setHours(0,0,0,0); return d.getTime()<t.getTime(); }
-function getOvqat(id) { if(!id) return null; return ovqatlar.find(function(o){return o.id===id;})||null; }
-function getProd(id) { return DEFAULT_PRODUCTS.find(function(p){return p.id===id;})||null; }
-
-function getRawNeeded(ing) {
-  if (ing.rawAmount!==undefined) return ing.rawAmount;
-  var prod=getProd(ing.productId); if(!prod) return ing.amount||0;
-  return prod.coef!==1?ing.amount/prod.coef:ing.amount;
-}
-function getCookedAmount(ing) {
-  if (ing.cookedAmount!==undefined) return ing.cookedAmount;
-  var prod=getProd(ing.productId); if(!prod) return ing.amount||0;
-  return prod.coef!==1?Math.round(ing.rawAmount*prod.coef):ing.rawAmount;
-}
-
-function calcRemainingForDay(productId, dayIndex, allDays) {
-  var zapItem=zapas.find(function(z){return z.productId===productId;});
-  if(!zapItem) return 0;
-  var available=zapItem.rawAmount;
-  var entryDate=zapItem.entryDate?new Date(zapItem.entryDate):null;
-  if(entryDate) entryDate.setHours(0,0,0,0);
-  for(var i=0;i<dayIndex;i++){
-    var d=allDays[i];
-    if(entryDate&&d<entryDate) continue;
-    var plan=getDayPlan(d);
-    MEAL_TIMES.forEach(function(mt){
-      var ovqat=getOvqat(plan[mt.key]); if(!ovqat) return;
-      ovqat.ingredients.forEach(function(ing){
-        if(ing.productId===productId) available-=getRawNeeded(ing);
-      });
-    });
-  }
-  return available;
-}
-
-function dayHasMissing(d, dayIndex, allDays) {
-  if(isPast(d)) return false;
-  var plan=getDayPlan(d);
-  for(var i=0;i<MEAL_TIMES.length;i++){
-    var ovqat=getOvqat(plan[MEAL_TIMES[i].key]); if(!ovqat) continue;
-    for(var j=0;j<ovqat.ingredients.length;j++){
-      var ing=ovqat.ingredients[j];
-      if(calcRemainingForDay(ing.productId,dayIndex,allDays)<getRawNeeded(ing)) return true;
-    }
-  }
-  return false;
-}
-
-function getMissingForMeal(ovqatId, dayIndex, allDays) {
-  var ovqat=getOvqat(ovqatId); if(!ovqat) return [];
-  var missing=[];
-  ovqat.ingredients.forEach(function(ing){
-    if(calcRemainingForDay(ing.productId,dayIndex,allDays)<getRawNeeded(ing)){
-      var prod=getProd(ing.productId); if(prod) missing.push(prod.name);
-    }
-  });
-  return missing;
-}
-
-// Find first future day with missing ingredients
-function findFirstMissingDay() {
-  var allDays=getDays();
-  var today=new Date(); today.setHours(0,0,0,0);
-  for(var i=0;i<allDays.length;i++){
-    var d=allDays[i];
-    if(d<=today) continue;
-    if(dayHasMissing(d,i,allDays)) return { day:d, dayName:UZ_DAYS[d.getDay()] };
-  }
-  return null;
-}
-
-// Get xarid info for card display
-function getXaridInfo() {
-  var missing=findFirstMissingDay();
-  if(!missing) return null;
-  var today=new Date(); today.setHours(0,0,0,0);
-  var dayBefore=new Date(missing.day); dayBefore.setDate(missing.day.getDate()-1);
-  var isUrgent=dayBefore.getTime()===today.getTime();
-  return {
-    day: missing.day,
-    dayName: missing.dayName,
-    isUrgent: isUrgent,
-    dateLabel: fmtDate(missing.day)+' '+missing.dayName
-  };
-}
-
-// Get missing products for first missing day
-function getMissingProductsForXarid() {
-  var allDays=getDays();
-  var today=new Date(); today.setHours(0,0,0,0);
-  var missingProds = {};
-  for(var i=0;i<allDays.length;i++){
-    var d=allDays[i];
-    if(d<=today) continue;
-    if(!dayHasMissing(d,i,allDays)) continue;
-    var plan=getDayPlan(d);
-    MEAL_TIMES.forEach(function(mt){
-      var ovqat=getOvqat(plan[mt.key]); if(!ovqat) return;
-      ovqat.ingredients.forEach(function(ing){
-        var rem=calcRemainingForDay(ing.productId,i,allDays);
-        var needed=getRawNeeded(ing);
-        if(rem<needed){
-          var prod=getProd(ing.productId); if(!prod) return;
-          if(!missingProds[ing.productId]){
-            missingProds[ing.productId]={prod:prod, needed: needed - Math.max(0,rem)};
-          } else {
-            missingProds[ing.productId].needed += needed;
-          }
-        }
-      });
-    });
-    break; // only first missing day
-  }
-  return Object.values(missingProds);
-}
-
-function calcEffectiveRemaining(item) {
-  var prod=getProd(item.productId); if(!prod) return item.rawAmount;
-  if(!item.entryDate) return item.rawAmount;
-  var entry=new Date(item.entryDate); entry.setHours(0,0,0,0);
-  var today=new Date(); today.setHours(0,0,0,0);
-  var remaining=item.rawAmount;
-  var cur=new Date(entry);
-  while(cur<today){
-    var plan=getDayPlan(cur);
-    MEAL_TIMES.forEach(function(mt){
-      var ovqat=getOvqat(plan[mt.key]); if(!ovqat) return;
-      ovqat.ingredients.forEach(function(ing){
-        if(ing.productId===item.productId) remaining-=getRawNeeded(ing);
-      });
-    });
-    cur.setDate(cur.getDate()+1);
-  }
-  return Math.max(0,Math.round(remaining*10)/10);
-}
-
-function calcDaysLeft(item) {
-  var prod=getProd(item.productId); if(!prod) return 0;
-  var effective=calcEffectiveRemaining(item);
-  var daily=prod.dailyRaw?prod.dailyRaw:prod.dailyCooked/prod.coef;
-  return Math.round((effective/daily)*10)/10;
-}
+function calcRemainingForDay(productId,dayIndex,allDays){var zapItem=zapas.find(function(z){return z.productId===productId;});if(!zapItem)return 0;var available=zapItem.rawAmount;var entryDate=zapItem.entryDate?new Date(zapItem.entryDate):null;if(entryDate)entryDate.setHours(0,0,0,0);for(var i=0;i<dayIndex;i++){var d=allDays[i];if(entryDate&&d<entryDate)continue;var plan=getDayPlan(d);MEAL_TIMES.forEach(function(mt){var ovqat=getOvqat(plan[mt.key]);if(!ovqat)return;ovqat.ingredients.forEach(function(ing){if(ing.productId===productId)available-=getRawNeeded(ing);});});}return available;}
+function dayHasMissing(d,dayIndex,allDays){if(isPast(d))return false;var plan=getDayPlan(d);for(var i=0;i<MEAL_TIMES.length;i++){var ovqat=getOvqat(plan[MEAL_TIMES[i].key]);if(!ovqat)continue;for(var j=0;j<ovqat.ingredients.length;j++){var ing=ovqat.ingredients[j];if(calcRemainingForDay(ing.productId,dayIndex,allDays)<getRawNeeded(ing))return true;}}return false;}
+function getMissingForMeal(ovqatId,dayIndex,allDays){var ovqat=getOvqat(ovqatId);if(!ovqat)return[];var missing=[];ovqat.ingredients.forEach(function(ing){if(calcRemainingForDay(ing.productId,dayIndex,allDays)<getRawNeeded(ing)){var prod=getProd(ing.productId);if(prod)missing.push(prod.name);}});return missing;}
+function findFirstMissingDay(){var allDays=getDays();var today=new Date();today.setHours(0,0,0,0);for(var i=0;i<allDays.length;i++){var d=allDays[i];if(d<=today)continue;if(dayHasMissing(d,i,allDays))return{day:d,dayName:UZ_DAYS[d.getDay()]};}return null;}
+function getXaridInfo(){var missing=findFirstMissingDay();if(!missing)return null;var today=new Date();today.setHours(0,0,0,0);var dayBefore=new Date(missing.day);dayBefore.setDate(missing.day.getDate()-1);return{day:missing.day,dayName:missing.dayName,isUrgent:dayBefore.getTime()===today.getTime(),dateLabel:fmtDate(missing.day)+' '+missing.dayName};}
+function getMissingProductsForXarid(){var allDays=getDays();var today=new Date();today.setHours(0,0,0,0);var missingProds={};for(var i=0;i<allDays.length;i++){var d=allDays[i];if(d<=today)continue;if(!dayHasMissing(d,i,allDays))continue;var plan=getDayPlan(d);MEAL_TIMES.forEach(function(mt){var ovqat=getOvqat(plan[mt.key]);if(!ovqat)return;ovqat.ingredients.forEach(function(ing){var rem=calcRemainingForDay(ing.productId,i,allDays);var needed=getRawNeeded(ing);if(rem<needed){var prod=getProd(ing.productId);if(!prod)return;if(!missingProds[ing.productId])missingProds[ing.productId]={prod:prod,needed:needed-Math.max(0,rem)};else missingProds[ing.productId].needed+=needed;}});});break;}return Object.values(missingProds);}
+function calcEffectiveRemaining(item){var prod=getProd(item.productId);if(!prod)return item.rawAmount;if(!item.entryDate)return item.rawAmount;var entry=new Date(item.entryDate);entry.setHours(0,0,0,0);var today=new Date();today.setHours(0,0,0,0);var remaining=item.rawAmount;var cur=new Date(entry);while(cur<today){var plan=getDayPlan(cur);MEAL_TIMES.forEach(function(mt){var ovqat=getOvqat(plan[mt.key]);if(!ovqat)return;ovqat.ingredients.forEach(function(ing){if(ing.productId===item.productId)remaining-=getRawNeeded(ing);});});cur.setDate(cur.getDate()+1);}return Math.max(0,Math.round(remaining*10)/10);}
+function calcDaysLeft(item){var prod=getProd(item.productId);if(!prod)return 0;var effective=calcEffectiveRemaining(item);var daily=prod.dailyRaw?prod.dailyRaw:prod.dailyCooked/prod.coef;return Math.round((effective/daily)*10)/10;}
 function statusClass(d){return d>=3?'status-green':d>=1?'status-warn':'status-red';}
 function statusColor(d){return d>=3?'#558237':d>=1?'#AA7B08':'#c0392b';}
 
 // =================== RENDER ===================
-function render() {
-  var page=pageStack[pageStack.length-1];
-  var app=document.getElementById('app');
-  if(page==='home') renderHome(app);
-  else if(page==='soglik') renderSoglik(app);
-  else if(page==='ovqatlanish') renderOvqatlanish(app);
-  else if(page==='ratsion') renderRatsion(app);
-  else if(page==='day') renderDay(app);
-  else if(page==='zaxira') renderZaxira(app);
-  else if(page==='ovqatlar') renderOvqatlar(app);
+function render(){
+  var page=pageStack[pageStack.length-1];var app=document.getElementById('app');
+  if(page==='home')renderHome(app);
+  else if(page==='soglik')renderSoglik(app);
+  else if(page==='ovqatlanish')renderOvqatlanish(app);
+  else if(page==='ratsion')renderRatsion(app);
+  else if(page==='day')renderDay(app);
+  else if(page==='zaxira')renderZaxira(app);
+  else if(page==='ovqatlar')renderOvqatlar(app);
+  else if(page==='bilim')renderBilim(app);
+  else if(page==='kitob')renderKitobList(app);
+  else if(page==='dars')renderDars(app);
+  else if(page==='kitob-detail')renderKitobDetail(app);
 }
 
-function mkH(title,back,addId){
-  var left=back
-    ?'<button class="back-btn" id="btn-back">←</button><div><div class="header-title">'+title+'</div></div>'
-    :'<div class="logo">🌿</div><div><div class="header-title">'+title+'</div><div class="header-sub">Sog\'liq va sport</div></div>';
-  var right=addId?'<button class="btn-add" id="'+addId+'">+</button>':'';
-  return '<div class="header"><div class="header-left">'+left+'</div>'+right+'</div>';
+function mkH(title,back,addId,addCls){
+  var left=back?'<button class="back-btn" id="btn-back">←</button><div><div class="header-title">'+title+'</div></div>':'<div class="logo">🌿</div><div><div class="header-title">'+title+'</div><div class="header-sub">Shaxsiy rivojlanish</div></div>';
+  var right=addId?'<button class="btn-add'+(addCls?' '+addCls:'')+'" id="'+addId+'">+</button>':'';
+  return'<div class="header"><div class="header-left">'+left+'</div>'+right+'</div>';
 }
 function mkBc(){
-  var lb={home:'🏠',soglik:"💚 Sog'liq",ovqatlanish:"🥗 Ovqatlanish",ratsion:'📋 Ratsion',zaxira:'📦 Zaxira va Xarid',ovqatlar:"🍽️ Ovqatlar",day:'📅 Kun'};
-  if(pageStack.length<=1) return '';
+  var lb={home:'🏠',soglik:'💚 Sog\'liq',ovqatlanish:'🥗 Ovqatlanish',ratsion:'📋 Ratsion',zaxira:'📦 Zaxira',ovqatlar:'🍽️ Ovqatlar',bilim:'🧠 Bilim',kitob:'📚 Kitob',dars:'📖 Dars',day:'📅 Kun','kitob-detail':'📖'};
+  if(pageStack.length<=1)return'';
   var h='<div class="breadcrumb">';
-  for(var i=0;i<pageStack.length-1;i++) h+='<span data-idx="'+i+'">'+(lb[pageStack[i]]||'')+'</span><span style="color:var(--light)"> › </span>';
+  for(var i=0;i<pageStack.length-1;i++)h+='<span data-idx="'+i+'">'+(lb[pageStack[i]]||'')+'</span><span style="color:var(--light)"> › </span>';
   h+='<span style="color:var(--text2)">'+(lb[pageStack[pageStack.length-1]]||'')+'</span></div>';
   return h;
 }
 function bc(){
-  document.querySelectorAll('.breadcrumb [data-idx]').forEach(function(el){
-    el.addEventListener('click',function(){pageStack=pageStack.slice(0,parseInt(this.getAttribute('data-idx'))+1);render();});
-  });
-  var b=document.getElementById('btn-back');
-  if(b) b.addEventListener('click',function(){pageStack.pop();render();});
+  document.querySelectorAll('.breadcrumb [data-idx]').forEach(function(el){el.addEventListener('click',function(){pageStack=pageStack.slice(0,parseInt(this.getAttribute('data-idx'))+1);render();});});
+  var b=document.getElementById('btn-back');if(b)b.addEventListener('click',function(){pageStack.pop();render();});
 }
 
 function renderHome(app){
-  app.innerHTML=mkH('Umatizim',false,null)+'<div class="main"><div class="page-title">Bo\'limlar</div><div class="card" id="gs"><div class="card-icon">💚</div><div class="card-info"><div class="card-name">Sog\'liq</div><div class="card-sub">Sport va to\'g\'ri ovqatlanish</div></div><span class="card-arrow">›</span></div></div>';
+  app.innerHTML=mkH('Uma-tizim',false,null)+'<div class="main"><div class="page-title">Bo\'limlar</div>'+
+    '<div class="card" id="gs"><div class="card-icon">💚</div><div class="card-info"><div class="card-name">Sog\'liq</div><div class="card-sub">Sport va to\'g\'ri ovqatlanish</div></div><span class="card-arrow">›</span></div>'+
+    '<div class="card" id="gb"><div class="card-icon">🧠</div><div class="card-info"><div class="card-name">Bilim va rivojlanish</div><div class="card-sub">Kitob va darslar</div></div><span class="card-arrow">›</span></div></div>';
   document.getElementById('gs').addEventListener('click',function(){pageStack.push('soglik');render();});
+  document.getElementById('gb').addEventListener('click',function(){pageStack.push('bilim');render();});
 }
 function renderSoglik(app){
   app.innerHTML=mkH("💚 Sog'liq",true,null)+mkBc()+'<div class="main"><div class="page-title">Bo\'limlar</div><div class="card" id="g1"><div class="card-icon">🏋️</div><div class="card-info"><div class="card-name">Sport</div><div class="card-sub">Mashqlar va trenirovka</div></div><span class="card-arrow">›</span></div><div class="card" id="g2"><div class="card-icon">🥗</div><div class="card-info"><div class="card-name">To\'g\'ri ovqatlanish</div><div class="card-sub">Ratsion, zaxira, xarid</div></div><span class="card-arrow">›</span></div></div>';
-  bc();
-  document.getElementById('g1').addEventListener('click',function(){showToast('Tez kunda qo\'shiladi');});
-  document.getElementById('g2').addEventListener('click',function(){pageStack.push('ovqatlanish');render();});
+  bc();document.getElementById('g1').addEventListener('click',function(){showToast('Tez kunda qo\'shiladi');});document.getElementById('g2').addEventListener('click',function(){pageStack.push('ovqatlanish');render();});
+}
+function renderBilim(app){
+  app.innerHTML=mkH('🧠 Bilim va rivojlanish',true,null)+mkBc()+'<div class="main"><div class="page-title">Bo\'limlar</div><div class="card" id="gk"><div class="card-icon">📚</div><div class="card-info"><div class="card-name">Kitob</div><div class="card-sub">O\'qilmoqda va o\'qib bo\'lingan</div></div><span class="card-arrow">›</span></div><div class="card" id="gd"><div class="card-icon">📖</div><div class="card-info"><div class="card-name">Dars</div><div class="card-sub">Tez kunda qo\'shiladi</div></div><span class="card-arrow">›</span></div></div>';
+  bc();document.getElementById('gk').addEventListener('click',function(){pageStack.push('kitob');render();});document.getElementById('gd').addEventListener('click',function(){pageStack.push('dars');render();});
 }
 
-function renderOvqatlanish(app){
-  var xarid=getXaridInfo();
-  var zaxiraSub, zaxiraDanger=false;
-  if(xarid){
-    if(xarid.isUrgent){
-      zaxiraSub="⚠️ Do'konga borish: bugun!";
-      zaxiraDanger=true;
-    } else {
-      zaxiraSub="Do'konga borish: "+xarid.dateLabel;
-    }
-  } else {
-    zaxiraSub="Zaxira yetarli ✅";
+function renderKitobList(app){
+  var oqilmoqda=kitoblar.filter(function(k){return k.status==='oqilmoqda';});
+  var tugallangan=kitoblar.filter(function(k){return k.status==='tugallangan';});
+  var h=mkH('📚 Kitob',true,'kitob-add-btn','blue')+mkBc()+'<div class="main">';
+  h+='<div class="page-title">O\'qilmoqda ('+oqilmoqda.length+')</div>';
+  if(!oqilmoqda.length)h+='<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">Hali kitob yo\'q</div>';
+  oqilmoqda.forEach(function(k){h+=kitobCardHTML(k);});
+  h+='<div class="page-title" style="margin-top:8px">O\'qib bo\'lindi ('+tugallangan.length+')</div>';
+  if(!tugallangan.length)h+='<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">Hali yo\'q</div>';
+  tugallangan.forEach(function(k){h+=kitobCardHTML(k);});
+  h+='</div>';
+  app.innerHTML=h; bc();
+  var ab=document.getElementById('kitob-add-btn');if(ab)ab.addEventListener('click',function(){openKitobModal(null);});
+  document.querySelectorAll('.kitob-card').forEach(function(c){c.addEventListener('click',function(){activeKitobId=this.getAttribute('data-kid');pageStack.push('kitob-detail');render();});});
+}
+
+function kitobCardHTML(k){
+  var pct=k.jamisahifa?Math.round((k.hozir/k.jamisahifa)*100):0;
+  var done=k.status==='tugallangan';
+  var h='<div class="kitob-card'+(done?' kitob-done':'')+'" data-kid="'+k.id+'">';
+  h+='<div class="kitob-header"><div class="kitob-emoji">📖</div><div class="kitob-info">';
+  h+='<div class="kitob-label">'+(k.muallif||'')+'</div>';
+  h+='<div class="kitob-name">'+k.nom+'</div>';
+  h+='<div class="kitob-dates">';
+  if(k.boshsana)h+='Boshlangan: '+fmtDateStr(k.boshsana);
+  if(k.tugsana)h+=(k.boshsana?' · ':'')+'Taxminiy: '+fmtDateStr(k.tugsana);
+  h+='</div></div></div>';
+  if(k.jamisahifa){
+    h+='<div class="kitob-progress"><div class="kitob-progress-label"><span>'+k.hozir+' / '+k.jamisahifa+' sahifa</span><span>'+pct+'%</span></div>';
+    h+='<div class="kitob-progress-bar"><div class="kitob-progress-fill" style="width:'+pct+'%"></div></div></div>';
   }
+  if(done)h+='<span class="done-badge">✅ O\'qib bo\'lindi</span>';
+  if(done&&k.tassurot)h+='<div class="kitob-tassurot">💬 '+k.tassurot+'</div>';
+  h+='</div>';
+  return h;
+}
+
+function renderKitobDetail(app){
+  var k=kitoblar.find(function(kb){return kb.id===activeKitobId;});
+  if(!k){pageStack.pop();render();return;}
+  var pct=k.jamisahifa?Math.round((k.hozir/k.jamisahifa)*100):0;
+  var done=k.status==='tugallangan';
+  var h=mkH(k.nom,true,null)+mkBc()+'<div class="main">';
+
+  // Kitob kartochkasi
+  h+='<div class="kitob-card'+(done?' kitob-done':'')+'" style="cursor:default">';
+  h+='<div class="kitob-header"><div class="kitob-emoji">📖</div><div class="kitob-info">';
+  h+='<div class="kitob-label">'+(k.muallif||'')+'</div>';
+  h+='<div class="kitob-name">'+k.nom+'</div>';
+  h+='<div class="kitob-dates">';
+  if(k.boshsana)h+='Boshlangan: '+fmtDateStr(k.boshsana);
+  if(k.tugsana)h+=(k.boshsana?' · ':'')+'Taxminiy: '+fmtDateStr(k.tugsana);
+  if(done&&k.tugatilgan)h+=' · Tugatildi: '+fmtDateStr(k.tugatilgan);
+  h+='</div></div></div>';
+  if(k.jamisahifa){
+    h+='<div class="kitob-progress"><div class="kitob-progress-label"><span>'+k.hozir+' / '+k.jamisahifa+' sahifa</span><span>'+pct+'%</span></div>';
+    h+='<div class="kitob-progress-bar"><div class="kitob-progress-fill" style="width:'+pct+'%"></div></div></div>';
+  }
+  if(done)h+='<span class="done-badge">✅ O\'qib bo\'lindi</span>';
+  if(k.tassurot)h+='<div class="kitob-tassurot">💬 '+k.tassurot+'</div>';
+
+  // Tugmalar
+  h+='<div class="kitob-actions">';
+  if(!done)h+='<button class="kitob-btn blue" id="btn-oqidim">📖 O\'qidim</button>';
+  h+='<button class="kitob-btn edit" id="btn-kitob-edit">✏️ Tahrirlash</button>';
+  h+='</div>';
+
+  // O'qish tarixi
+  if(k.tarix&&k.tarix.length){
+    h+='<div class="tarix-section"><div class="tarix-title">O\'qish tarixi</div>';
+    var sorted=k.tarix.slice().reverse();
+    sorted.forEach(function(t,i){
+      h+='<div class="tarix-item">';
+      h+='<div class="tarix-meta"><span>📅 '+fmtDateStr(t.sana)+'</span></div>';
+      h+='<div class="tarix-bet">'+t.avval+' → '+t.hozir+' bet (+'+t.farq+' bet)</div>';
+      if(t.izoh){
+        h+='<div class="tarix-izoh" data-tarix="'+i+'" title="To\'liq o\'qish">'+t.izoh+' ›</div>';
+      }
+      h+='</div>';
+    });
+    h+='</div>';
+  }
+
+  h+='</div>';
+  app.innerHTML=h; bc();
+
+  var bo=document.getElementById('btn-oqidim');
+  if(bo)bo.addEventListener('click',function(){openOqidimModal(k);});
+  var be=document.getElementById('btn-kitob-edit');
+  if(be)be.addEventListener('click',function(){openKitobModal(k.id);});
+
+  document.querySelectorAll('.tarix-izoh').forEach(function(el){
+    el.addEventListener('click',function(){
+      var idx=parseInt(this.getAttribute('data-tarix'));
+      var sorted=k.tarix.slice().reverse();
+      openIzohFull(sorted[idx]);
+    });
+  });
+}
+
+function renderDars(app){app.innerHTML=mkH('📖 Dars',true,null)+mkBc()+'<div class="main"><div class="empty-state"><div class="empty-icon">📖</div><div class="empty-text">Tez kunda qo\'shiladi</div></div></div>';bc();}
+
+function renderOvqatlanish(app){
+  var xarid=getXaridInfo();var zaxiraSub,zaxiraDanger=false;
+  if(xarid){if(xarid.isUrgent){zaxiraSub="⚠️ Do'konga borish: bugun!";zaxiraDanger=true;}else zaxiraSub="Do'konga borish: "+xarid.dateLabel;}
+  else zaxiraSub="Zaxira yetarli ✅";
   app.innerHTML=mkH("🥗 Ovqatlanish",true,null)+mkBc()+'<div class="main"><div class="page-title">Bo\'limlar</div>'+
     '<div class="card" id="gr"><div class="card-icon">📋</div><div class="card-info"><div class="card-name">Kunlik ratsion</div><div class="card-sub">7 kunlik ovqat rejasi</div></div><span class="card-arrow">›</span></div>'+
     '<div class="card'+(zaxiraDanger?' danger':'')+'" id="gz"><div class="card-icon">📦</div><div class="card-info"><div class="card-name">Zaxira va Xarid rejasi</div><div class="card-sub">'+zaxiraSub+'</div></div><span class="card-arrow">›</span></div>'+
@@ -535,374 +473,186 @@ function renderOvqatlanish(app){
 }
 
 function renderRatsion(app){
-  var allDays=getDays();
-  var h=mkH('📋 Kunlik ratsion',true,null)+mkBc()+'<div class="main"><div class="page-title">Kunlar</div>';
+  var allDays=getDays();var h=mkH('📋 Kunlik ratsion',true,null)+mkBc()+'<div class="main"><div class="page-title">Kunlar</div>';
   for(var i=0;i<allDays.length;i++){
-    var d=allDays[i]; var tod=isToday(d); var yest=isYesterday(d); var past=isPast(d);
-    var miss=dayHasMissing(d,i,allDays);
-    var plan=getDayPlan(d);
+    var d=allDays[i];var tod=isToday(d);var yest=isYesterday(d);var past=isPast(d);
+    var miss=dayHasMissing(d,i,allDays);var plan=getDayPlan(d);
     var mealNames=MEAL_TIMES.map(function(mt){var o=getOvqat(plan[mt.key]);return o?o.name:null;}).filter(Boolean);
-    var cardClass='day-card'+(!past&&miss?' warn-red':'');
-    h+='<div class="'+cardClass+'" data-ts="'+d.getTime()+'">';
-    h+='<div class="day-date"><div class="day-date-num">'+d.getDate()+'</div>';
-    h+='<div class="day-date-month">'+UZ_MONTHS[d.getMonth()]+'</div></div>';
-    h+='<div class="day-divider"></div>';
-    h+='<div class="day-info"><div class="day-name">'+UZ_DAYS[d.getDay()]+'</div>';
+    h+='<div class="day-card'+(!past&&miss?' warn-red':'')+'" data-ts="'+d.getTime()+'">';
+    h+='<div class="day-date"><div class="day-date-num">'+d.getDate()+'</div><div class="day-date-month">'+UZ_MONTHS[d.getMonth()]+'</div></div>';
+    h+='<div class="day-divider"></div><div class="day-info"><div class="day-name">'+UZ_DAYS[d.getDay()]+'</div>';
     h+='<div class="day-meals">'+mealNames.join(' / ')+'</div>';
-    if(!past&&miss) h+='<div class="day-warn">⚠️ Mahsulot yetmaydi</div>';
+    if(!past&&miss)h+='<div class="day-warn">⚠️ Mahsulot yetmaydi</div>';
     h+='</div>';
-    if(tod) h+='<span class="today-badge">Bugun</span>';
-    else if(yest) h+='<span class="past-badge">Kecha</span>';
+    if(tod)h+='<span class="today-badge">Bugun</span>';
+    else if(yest)h+='<span class="past-badge">Kecha</span>';
     h+='<span class="card-arrow">›</span></div>';
   }
-  h+='</div>';
-  app.innerHTML=h; bc();
-  document.querySelectorAll('.day-card').forEach(function(c){
-    c.addEventListener('click',function(){selectedDate=new Date(parseInt(this.getAttribute('data-ts')));pageStack.push('day');render();});
-  });
+  h+='</div>';app.innerHTML=h;bc();
+  document.querySelectorAll('.day-card').forEach(function(c){c.addEventListener('click',function(){selectedDate=new Date(parseInt(this.getAttribute('data-ts')));pageStack.push('day');render();});});
 }
 
 function renderDay(app){
-  var d=selectedDate;
-  var title=fmtDate(d)+' '+UZ_DAYS[d.getDay()];
-  var plan=getDayPlan(d);
-  var allDays=getDays();
-  var dayIndex=allDays.findIndex(function(dd){return dateStr(dd)===dateStr(d);});
-  if(dayIndex<0) dayIndex=1;
+  var d=selectedDate;var title=fmtDate(d)+' '+UZ_DAYS[d.getDay()];
+  var plan=getDayPlan(d);var allDays=getDays();var dayIndex=allDays.findIndex(function(dd){return dateStr(dd)===dateStr(d);});if(dayIndex<0)dayIndex=1;
   var h=mkH(title,true,null)+mkBc()+'<div class="main" style="padding-top:16px">';
   MEAL_TIMES.forEach(function(mt){
-    var ovqatId=plan[mt.key];
-    var ovqat=getOvqat(ovqatId);
-    var missing=ovqat?getMissingForMeal(ovqatId,dayIndex,allDays):[];
-    var hasMissing=missing.length>0;
-    var itemsStr=ovqat?ovqat.ingredients.map(function(ing){
-      var p=getProd(ing.productId); if(!p) return '';
-      var cooked=getCookedAmount(ing); var raw=getRawNeeded(ing);
-      if(p.coef!==1) return p.name+' '+cooked+p.unit+' <span style="opacity:0.55;font-size:11px">('+raw+'g xom)</span>';
-      return p.name+' '+raw+p.unit;
-    }).join(' · '):'—';
+    var ovqatId=plan[mt.key];var ovqat=getOvqat(ovqatId);var missing=ovqat?getMissingForMeal(ovqatId,dayIndex,allDays):[];var hasMissing=missing.length>0;
+    var itemsStr=ovqat?ovqat.ingredients.map(function(ing){var p=getProd(ing.productId);if(!p)return'';var cooked=getCookedAmount(ing);var raw=getRawNeeded(ing);if(p.coef!==1)return p.name+' '+cooked+p.unit+' <span style="opacity:0.55;font-size:11px">('+raw+'g xom)</span>';return p.name+' '+raw+p.unit;}).join(' · '):'—';
     h+='<div class="meal-card'+(hasMissing?' missing':'')+'" data-time="'+mt.key+'">';
-    h+='<div class="meal-card-header">';
-    h+='<div class="meal-card-icon">'+mt.icon+'</div>';
-    h+='<div class="meal-card-info"><div class="meal-card-time">'+mt.name+'</div>';
-    h+='<div class="meal-card-name">'+(ovqat?ovqat.icon+' '+ovqat.name:'Tanlanmagan')+'</div></div>';
-    h+='<span class="meal-card-arrow">›</span></div>';
-    if(ovqat) h+='<div class="meal-card-items">'+itemsStr+'</div>';
-    if(hasMissing) h+='<div class="meal-card-missing">⚠️ Yo\'q: '+missing.join(', ')+'</div>';
+    h+='<div class="meal-card-header"><div class="meal-card-icon">'+mt.icon+'</div><div class="meal-card-info"><div class="meal-card-time">'+mt.name+'</div><div class="meal-card-name">'+(ovqat?ovqat.icon+' '+ovqat.name:'Tanlanmagan')+'</div></div><span class="meal-card-arrow">›</span></div>';
+    if(ovqat)h+='<div class="meal-card-items">'+itemsStr+'</div>';
+    if(hasMissing)h+='<div class="meal-card-missing">⚠️ Yo\'q: '+missing.join(', ')+'</div>';
     h+='</div>';
   });
-  h+='</div>';
-  app.innerHTML=h; bc();
-  document.querySelectorAll('.meal-card').forEach(function(card){
-    card.addEventListener('click',function(){openMealSelect(dateStr(d),this.getAttribute('data-time'),plan[this.getAttribute('data-time')]);});
-  });
+  h+='</div>';app.innerHTML=h;bc();
+  document.querySelectorAll('.meal-card').forEach(function(card){card.addEventListener('click',function(){openMealSelect(dateStr(d),this.getAttribute('data-time'),plan[this.getAttribute('data-time')]);});});
 }
 
 function renderZaxira(app){
-  var xarid=getXaridInfo();
-  var missingProds=getMissingProductsForXarid();
-
+  var xarid=getXaridInfo();var missingProds=getMissingProductsForXarid();
   var h=mkH('📦 Zaxira va Xarid rejasi',true,'zadd-btn')+mkBc()+'<div class="main">';
-
-  // Xarid banner
-  if(xarid){
-    var bannerColor=xarid.isUrgent?'#fdf2f2':'#f0f3ee';
-    var bannerBorder=xarid.isUrgent?'var(--danger)':'var(--bg3)';
-    var bannerText=xarid.isUrgent?"⚠️ Do'konga borish: bugun!":"🛒 Do'konga borish: "+xarid.dateLabel;
-    var bannerTextColor=xarid.isUrgent?'var(--danger)':'var(--text2)';
-    h+='<div style="background:'+bannerColor+';border:1px solid '+bannerBorder+';border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:14px;font-weight:500;color:'+bannerTextColor+'">'+bannerText+'</div>';
-  }
-
-  // Xarid kerak bo'lgan mahsulotlar
-  if(missingProds.length){
-    h+='<div class="page-title">Xarid ro\'yxati</div>';
-    missingProds.forEach(function(item){
-      h+='<div class="xarid-item">';
-      h+='<div class="xarid-icon">'+item.prod.icon+'</div>';
-      h+='<div class="xarid-info"><div class="xarid-name">'+item.prod.name+'</div>';
-      h+='<div class="xarid-amount">Kerak: ~'+Math.ceil(item.needed)+item.prod.unit+'</div></div></div>';
-    });
-  }
-
-  // Zaxira
+  if(xarid){var bc2=xarid.isUrgent?'#fdf2f2':'#f0f3ee';var bb=xarid.isUrgent?'var(--danger)':'var(--bg3)';var bt2=xarid.isUrgent?"⚠️ Do'konga borish: bugun!":"🛒 Do'konga borish: "+xarid.dateLabel;var btc=xarid.isUrgent?'var(--danger)':'var(--text2)';h+='<div style="background:'+bc2+';border:1px solid '+bb+';border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:14px;font-weight:500;color:'+btc+'">'+bt2+'</div>';}
+  if(missingProds.length){h+='<div class="page-title">Xarid ro\'yxati</div>';missingProds.forEach(function(item){h+='<div class="xarid-item"><div class="xarid-icon">'+item.prod.icon+'</div><div class="xarid-info"><div class="xarid-name">'+item.prod.name+'</div><div class="xarid-amount">Kerak: ~'+Math.ceil(item.needed)+item.prod.unit+'</div></div></div>';});}
   h+='<div class="page-title" style="margin-top:'+(missingProds.length?'8px':'0')+'">Zaxira</div>';
-  if(!zapas.length){
-    h+='<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">Hali mahsulot yo\'q</div><div class="empty-sub">+ tugmasini bosib qo\'shing</div></div>';
-  } else {
-    zapas.forEach(function(item,i){
-      var prod=getProd(item.productId); if(!prod) return;
-      var effective=calcEffectiveRemaining(item);
-      var days=calcDaysLeft(item);
-      var sc=statusClass(days); var clr=statusColor(days);
-      var pct=Math.min(100,Math.round((days/7)*100));
-      var cooked=prod.coef!==1?' → '+Math.round(effective*prod.coef)+prod.unit+' pishgan':'';
-      var dateLabel=item.entryDate?fmtDate(new Date(item.entryDate))+' da kiritilgan':'';
-      h+='<div class="zapas-item" data-idx="'+i+'">';
-      h+='<div class="zapas-icon">'+prod.icon+'</div>';
-      h+='<div class="zapas-info"><div class="zapas-name">'+prod.name+'</div>';
-      h+='<div class="zapas-raw">'+effective+prod.unit+' qoldi'+cooked+'</div>';
-      if(dateLabel) h+='<div class="zapas-date">'+dateLabel+'</div>';
-      h+='<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%;background:'+clr+'"></div></div></div>';
-      h+='<div class="zapas-right"><div class="zapas-days '+sc+'">'+days+'</div><div class="zapas-days-lbl">kun</div></div></div>';
-    });
-  }
-  h+='</div>';
-  app.innerHTML=h; bc();
-  var ab=document.getElementById('zadd-btn');
-  if(ab) ab.addEventListener('click',openZaddModal);
-  document.querySelectorAll('.zapas-item').forEach(function(el){
-    el.addEventListener('click',function(){openZeditModal(parseInt(this.getAttribute('data-idx')));});
-  });
+  if(!zapas.length)h+='<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">Hali mahsulot yo\'q</div><div class="empty-sub">+ tugmasini bosib qo\'shing</div></div>';
+  else{zapas.forEach(function(item,i){var prod=getProd(item.productId);if(!prod)return;var effective=calcEffectiveRemaining(item);var days=calcDaysLeft(item);var sc=statusClass(days);var clr=statusColor(days);var pct=Math.min(100,Math.round((days/7)*100));var cooked=prod.coef!==1?' → '+Math.round(effective*prod.coef)+prod.unit+' pishgan':'';var dateLabel=item.entryDate?fmtDate(new Date(item.entryDate))+' da kiritilgan':'';h+='<div class="zapas-item" data-idx="'+i+'"><div class="zapas-icon">'+prod.icon+'</div><div class="zapas-info"><div class="zapas-name">'+prod.name+'</div><div class="zapas-raw">'+effective+prod.unit+' qoldi'+cooked+'</div>'+(dateLabel?'<div class="zapas-date">'+dateLabel+'</div>':'')+'<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%;background:'+clr+'"></div></div></div><div class="zapas-right"><div class="zapas-days '+sc+'">'+days+'</div><div class="zapas-days-lbl">kun</div></div></div>';});}
+  h+='</div>';app.innerHTML=h;bc();
+  var ab=document.getElementById('zadd-btn');if(ab)ab.addEventListener('click',openZaddModal);
+  document.querySelectorAll('.zapas-item').forEach(function(el){el.addEventListener('click',function(){openZeditModal(parseInt(this.getAttribute('data-idx')));});});
 }
 
 function renderOvqatlar(app){
   var h=mkH("🍽️ Ovqatlar",true,'ovqat-add-btn')+mkBc()+'<div class="main"><div class="page-title">Retseptlar</div>';
-  ovqatlar.forEach(function(o){
-    var ings=o.ingredients.map(function(ing){
-      var p=getProd(ing.productId); if(!p) return '';
-      var raw=getRawNeeded(ing); var cooked=getCookedAmount(ing);
-      if(p.coef!==1) return p.name+' '+raw+'g xom ('+cooked+'g pishgan)';
-      return p.name+' '+raw+p.unit;
-    }).join(', ');
-    h+='<div class="ovqat-card"><div class="ovqat-icon">'+o.icon+'</div><div class="ovqat-info"><div class="ovqat-name">'+o.name+'</div><div class="ovqat-items">'+ings+'</div></div><button class="btn-sm" data-oid="'+o.id+'">✏️</button></div>';
-  });
-  h+='</div>';
-  app.innerHTML=h; bc();
-  var ab=document.getElementById('ovqat-add-btn');
-  if(ab) ab.addEventListener('click',function(){openOvqatModal(null);});
-  document.querySelectorAll('[data-oid]').forEach(function(btn){
-    btn.addEventListener('click',function(e){e.stopPropagation();openOvqatModal(this.getAttribute('data-oid'));});
-  });
+  ovqatlar.forEach(function(o){var ings=o.ingredients.map(function(ing){var p=getProd(ing.productId);if(!p)return'';var raw=getRawNeeded(ing);var cooked=getCookedAmount(ing);if(p.coef!==1)return p.name+' '+raw+'g xom ('+cooked+'g pishgan)';return p.name+' '+raw+p.unit;}).join(', ');h+='<div class="ovqat-card"><div class="ovqat-icon">'+o.icon+'</div><div class="ovqat-info"><div class="ovqat-name">'+o.name+'</div><div class="ovqat-items">'+ings+'</div></div><button class="btn-sm" data-oid="'+o.id+'">✏️</button></div>';});
+  h+='</div>';app.innerHTML=h;bc();
+  var ab=document.getElementById('ovqat-add-btn');if(ab)ab.addEventListener('click',function(){openOvqatModal(null);});
+  document.querySelectorAll('[data-oid]').forEach(function(btn){btn.addEventListener('click',function(e){e.stopPropagation();openOvqatModal(this.getAttribute('data-oid'));});});
 }
 
-function buildZaddList(){
-  var q=document.getElementById('zadd-search').value.toLowerCase();
-  var filtered=DEFAULT_PRODUCTS.filter(function(p){return p.name.toLowerCase().includes(q);});
-  var h='';
-  filtered.forEach(function(p){
-    h+='<button class="product-btn'+(selectedZapasProduct&&selectedZapasProduct.id===p.id?' selected':'')+'" data-id="'+p.id+'">';
-    h+='<span class="product-btn-icon">'+p.icon+'</span><span><div class="product-btn-name">'+p.name+'</div><div class="product-btn-unit">'+(p.coefLabel||p.unit)+'</div></span></button>';
-  });
-  if(!h) h='<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">Topilmadi</div>';
-  document.getElementById('zadd-list').innerHTML=h;
-  document.querySelectorAll('#zadd-list .product-btn').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      selectedZapasProduct=getProd(btn.getAttribute('data-id'));
-      buildZaddList();
-      document.getElementById('zadd-amount').classList.add('show');
-      document.getElementById('zadd-label').textContent=selectedZapasProduct.name+' ('+selectedZapasProduct.unit+', xom)';
-      document.getElementById('zadd-unit').textContent=selectedZapasProduct.unit;
-      var ci=document.getElementById('zadd-coef');
-      if(selectedZapasProduct.coefLabel){ci.style.display='block';ci.textContent='📌 '+selectedZapasProduct.coefLabel;}
-      else ci.style.display='none';
-      document.getElementById('zadd-input').value='';
-      setTimeout(function(){document.getElementById('zadd-input').focus();document.getElementById('zadd-amount').scrollIntoView({behavior:'smooth',block:'end'});},100);
-    });
-  });
+// =================== KITOB MODALS ===================
+function openKitobModal(kid){
+  editingKitobId=kid;
+  if(kid){var k=kitoblar.find(function(kb){return kb.id===kid;});document.getElementById('kitob-modal-title').textContent='Tahrirlash';document.getElementById('kitob-nom').value=k.nom;document.getElementById('kitob-muallif').value=k.muallif||'';document.getElementById('kitob-sahifa').value=k.jamisahifa||'';document.getElementById('kitob-boshsana').value=k.boshsana||'';document.getElementById('kitob-tugsana').value=k.tugsana||'';document.getElementById('kitob-del').style.display='flex';}
+  else{document.getElementById('kitob-modal-title').textContent='Yangi kitob';document.getElementById('kitob-nom').value='';document.getElementById('kitob-muallif').value='';document.getElementById('kitob-sahifa').value='';document.getElementById('kitob-boshsana').value=todayDateStr();document.getElementById('kitob-tugsana').value='';document.getElementById('kitob-del').style.display='none';}
+  document.getElementById('modal-kitob').classList.add('open');
+  setTimeout(function(){document.getElementById('kitob-nom').focus();},150);
 }
-function openZaddModal(){
-  selectedZapasProduct=null;
-  document.getElementById('zadd-search').value='';
-  document.getElementById('zadd-input').value='';
-  document.getElementById('zadd-amount').classList.remove('show');
-  buildZaddList();
-  document.getElementById('modal-zadd').classList.add('open');
+document.getElementById('modal-kitob').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+document.getElementById('kitob-cancel').addEventListener('click',function(){document.getElementById('modal-kitob').classList.remove('open');});
+document.getElementById('kitob-save').addEventListener('click',function(){
+  var nom=document.getElementById('kitob-nom').value.trim();if(!nom){document.getElementById('kitob-nom').focus();return;}
+  var data={nom:nom,muallif:document.getElementById('kitob-muallif').value.trim(),jamisahifa:parseInt(document.getElementById('kitob-sahifa').value)||0,boshsana:document.getElementById('kitob-boshsana').value,tugsana:document.getElementById('kitob-tugsana').value};
+  if(editingKitobId){var k=kitoblar.find(function(kb){return kb.id===editingKitobId;});Object.assign(k,data);}
+  else{data.id='kitob_'+Date.now();data.hozir=0;data.status='oqilmoqda';data.tarix=[];kitoblar.push(data);}
+  saveData();document.getElementById('modal-kitob').classList.remove('open');render();showToast('Saqlandi ✓');
+});
+document.getElementById('kitob-del').addEventListener('click',function(){
+  kitoblar=kitoblar.filter(function(k){return k.id!==editingKitobId;});
+  saveData();document.getElementById('modal-kitob').classList.remove('open');while(pageStack.length>0&&pageStack[pageStack.length-1]==='kitob-detail')pageStack.pop();render();showToast("O'chirildi");
+});
+
+// O'QIDIM MODAL
+function openOqidimModal(k){
+  activeKitobId=k.id;
+  document.getElementById('oqidim-title').textContent='📖 '+k.nom;
+  document.getElementById('oqidim-label').textContent='Qaysi betgacha o\'qidingiz? (hozir: '+k.hozir+')';
+  document.getElementById('oqidim-hint').textContent='Jami: '+k.jamisahifa+' sahifa';
+  document.getElementById('oqidim-bet').value='';
+  document.getElementById('oqidim-izoh').value='';
+  document.getElementById('modal-oqidim').classList.add('open');
+  setTimeout(function(){document.getElementById('oqidim-bet').focus();},150);
 }
+document.getElementById('modal-oqidim').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+document.getElementById('oqidim-cancel').addEventListener('click',function(){document.getElementById('modal-oqidim').classList.remove('open');});
+document.getElementById('oqidim-save').addEventListener('click',function(){
+  var k=kitoblar.find(function(kb){return kb.id===activeKitobId;});if(!k)return;
+  var yangi=parseInt(document.getElementById('oqidim-bet').value)||0;
+  var max=k.jamisahifa||9999;
+  // Cannot go below current
+  if(yangi<=k.hozir){showToast('Avvalgi betdan katta son kiriting');return;}
+  // Cap at max
+  yangi=Math.min(yangi,max);
+  var farq=yangi-k.hozir;
+  var izoh=document.getElementById('oqidim-izoh').value.trim();
+  if(!k.tarix)k.tarix=[];
+  k.tarix.push({sana:todayDateStr(),avval:k.hozir,hozir:yangi,farq:farq,izoh:izoh});
+  k.hozir=yangi;
+  document.getElementById('modal-oqidim').classList.remove('open');
+  saveData();
+  // Check if finished
+  if(k.jamisahifa&&k.hozir>=k.jamisahifa){
+    setTimeout(function(){openFinishConfirm(k.id);},300);
+  } else {
+    render();showToast('+'+farq+' bet o\'qildi ✓');
+  }
+});
+
+function openFinishConfirm(kid){
+  finishingKitobId=kid;
+  var k=kitoblar.find(function(kb){return kb.id===kid;});
+  document.getElementById('taassurot-title').textContent='🎉 '+k.nom;
+  document.getElementById('taassurot-text').value='';
+  document.getElementById('modal-taassurot').classList.add('open');
+}
+document.getElementById('modal-taassurot').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+function finishKitob(tassurot){
+  var k=kitoblar.find(function(kb){return kb.id===finishingKitobId;});if(!k)return;
+  k.status='tugallangan';k.hozir=k.jamisahifa;k.tugatilgan=todayDateStr();
+  if(tassurot)k.tassurot=tassurot;
+  saveData();document.getElementById('modal-taassurot').classList.remove('open');render();showToast("O'qib bo'ldingiz! 🎉");
+}
+document.getElementById('taassurot-skip').addEventListener('click',function(){finishKitob('');});
+document.getElementById('taassurot-save').addEventListener('click',function(){finishKitob(document.getElementById('taassurot-text').value.trim());});
+
+// TO'LIQ IZOH
+function openIzohFull(t){
+  document.getElementById('izoh-title').textContent=fmtDateStr(t.sana)+' · '+t.avval+' → '+t.hozir+' bet';
+  document.getElementById('izoh-text').textContent=t.izoh;
+  document.getElementById('modal-izoh').classList.add('open');
+}
+document.getElementById('modal-izoh').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+document.getElementById('izoh-close').addEventListener('click',function(){document.getElementById('modal-izoh').classList.remove('open');});
+
+// =================== ZAPAS ===================
+function buildZaddList(){var q=document.getElementById('zadd-search').value.toLowerCase();var filtered=DEFAULT_PRODUCTS.filter(function(p){return p.name.toLowerCase().includes(q);});var h='';filtered.forEach(function(p){h+='<button class="product-btn'+(selectedZapasProduct&&selectedZapasProduct.id===p.id?' selected':'')+'" data-id="'+p.id+'"><span class="product-btn-icon">'+p.icon+'</span><span><div class="product-btn-name">'+p.name+'</div><div class="product-btn-unit">'+(p.coefLabel||p.unit)+'</div></span></button>';});if(!h)h='<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">Topilmadi</div>';document.getElementById('zadd-list').innerHTML=h;document.querySelectorAll('#zadd-list .product-btn').forEach(function(btn){btn.addEventListener('click',function(){selectedZapasProduct=getProd(btn.getAttribute('data-id'));buildZaddList();document.getElementById('zadd-amount').classList.add('show');document.getElementById('zadd-label').textContent=selectedZapasProduct.name+' ('+selectedZapasProduct.unit+', xom)';document.getElementById('zadd-unit').textContent=selectedZapasProduct.unit;var ci=document.getElementById('zadd-coef');if(selectedZapasProduct.coefLabel){ci.style.display='block';ci.textContent='📌 '+selectedZapasProduct.coefLabel;}else ci.style.display='none';document.getElementById('zadd-input').value='';setTimeout(function(){document.getElementById('zadd-input').focus();document.getElementById('zadd-amount').scrollIntoView({behavior:'smooth',block:'end'});},100);});});}
+function openZaddModal(){selectedZapasProduct=null;document.getElementById('zadd-search').value='';document.getElementById('zadd-input').value='';document.getElementById('zadd-amount').classList.remove('show');buildZaddList();document.getElementById('modal-zadd').classList.add('open');}
 document.getElementById('modal-zadd').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
 document.getElementById('zadd-search').addEventListener('input',buildZaddList);
 document.getElementById('zadd-cancel').addEventListener('click',function(){document.getElementById('modal-zadd').classList.remove('open');});
-document.getElementById('zadd-save').addEventListener('click',function(){
-  if(!selectedZapasProduct) return;
-  var amt=parseFloat(document.getElementById('zadd-input').value);
-  if(!amt||amt<=0){document.getElementById('zadd-input').focus();return;}
-  var today=new Date(); today.setHours(0,0,0,0);
-  var ex=zapas.find(function(z){return z.productId===selectedZapasProduct.id;});
-  if(ex){ex.rawAmount=Math.round((ex.rawAmount+amt)*10)/10;ex.entryDate=today.toISOString();}
-  else zapas.push({productId:selectedZapasProduct.id,rawAmount:amt,entryDate:today.toISOString()});
-  saveData(); document.getElementById('modal-zadd').classList.remove('open'); render();
-  showToast(selectedZapasProduct.name+' qo\'shildi ✓');
-});
-
-function openZeditModal(idx){
-  editingZapasIdx=idx;
-  var item=zapas[idx]; var prod=getProd(item.productId);
-  document.getElementById('zedit-title').textContent=prod.icon+' '+prod.name;
-  document.getElementById('zedit-label').textContent='Miqdor ('+prod.unit+', xom)';
-  document.getElementById('zedit-unit').textContent=prod.unit;
-  document.getElementById('zedit-input').value=item.rawAmount;
-  var ci=document.getElementById('zedit-coef');
-  if(prod.coefLabel){ci.style.display='block';ci.textContent='📌 '+prod.coefLabel;}else ci.style.display='none';
-  document.getElementById('modal-zedit').classList.add('open');
-  setTimeout(function(){document.getElementById('zedit-input').focus();document.getElementById('zedit-input').select();},150);
-}
+document.getElementById('zadd-save').addEventListener('click',function(){if(!selectedZapasProduct)return;var amt=parseFloat(document.getElementById('zadd-input').value);if(!amt||amt<=0){document.getElementById('zadd-input').focus();return;}var today=new Date();today.setHours(0,0,0,0);var ex=zapas.find(function(z){return z.productId===selectedZapasProduct.id;});if(ex){ex.rawAmount=Math.round((ex.rawAmount+amt)*10)/10;ex.entryDate=today.toISOString();}else zapas.push({productId:selectedZapasProduct.id,rawAmount:amt,entryDate:today.toISOString()});saveData();document.getElementById('modal-zadd').classList.remove('open');render();showToast(selectedZapasProduct.name+' qo\'shildi ✓');});
+function openZeditModal(idx){editingZapasIdx=idx;var item=zapas[idx];var prod=getProd(item.productId);document.getElementById('zedit-title').textContent=prod.icon+' '+prod.name;document.getElementById('zedit-label').textContent='Miqdor ('+prod.unit+', xom)';document.getElementById('zedit-unit').textContent=prod.unit;document.getElementById('zedit-input').value=item.rawAmount;var ci=document.getElementById('zedit-coef');if(prod.coefLabel){ci.style.display='block';ci.textContent='📌 '+prod.coefLabel;}else ci.style.display='none';document.getElementById('modal-zedit').classList.add('open');setTimeout(function(){document.getElementById('zedit-input').focus();document.getElementById('zedit-input').select();},150);}
 document.getElementById('modal-zedit').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
 document.getElementById('zedit-cancel').addEventListener('click',function(){document.getElementById('modal-zedit').classList.remove('open');});
-document.getElementById('zedit-save').addEventListener('click',function(){
-  var amt=parseFloat(document.getElementById('zedit-input').value);
-  if(!amt||amt<=0){document.getElementById('zedit-input').focus();return;}
-  var today=new Date(); today.setHours(0,0,0,0);
-  zapas[editingZapasIdx].rawAmount=amt; zapas[editingZapasIdx].entryDate=today.toISOString();
-  saveData(); document.getElementById('modal-zedit').classList.remove('open'); render(); showToast('Yangilandi ✓');
-});
-document.getElementById('zedit-del').addEventListener('click',function(){
-  var prod=getProd(zapas[editingZapasIdx].productId);
-  if(!confirm(prod.name+' ni o\'chirishni tasdiqlaysizmi?')) return;
-  zapas.splice(editingZapasIdx,1); saveData();
-  document.getElementById('modal-zedit').classList.remove('open'); render(); showToast("O'chirildi");
-});
+document.getElementById('zedit-save').addEventListener('click',function(){var amt=parseFloat(document.getElementById('zedit-input').value);if(!amt||amt<=0){document.getElementById('zedit-input').focus();return;}var today=new Date();today.setHours(0,0,0,0);zapas[editingZapasIdx].rawAmount=amt;zapas[editingZapasIdx].entryDate=today.toISOString();saveData();document.getElementById('modal-zedit').classList.remove('open');render();showToast('Yangilandi ✓');});
+document.getElementById('zedit-del').addEventListener('click',function(){var prod=getProd(zapas[editingZapasIdx].productId);if(!confirm(prod.name+' ni o\'chirishni tasdiqlaysizmi?'))return;zapas.splice(editingZapasIdx,1);saveData();document.getElementById('modal-zedit').classList.remove('open');render();showToast("O'chirildi");});
 
-function openMealSelect(ds,timeKey,currentOvqatId){
-  editingMealTime={dateStr:ds,timeKey:timeKey}; pendingMealChange=null;
-  var mt=MEAL_TIMES.find(function(m){return m.key===timeKey;});
-  document.getElementById('meal-modal-title').textContent=mt.icon+' '+mt.name;
-  document.getElementById('meal-confirm-box').style.display='none';
-  document.getElementById('meal-confirm-yes').style.display='none';
-  document.getElementById('meal-options').style.display='';
-  var h='';
-  ovqatlar.forEach(function(o){
-    var ings=o.ingredients.map(function(ing){var p=getProd(ing.productId);return p?p.name+' '+getCookedAmount(ing)+p.unit:'';}).join(', ');
-    h+='<div class="meal-option'+(currentOvqatId===o.id?' selected':'')+'" data-oid="'+o.id+'">';
-    h+='<span class="meal-option-icon">'+o.icon+'</span><span><div class="meal-option-name">'+o.name+'</div><div class="meal-option-items">'+ings+'</div></span></div>';
-  });
-  document.getElementById('meal-options').innerHTML=h;
-  document.getElementById('modal-meal').classList.add('open');
-  document.querySelectorAll('.meal-option').forEach(function(el){
-    el.addEventListener('click',function(){
-      var oid=this.getAttribute('data-oid');
-      if(oid===currentOvqatId){document.getElementById('modal-meal').classList.remove('open');return;}
-      pendingMealChange=oid;
-      var curO=getOvqat(currentOvqatId); var newO=getOvqat(oid);
-      var cb=document.getElementById('meal-confirm-box');
-      cb.style.display='block';
-      cb.textContent=(curO?curO.name:'Tanlanmagan')+' → '+newO.name+". O'zgartirasizmi?";
-      document.getElementById('meal-confirm-yes').style.display='flex';
-      document.getElementById('meal-options').style.display='none';
-    });
-  });
-}
+// MEAL SELECT
+function openMealSelect(ds,timeKey,currentOvqatId){editingMealTime={dateStr:ds,timeKey:timeKey};pendingMealChange=null;var mt=MEAL_TIMES.find(function(m){return m.key===timeKey;});document.getElementById('meal-modal-title').textContent=mt.icon+' '+mt.name;document.getElementById('meal-confirm-box').style.display='none';document.getElementById('meal-confirm-yes').style.display='none';document.getElementById('meal-options').style.display='';var h='';ovqatlar.forEach(function(o){var ings=o.ingredients.map(function(ing){var p=getProd(ing.productId);return p?p.name+' '+getCookedAmount(ing)+p.unit:'';}).join(', ');h+='<div class="meal-option'+(currentOvqatId===o.id?' selected':'')+'" data-oid="'+o.id+'"><span class="meal-option-icon">'+o.icon+'</span><span><div class="meal-option-name">'+o.name+'</div><div class="meal-option-items">'+ings+'</div></span></div>';});document.getElementById('meal-options').innerHTML=h;document.getElementById('modal-meal').classList.add('open');document.querySelectorAll('.meal-option').forEach(function(el){el.addEventListener('click',function(){var oid=this.getAttribute('data-oid');if(oid===currentOvqatId){document.getElementById('modal-meal').classList.remove('open');return;}pendingMealChange=oid;var curO=getOvqat(currentOvqatId);var newO=getOvqat(oid);var cb=document.getElementById('meal-confirm-box');cb.style.display='block';cb.textContent=(curO?curO.name:'Tanlanmagan')+' → '+newO.name+". O'zgartirasizmi?";document.getElementById('meal-confirm-yes').style.display='flex';document.getElementById('meal-options').style.display='none';});});}
 document.getElementById('modal-meal').addEventListener('click',function(e){if(e.target===this){this.classList.remove('open');document.getElementById('meal-options').style.display='';}});
 document.getElementById('meal-cancel').addEventListener('click',function(){document.getElementById('modal-meal').classList.remove('open');document.getElementById('meal-options').style.display='';pendingMealChange=null;});
-document.getElementById('meal-confirm-yes').addEventListener('click',function(){
-  if(!pendingMealChange||!editingMealTime) return;
-  var ds=editingMealTime.dateStr; var tk=editingMealTime.timeKey;
-  if(!dayPlans[ds]) dayPlans[ds]=JSON.parse(JSON.stringify(DEFAULT_DAY_PLAN));
-  dayPlans[ds][tk]=pendingMealChange;
-  saveData(); document.getElementById('modal-meal').classList.remove('open');
-  document.getElementById('meal-options').style.display=''; pendingMealChange=null; render(); showToast('Saqlandi ✓');
-});
+document.getElementById('meal-confirm-yes').addEventListener('click',function(){if(!pendingMealChange||!editingMealTime)return;var ds=editingMealTime.dateStr;var tk=editingMealTime.timeKey;if(!dayPlans[ds])dayPlans[ds]=JSON.parse(JSON.stringify(DEFAULT_DAY_PLAN));dayPlans[ds][tk]=pendingMealChange;saveData();document.getElementById('modal-meal').classList.remove('open');document.getElementById('meal-options').style.display='';pendingMealChange=null;render();showToast('Saqlandi ✓');});
 
-var ovqatSelectedEmoji='🍲';
-var OVQAT_EMOJIS=['🍲','🥘','🍜','🥗','🍳','🥩','🍖','🫕','🥣','🍱','🫔','🥙'];
-function buildOvqatEmoji(){
-  var h='';
-  OVQAT_EMOJIS.forEach(function(e){
-    h+='<button style="width:40px;height:40px;border:2px solid '+(e===ovqatSelectedEmoji?'var(--accent)':'transparent')+';background:'+(e===ovqatSelectedEmoji?'#e8f0e0':'var(--bg)')+';border-radius:8px;font-size:22px;cursor:pointer;" data-emoji="'+e+'">'+e+'</button>';
-  });
-  document.getElementById('ovqat-emoji-grid').innerHTML=h;
-  document.querySelectorAll('#ovqat-emoji-grid button').forEach(function(btn){
-    btn.addEventListener('click',function(){ovqatSelectedEmoji=this.getAttribute('data-emoji');buildOvqatEmoji();});
-  });
-}
-function renderTempIngs(){
-  var h='';
-  tempIngredients.forEach(function(ing,i){
-    var prod=getProd(ing.productId); if(!prod) return;
-    var raw=getRawNeeded(ing); var cooked=getCookedAmount(ing);
-    var label=prod.coef!==1?raw+'g xom → '+cooked+'g pishgan':raw+prod.unit;
-    h+='<div class="ing-row"><span class="ing-name">'+prod.icon+' '+prod.name+'</span><span class="ing-amount">'+label+'</span><button class="ing-del" data-iidx="'+i+'">×</button></div>';
-  });
-  document.getElementById('ovqat-ings').innerHTML=h;
-  document.querySelectorAll('.ing-del').forEach(function(btn){
-    btn.addEventListener('click',function(){tempIngredients.splice(parseInt(this.getAttribute('data-iidx')),1);renderTempIngs();});
-  });
-}
-function openOvqatModal(oid){
-  editingOvqatId=oid;
-  if(oid){
-    var o=getOvqat(oid);
-    document.getElementById('ovqat-modal-title').textContent='Tahrir';
-    document.getElementById('ovqat-name').value=o.name;
-    ovqatSelectedEmoji=o.icon; tempIngredients=JSON.parse(JSON.stringify(o.ingredients));
-    document.getElementById('ovqat-del').style.display='flex';
-  } else {
-    document.getElementById('ovqat-modal-title').textContent='Yangi ovqat';
-    document.getElementById('ovqat-name').value='';
-    ovqatSelectedEmoji='🍲'; tempIngredients=[];
-    document.getElementById('ovqat-del').style.display='none';
-  }
-  buildOvqatEmoji(); renderTempIngs();
-  document.getElementById('modal-ovqat').classList.add('open');
-}
+// OVQAT
+var ovqatSelectedEmoji='🍲';var OVQAT_EMOJIS=['🍲','🥘','🍜','🥗','🍳','🥩','🍖','🫕','🥣','🍱','🫔','🥙'];
+function buildOvqatEmoji(){var h='';OVQAT_EMOJIS.forEach(function(e){h+='<button style="width:40px;height:40px;border:2px solid '+(e===ovqatSelectedEmoji?'var(--accent)':'transparent')+';background:'+(e===ovqatSelectedEmoji?'#e8f0e0':'var(--bg)')+';border-radius:8px;font-size:22px;cursor:pointer;" data-emoji="'+e+'">'+e+'</button>';});document.getElementById('ovqat-emoji-grid').innerHTML=h;document.querySelectorAll('#ovqat-emoji-grid button').forEach(function(btn){btn.addEventListener('click',function(){ovqatSelectedEmoji=this.getAttribute('data-emoji');buildOvqatEmoji();});});}
+function renderTempIngs(){var h='';tempIngredients.forEach(function(ing,i){var prod=getProd(ing.productId);if(!prod)return;var raw=getRawNeeded(ing);var cooked=getCookedAmount(ing);var label=prod.coef!==1?raw+'g xom → '+cooked+'g pishgan':raw+prod.unit;h+='<div class="ing-row"><span class="ing-name">'+prod.icon+' '+prod.name+'</span><span class="ing-amount">'+label+'</span><button class="ing-del" data-iidx="'+i+'">×</button></div>';});document.getElementById('ovqat-ings').innerHTML=h;document.querySelectorAll('.ing-del').forEach(function(btn){btn.addEventListener('click',function(){tempIngredients.splice(parseInt(this.getAttribute('data-iidx')),1);renderTempIngs();});});}
+function openOvqatModal(oid){editingOvqatId=oid;if(oid){var o=getOvqat(oid);document.getElementById('ovqat-modal-title').textContent='Tahrir';document.getElementById('ovqat-name').value=o.name;ovqatSelectedEmoji=o.icon;tempIngredients=JSON.parse(JSON.stringify(o.ingredients));document.getElementById('ovqat-del').style.display='flex';}else{document.getElementById('ovqat-modal-title').textContent='Yangi ovqat';document.getElementById('ovqat-name').value='';ovqatSelectedEmoji='🍲';tempIngredients=[];document.getElementById('ovqat-del').style.display='none';}buildOvqatEmoji();renderTempIngs();document.getElementById('modal-ovqat').classList.add('open');}
 document.getElementById('modal-ovqat').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
 document.getElementById('ovqat-cancel').addEventListener('click',function(){document.getElementById('modal-ovqat').classList.remove('open');});
 document.getElementById('ovqat-add-ing').addEventListener('click',openIngModal);
-document.getElementById('ovqat-save').addEventListener('click',function(){
-  var name=document.getElementById('ovqat-name').value.trim();
-  if(!name){document.getElementById('ovqat-name').focus();return;}
-  if(editingOvqatId){
-    var o=getOvqat(editingOvqatId);
-    o.name=name;o.icon=ovqatSelectedEmoji;o.ingredients=JSON.parse(JSON.stringify(tempIngredients));
-  } else {
-    ovqatlar.push({id:'ovqat_'+Date.now(),name:name,icon:ovqatSelectedEmoji,ingredients:JSON.parse(JSON.stringify(tempIngredients))});
-  }
-  saveData(); document.getElementById('modal-ovqat').classList.remove('open'); render(); showToast('Saqlandi ✓');
-});
-document.getElementById('ovqat-del').addEventListener('click',function(){
-  if(!confirm("O'chirishni tasdiqlaysizmi?")) return;
-  ovqatlar=ovqatlar.filter(function(o){return o.id!==editingOvqatId;});
-  saveData(); document.getElementById('modal-ovqat').classList.remove('open'); render(); showToast("O'chirildi");
-});
-
-function buildIngList(){
-  var q=document.getElementById('ing-search').value.toLowerCase();
-  var filtered=DEFAULT_PRODUCTS.filter(function(p){return p.name.toLowerCase().includes(q);});
-  var h='';
-  filtered.forEach(function(p){
-    h+='<button class="product-btn'+(ingSelectedProduct&&ingSelectedProduct.id===p.id?' selected':'')+'" data-id="'+p.id+'">';
-    h+='<span class="product-btn-icon">'+p.icon+'</span><span><div class="product-btn-name">'+p.name+'</div><div class="product-btn-unit">'+p.unit+(p.coefLabel?' · '+p.coefLabel:'')+'</div></span></button>';
-  });
-  document.getElementById('ing-list').innerHTML=h;
-  document.querySelectorAll('#ing-list .product-btn').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      ingSelectedProduct=getProd(btn.getAttribute('data-id'));
-      buildIngList();
-      document.getElementById('ing-amount').classList.add('show');
-      document.getElementById('ing-label').textContent=ingSelectedProduct.name+' (xom, '+ingSelectedProduct.unit+')';
-      document.getElementById('ing-unit').textContent=ingSelectedProduct.unit;
-      var ci=document.getElementById('ing-coef-info');
-      if(ingSelectedProduct.coefLabel){ci.style.display='block';ci.textContent='📌 '+ingSelectedProduct.coefLabel;}
-      else ci.style.display='none';
-      document.getElementById('ing-input').value='';
-      setTimeout(function(){document.getElementById('ing-input').focus();document.getElementById('ing-amount').scrollIntoView({behavior:'smooth',block:'end'});},100);
-    });
-  });
-}
-function openIngModal(){
-  ingSelectedProduct=null;
-  document.getElementById('ing-search').value='';
-  document.getElementById('ing-input').value='';
-  document.getElementById('ing-amount').classList.remove('show');
-  buildIngList();
-  document.getElementById('modal-ing').classList.add('open');
-}
+document.getElementById('ovqat-save').addEventListener('click',function(){var name=document.getElementById('ovqat-name').value.trim();if(!name){document.getElementById('ovqat-name').focus();return;}if(editingOvqatId){var o=getOvqat(editingOvqatId);o.name=name;o.icon=ovqatSelectedEmoji;o.ingredients=JSON.parse(JSON.stringify(tempIngredients));}else{ovqatlar.push({id:'ovqat_'+Date.now(),name:name,icon:ovqatSelectedEmoji,ingredients:JSON.parse(JSON.stringify(tempIngredients))});}saveData();document.getElementById('modal-ovqat').classList.remove('open');render();showToast('Saqlandi ✓');});
+document.getElementById('ovqat-del').addEventListener('click',function(){if(!confirm("O'chirishni tasdiqlaysizmi?"))return;ovqatlar=ovqatlar.filter(function(o){return o.id!==editingOvqatId;});saveData();document.getElementById('modal-ovqat').classList.remove('open');render();showToast("O'chirildi");});
+function buildIngList(){var q=document.getElementById('ing-search').value.toLowerCase();var filtered=DEFAULT_PRODUCTS.filter(function(p){return p.name.toLowerCase().includes(q);});var h='';filtered.forEach(function(p){h+='<button class="product-btn'+(ingSelectedProduct&&ingSelectedProduct.id===p.id?' selected':'')+'" data-id="'+p.id+'"><span class="product-btn-icon">'+p.icon+'</span><span><div class="product-btn-name">'+p.name+'</div><div class="product-btn-unit">'+p.unit+(p.coefLabel?' · '+p.coefLabel:'')+'</div></span></button>';});document.getElementById('ing-list').innerHTML=h;document.querySelectorAll('#ing-list .product-btn').forEach(function(btn){btn.addEventListener('click',function(){ingSelectedProduct=getProd(btn.getAttribute('data-id'));buildIngList();document.getElementById('ing-amount').classList.add('show');document.getElementById('ing-label').textContent=ingSelectedProduct.name+' (xom, '+ingSelectedProduct.unit+')';document.getElementById('ing-unit').textContent=ingSelectedProduct.unit;var ci=document.getElementById('ing-coef-info');if(ingSelectedProduct.coefLabel){ci.style.display='block';ci.textContent='📌 '+ingSelectedProduct.coefLabel;}else ci.style.display='none';document.getElementById('ing-input').value='';setTimeout(function(){document.getElementById('ing-input').focus();document.getElementById('ing-amount').scrollIntoView({behavior:'smooth',block:'end'});},100);});});}
+function openIngModal(){ingSelectedProduct=null;document.getElementById('ing-search').value='';document.getElementById('ing-input').value='';document.getElementById('ing-amount').classList.remove('show');buildIngList();document.getElementById('modal-ing').classList.add('open');}
 document.getElementById('modal-ing').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
 document.getElementById('ing-search').addEventListener('input',buildIngList);
 document.getElementById('ing-cancel').addEventListener('click',function(){document.getElementById('modal-ing').classList.remove('open');});
-document.getElementById('ing-save').addEventListener('click',function(){
-  if(!ingSelectedProduct) return;
-  var rawAmt=parseFloat(document.getElementById('ing-input').value);
-  if(!rawAmt||rawAmt<=0){document.getElementById('ing-input').focus();return;}
-  var prod=ingSelectedProduct;
-  var cookedAmt=prod.coef!==1?Math.round(rawAmt*prod.coef*10)/10:rawAmt;
-  var ex=tempIngredients.find(function(i){return i.productId===prod.id;});
-  if(ex){ex.rawAmount=rawAmt;ex.cookedAmount=cookedAmt;}
-  else tempIngredients.push({productId:prod.id,rawAmount:rawAmt,cookedAmount:cookedAmt});
-  document.getElementById('modal-ing').classList.remove('open'); renderTempIngs();
-});
+document.getElementById('ing-save').addEventListener('click',function(){if(!ingSelectedProduct)return;var rawAmt=parseFloat(document.getElementById('ing-input').value);if(!rawAmt||rawAmt<=0){document.getElementById('ing-input').focus();return;}var prod=ingSelectedProduct;var cookedAmt=prod.coef!==1?Math.round(rawAmt*prod.coef*10)/10:rawAmt;var ex=tempIngredients.find(function(i){return i.productId===prod.id;});if(ex){ex.rawAmount=rawAmt;ex.cookedAmount=cookedAmt;}else tempIngredients.push({productId:prod.id,rawAmount:rawAmt,cookedAmount:cookedAmt});document.getElementById('modal-ing').classList.remove('open');renderTempIngs();});
 
 function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
 if(window.Telegram&&window.Telegram.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}
-loadData(); render();
+loadData();render();
 </script>
 </body>
 </html>
