@@ -403,7 +403,7 @@ function kitobCardHTML(k){
     h+='<div class="kitob-progress-bar"><div class="kitob-progress-fill" style="width:'+pct+'%"></div></div></div>';
   }
   if(done)h+='<span class="done-badge">✅ O\'qib bo\'lindi</span>';
-  if(done&&k.tassurot)h+='<div class="kitob-tassurot">💬 '+k.tassurot+'</div>';
+
   h+='</div>';
   return h;
 }
@@ -430,7 +430,7 @@ function renderKitobDetail(app){
     h+='<div class="kitob-progress-bar"><div class="kitob-progress-fill" style="width:'+pct+'%"></div></div></div>';
   }
   if(done)h+='<span class="done-badge">✅ O\'qib bo\'lindi</span>';
-  if(k.tassurot)h+='<div class="kitob-tassurot">💬 '+k.tassurot+'</div>';
+
 
   // Tugmalar
   h+='<div class="kitob-actions">';
@@ -452,6 +452,7 @@ function renderKitobDetail(app){
       h+='<div style="display:flex;align-items:center;gap:6px;margin-top:3px;">';
       if(t.izoh)h+='<div style="flex:1;font-size:13px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+t.izoh+'</div>';
       else h+='<div style="flex:1;font-size:12px;color:var(--light);font-style:italic;">Izoh yo\'q</div>';
+      if(t.izoh)h+='<button class="tarix-view-btn" data-tidx="'+i+'" style="flex-shrink:0;border:none;background:var(--bg3);color:var(--text3);font-size:12px;padding:3px 8px;border-radius:6px;cursor:pointer;">↓</button>';
       h+='<button class="tarix-edit-btn" data-tidx="'+i+'" style="flex-shrink:0;border:none;background:var(--bg3);color:var(--text3);font-size:12px;padding:3px 8px;border-radius:6px;cursor:pointer;">✏️</button>';
       h+='</div></div>';
     });
@@ -470,6 +471,16 @@ function renderKitobDetail(app){
   var allT2=(k.tarix||[]).slice();
   if(k.tassurot)allT2.push({sana:k.tugatilgan||todayDateStr(),izoh:k.tassurot,isFinal:true,avval:0,hozir:0,farq:0});
   var sortedT2=allT2.slice().reverse();
+  document.querySelectorAll('.tarix-view-btn').forEach(function(btn){
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var tidx=parseInt(this.getAttribute('data-tidx'));
+      var t=sortedT2[tidx];
+      document.getElementById('izoh-title').textContent=(t.isFinal?'Yakuniy taassurot':(fmtDateStr(t.sana)+' · '+t.avval+' → '+t.hozir+' bet'));
+      document.getElementById('izoh-text').textContent=t.izoh;
+      document.getElementById('modal-izoh').classList.add('open');
+    });
+  });
   document.querySelectorAll('.tarix-edit-btn').forEach(function(btn){
     btn.addEventListener('click',function(e){
       e.stopPropagation();
