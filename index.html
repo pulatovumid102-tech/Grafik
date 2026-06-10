@@ -256,137 +256,67 @@
 
 <script>
 var STORAGE_KEY = 'umatizim_data';
-var SUPABASE_URL = 'https://qtrniovpkrwimeohamkc.supabase.co';
-var SUPABASE_KEY = 'sb_publishable_XwiSTQrkI0d1Wfj2nLqdLg_qPn48OEu';
-var USER_ID = 'guest';
-
-function sbFetch(path, method, body) {
-  var opts = {
-    method: method || 'GET',
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation'
-    }
-  };
-  if (body) opts.body = JSON.stringify(body);
-  return fetch(SUPABASE_URL + '/rest/v1/' + path, opts).then(function(r){
-    return r.text().then(function(t){ return t ? JSON.parse(t) : []; });
-  });
-}
-
-async function syncToSupabase() {
-  try {
-    // Sync zapas
-    await sbFetch('zapas?user_id=eq.'+USER_ID, 'DELETE');
-    for (var i=0; i<zapas.length; i++) {
-      var z = zapas[i];
-      await sbFetch('zapas', 'POST', {
-        user_id: USER_ID, product_id: z.productId,
-        raw_amount: z.rawAmount, entry_date: z.entryDate
-      });
-    }
-    // Sync ovqatlar (custom only)
-    var customOvqatlar = ovqatlar.filter(function(o){ return !['klassika','tuxum_meal','tvorog_meal','olma_meal'].includes(o.id); });
-    await sbFetch('ovqatlar?user_id=eq.'+USER_ID, 'DELETE');
-    for (var j=0; j<customOvqatlar.length; j++) {
-      var o = customOvqatlar[j];
-      await sbFetch('ovqatlar', 'POST', { user_id: USER_ID, id: o.id, nom: o.name, icon: o.icon, ingredients: o.ingredients });
-    }
-    // Sync day_plans
-    await sbFetch('day_plans?user_id=eq.'+USER_ID, 'DELETE');
-    var keys = Object.keys(dayPlans);
-    for (var k=0; k<keys.length; k++) {
-      await sbFetch('day_plans', 'POST', { user_id: USER_ID, date_str: keys[k], plan: dayPlans[keys[k]] });
-    }
-    // Sync kitoblar
-    await sbFetch('kitoblar?user_id=eq.'+USER_ID, 'DELETE');
-    for (var m=0; m<kitoblar.length; m++) {
-      var kb = kitoblar[m];
-      await sbFetch('kitoblar', 'POST', {
-        user_id: USER_ID, id: kb.id, nom: kb.nom, muallif: kb.muallif||'',
-        jamisahifa: kb.jamisahifa||0, hozir: kb.hozir||0, status: kb.status||'oqilmoqda',
-        boshsana: kb.boshsana||null, tugsana: kb.tugsana||null,
-        tugatilgan: kb.tugatilgan||null, tassurot: kb.tassurot||'',
-        tarix: kb.tarix||[]
-      });
-    }
-  } catch(e) { console.error('Sync error:', e); }
-}
-
-async function loadFromSupabase() {
-  try {
-    var [zRes, oRes, dpRes, kRes] = await Promise.all([
-      sbFetch('zapas?user_id=eq.'+USER_ID),
-      sbFetch('ovqatlar?user_id=eq.'+USER_ID),
-      sbFetch('day_plans?user_id=eq.'+USER_ID),
-      sbFetch('kitoblar?user_id=eq.'+USER_ID)
-    ]);
-    zapas = zRes.map(function(z){ return { productId: z.product_id, rawAmount: parseFloat(z.raw_amount), entryDate: z.entry_date }; });
-    var customOvq = oRes.map(function(o){ return { id: o.id, name: o.nom, icon: o.icon, ingredients: o.ingredients }; });
-    ovqatlar = JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));
-    customOvq.forEach(function(o){ if(!ovqatlar.find(function(x){return x.id===o.id;})) ovqatlar.push(o); });
-    dayPlans = {};
-    dpRes.forEach(function(dp){ dayPlans[dp.date_str] = dp.plan; });
-    kitoblar = kRes.map(function(k){ return { id: k.id, nom: k.nom, muallif: k.muallif, jamisahifa: k.jamisahifa, hozir: k.hozir, status: k.status, boshsana: k.boshsana, tugsana: k.tugsana, tugatilgan: k.tugatilgan, tassurot: k.tassurot, tarix: k.tarix||[] }; });
-    // Also save to localStorage as cache
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({zapas:zapas,ovqatlar:ovqatlar,dayPlans:dayPlans,kitoblar:kitoblar}));
-    return true;
-  } catch(e) { console.error('Load error:', e); return false; }
-}
-var UZ_DAYS = ['Yakshanba','Dushanba','Seshanba','Chorshanba','Payshanba','Juma','Shanba'];
-var UZ_MONTHS = ['Yan','Fev','Mar','Apr','May','Iyun','Iyul','Avg','Sen','Okt','Noy','Dek'];
-var MEAL_TIMES = [
-  {key:'nonushta',icon:'🌅',name:'Nonushta'},
-  {key:'snack',icon:'🍎',name:'Oraliq ovqat'},
-  {key:'obed',icon:'☀️',name:'Tushlik'},
-  {key:'ujin',icon:'🌙',name:'Kechki ovqat'},
-  {key:'kechga',icon:'🌛',name:'Kechga'}
-];
-var DEFAULT_PRODUCTS = [
-  {id:'tovuq',name:'Tovuq',icon:'🥩',unit:'g',coef:0.72,coefLabel:'100g xom → 72g pishgan',dailyCooked:440},
-  {id:'tuxum',name:'Tuxum',icon:'🥚',unit:'ta',coef:1,coefLabel:null,dailyRaw:5},
-  {id:'tvorog',name:'Tvorog',icon:'🥛',unit:'ta',coef:1,coefLabel:null,dailyRaw:1},
-  {id:'guruch',name:'Guruch',icon:'🌾',unit:'g',coef:2.14,coefLabel:'100g xom → 214g pishgan',dailyCooked:500},
-  {id:'grechka',name:'Grechka',icon:'🌾',unit:'g',coef:2.5,coefLabel:'100g xom → 250g pishgan',dailyCooked:600},
-  {id:'brokoli',name:'Brokoli',icon:'🥦',unit:'ta',coef:1,coefLabel:null,dailyRaw:2},
-  {id:'olma',name:'Olma',icon:'🍎',unit:'ta',coef:1,coefLabel:null,dailyRaw:1},
-  {id:'banan',name:'Banan',icon:'🍌',unit:'ta',coef:1,coefLabel:null,dailyRaw:1},
-  {id:'ovsyanka',name:'Ovsyanka',icon:'🥣',unit:'g',coef:1,coefLabel:null,dailyRaw:100}
-];
-var DEFAULT_OVQATLAR = [
-  {id:'klassika',name:'Klassika',icon:'🍱',ingredients:[{productId:'tovuq',rawAmount:305,cookedAmount:220},{productId:'guruch',rawAmount:117,cookedAmount:250},{productId:'brokoli',rawAmount:1,cookedAmount:1}]},
-  {id:'tuxum_meal',name:'Tuxum',icon:'🍳',ingredients:[{productId:'tuxum',rawAmount:5,cookedAmount:5}]},
-  {id:'tvorog_meal',name:'Tvorog',icon:'🥛',ingredients:[{productId:'tvorog',rawAmount:1,cookedAmount:1}]},
-  {id:'olma_meal',name:'Olma',icon:'🍎',ingredients:[{productId:'olma',rawAmount:1,cookedAmount:1}]}
-];
-var DEFAULT_DAY_PLAN = {nonushta:'tuxum_meal',snack:'olma_meal',obed:'klassika',ujin:'klassika',kechga:'tvorog_meal'};
-
 var pageStack=['home'];
 var selectedDate=null,zapas=[],ovqatlar=[],dayPlans={},kitoblar=[];
 var selectedZapasProduct=null,editingZapasIdx=null;
 var editingMealTime=null,pendingMealChange=null;
 var editingOvqatId=null,tempIngredients=[],ingSelectedProduct=null;
 var editingKitobId=null,activeKitobId=null,finishingKitobId=null;
+var SB_URL = 'https://qtrniovpkrwimeohamkc.supabase.co';
+var SB_KEY = 'sb_publishable_XwiSTQrkI0d1Wfj2nLqdLg_qPn48OEu';
+var SB_H = {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+var USER_ID = 'guest';
+
+async function sbSave(){
+  var payload = {zapas:zapas,ovqatlar:ovqatlar,dayPlans:dayPlans,kitoblar:kitoblar};
+  try{
+    await fetch(SB_URL+'/rest/v1/uma_data?id=eq.'+USER_ID,{
+      method:'PATCH',
+      headers:Object.assign({},SB_H,{'Prefer':'return=minimal'}),
+      body:JSON.stringify({data:payload})
+    });
+  }catch(e){ console.error('SB save error:',e); }
+}
+
+async function sbLoad(){
+  try{
+    var r = await fetch(SB_URL+'/rest/v1/uma_data?id=eq.'+USER_ID, {headers:SB_H});
+    var rows = await r.json();
+    if(rows&&rows.length&&rows[0].data&&Object.keys(rows[0].data).length){
+      var d = rows[0].data;
+      zapas = d.zapas||[];
+      ovqatlar = d.ovqatlar||[];
+      if(!ovqatlar.length) ovqatlar = JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));
+      dayPlans = d.dayPlans||{};
+      kitoblar = d.kitoblar||[];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({zapas:zapas,ovqatlar:ovqatlar,dayPlans:dayPlans,kitoblar:kitoblar}));
+      return true;
+    }
+    // Row exists but empty — insert our data
+    var localRaw = localStorage.getItem(STORAGE_KEY);
+    if(localRaw){
+      var local = JSON.parse(localRaw);
+      await fetch(SB_URL+'/rest/v1/uma_data?id=eq.'+USER_ID,{
+        method:'PATCH',
+        headers:Object.assign({},SB_H,{'Prefer':'return=minimal'}),
+        body:JSON.stringify({data:local})
+      });
+    }
+    return false;
+  }catch(e){ console.error('SB load error:',e); return false; }
+}
 
 function loadData(){
-  // Load from localStorage first (fast)
-  try{var d=localStorage.getItem(STORAGE_KEY);if(d){var p=JSON.parse(d);zapas=p.zapas||[];ovqatlar=p.ovqatlar||[];dayPlans=p.dayPlans||{};kitoblar=p.kitoblar||[];}if(!ovqatlar.length)ovqatlar=JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));}
-  catch(e){zapas=[];ovqatlar=JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));dayPlans={};kitoblar=[];}
-}
-async function loadDataWithSync(){
-  // Try Supabase first
-  var ok = await loadFromSupabase();
-  if(!ok){
-    // Fallback to localStorage
-    loadData();
-  }
-  if(!ovqatlar.length)ovqatlar=JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));
+  try{
+    var d=localStorage.getItem(STORAGE_KEY);
+    if(d){var p=JSON.parse(d);zapas=p.zapas||[];ovqatlar=p.ovqatlar||[];dayPlans=p.dayPlans||{};kitoblar=p.kitoblar||[];}
+    if(!ovqatlar.length)ovqatlar=JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));
+  }catch(e){zapas=[];ovqatlar=JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));dayPlans={};kitoblar=[];}
 }
 function saveData(){
-  localStorage.setItem(STORAGE_KEY,JSON.stringify({zapas:zapas,ovqatlar:ovqatlar,dayPlans:dayPlans,kitoblar:kitoblar}));
-  syncToSupabase().catch(function(e){console.error('Sync failed:',e);});
+  var payload = {zapas:zapas,ovqatlar:ovqatlar,dayPlans:dayPlans,kitoblar:kitoblar};
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(payload));
+  sbSave().catch(function(e){console.error('Sync failed:',e);});
 }
 function dateStr(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
 function fmtDate(d){return('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2);}
@@ -802,13 +732,15 @@ if(window.Telegram&&window.Telegram.WebApp){
   var tgUser = window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user;
   if(tgUser && tgUser.id) USER_ID = String(tgUser.id);
 }
-// Load from localStorage immediately, then sync from Supabase
+// Init: localStorage first (instant), then Supabase in background
 loadData();
 render();
-// Then try to sync from Supabase in background
-loadFromSupabase().then(function(ok){
-  if(ok){ render(); }
-}).catch(function(e){ console.error('Supabase sync failed:', e); });
+// Background sync from Supabase
+setTimeout(function(){
+  sbLoad().then(function(ok){
+    if(ok){ render(); }
+  }).catch(function(e){ console.error('SB init error:', e); });
+}, 100);
 </script>
 </body>
 </html>
