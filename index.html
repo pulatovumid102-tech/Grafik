@@ -175,7 +175,7 @@
 </style>
 </head>
 <body>
-<div id="app"></div>
+<div id="app" style="display:none"></div>
 
 <!-- ZAPAS ADD -->
 <div class="modal-overlay" id="modal-zadd"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Mahsulot qo'shish</div><input class="search-input" id="zadd-search" placeholder="🔍 Qidirish..."><div class="product-list" id="zadd-list"></div><div class="amount-section" id="zadd-amount"><label class="form-label" id="zadd-label">Miqdor</label><div class="amount-row"><input class="amount-input" id="zadd-input" type="number" placeholder="0" min="0"><span class="unit-lbl" id="zadd-unit">g</span></div><div class="coef-info" id="zadd-coef" style="display:none"></div><div class="modal-btns"><button class="btn-cancel" id="zadd-cancel">Bekor</button><button class="btn-save" id="zadd-save">Qo'shish</button></div></div></div></div>
@@ -252,6 +252,27 @@
   </div>
 </div>
 
+<!-- LOGIN MODAL -->
+<div id="login-screen" style="position:fixed;inset:0;background:var(--bg);z-index:500;align-items:center;justify-content:center;padding:24px;display:none;">
+  <div style="width:100%;max-width:340px;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="width:60px;height:60px;background:var(--dark);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 12px;">🌿</div>
+      <div style="font-size:22px;font-weight:700;color:var(--dark);">Uma-tizim</div>
+      <div style="font-size:13px;color:var(--text3);margin-top:4px;">Shaxsiy rivojlanish</div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:13px;color:var(--text3);font-weight:500;display:block;margin-bottom:6px;">Login</label>
+      <input id="login-input" type="text" placeholder="loginni kiriting" style="width:100%;background:var(--bg2);border:1px solid var(--bg3);border-radius:10px;padding:14px;font-size:16px;color:var(--text);outline:none;" autocomplete="off" autocapitalize="none">
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="font-size:13px;color:var(--text3);font-weight:500;display:block;margin-bottom:6px;">Parol</label>
+      <input id="parol-input" type="password" placeholder="parolni kiriting" style="width:100%;background:var(--bg2);border:1px solid var(--bg3);border-radius:10px;padding:14px;font-size:16px;color:var(--text);outline:none;">
+    </div>
+    <div id="login-error" style="display:none;color:var(--danger);font-size:13px;margin-bottom:12px;text-align:center;">Login yoki parol noto'g'ri</div>
+    <button id="login-btn" style="width:100%;padding:14px;background:var(--accent);border:none;border-radius:10px;color:white;font-size:16px;font-weight:600;cursor:pointer;">Kirish</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -283,19 +304,67 @@ var DEFAULT_OVQATLAR = [
   {id:'olma_meal',name:'Olma',icon:'🍎',ingredients:[{productId:'olma',rawAmount:1,cookedAmount:1}]}
 ];
 var DEFAULT_DAY_PLAN = {nonushta:'tuxum_meal',snack:'olma_meal',obed:'klassika',ujin:'klassika',kechga:'tvorog_meal'};
-
 var pageStack=['home'];
 var selectedDate=null,zapas=[],ovqatlar=[],dayPlans={},kitoblar=[];
 var selectedZapasProduct=null,editingZapasIdx=null;
 var editingMealTime=null,pendingMealChange=null;
 var editingOvqatId=null,tempIngredients=[],ingSelectedProduct=null;
 var editingKitobId=null,activeKitobId=null,finishingKitobId=null;
+var USER_ID = 'guest';
+var API_URL = 'https://grafik-production.up.railway.app';
+
+async function sbSave(){
+  var payload = {zapas:zapas,ovqatlar:ovqatlar,dayPlans:dayPlans,kitoblar:kitoblar};
+  try{
+    await fetch(API_URL+'/api/data/'+USER_ID,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+  }catch(e){ console.error('Save error:',e); }
+}
+
+async function sbLoad(){
+  try{
+    var r = await fetch(API_URL+'/api/data/'+USER_ID);
+    var d = await r.json();
+    if(d&&d.kitoblar!==undefined){
+      zapas = d.zapas||[];
+      ovqatlar = d.ovqatlar||[];
+      if(!ovqatlar.length) ovqatlar = JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));
+      dayPlans = d.dayPlans||{};
+      kitoblar = d.kitoblar||[];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({zapas:zapas,ovqatlar:ovqatlar,dayPlans:dayPlans,kitoblar:kitoblar}));
+      return true;
+    }
+    // No server data — push localStorage
+    var localRaw = localStorage.getItem(STORAGE_KEY);
+    if(localRaw){
+      var local = JSON.parse(localRaw);
+      if(local.kitoblar&&local.kitoblar.length){
+        await fetch(API_URL+'/api/data/'+USER_ID,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify(local)
+        });
+      }
+    }
+    return false;
+  }catch(e){ console.error('Load error:',e); return false; }
+}
 
 function loadData(){
-  try{var d=localStorage.getItem(STORAGE_KEY);if(d){var p=JSON.parse(d);zapas=p.zapas||[];ovqatlar=p.ovqatlar||[];dayPlans=p.dayPlans||{};kitoblar=p.kitoblar||[];}if(!ovqatlar.length)ovqatlar=JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));}
-  catch(e){zapas=[];ovqatlar=JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));dayPlans={};kitoblar=[];}
+  try{
+    var d=localStorage.getItem(STORAGE_KEY);
+    if(d){var p=JSON.parse(d);zapas=p.zapas||[];ovqatlar=p.ovqatlar||[];dayPlans=p.dayPlans||{};kitoblar=p.kitoblar||[];}
+    if(!ovqatlar.length)ovqatlar=JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));
+  }catch(e){zapas=[];ovqatlar=JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));dayPlans={};kitoblar=[];}
 }
-function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify({zapas:zapas,ovqatlar:ovqatlar,dayPlans:dayPlans,kitoblar:kitoblar}));}
+function saveData(){
+  var payload = {zapas:zapas,ovqatlar:ovqatlar,dayPlans:dayPlans,kitoblar:kitoblar};
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(payload));
+  sbSave().catch(function(e){console.error('Sync failed:',e);});
+}
 function dateStr(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
 function fmtDate(d){return('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2);}
 function fmtDateStr(s){if(!s)return'';var p=s.split('-');return p[2]+'.'+p[1];}
@@ -704,8 +773,66 @@ document.getElementById('ing-cancel').addEventListener('click',function(){docume
 document.getElementById('ing-save').addEventListener('click',function(){if(!ingSelectedProduct)return;var rawAmt=parseFloat(document.getElementById('ing-input').value);if(!rawAmt||rawAmt<=0){document.getElementById('ing-input').focus();return;}var prod=ingSelectedProduct;var cookedAmt=prod.coef!==1?Math.round(rawAmt*prod.coef*10)/10:rawAmt;var ex=tempIngredients.find(function(i){return i.productId===prod.id;});if(ex){ex.rawAmount=rawAmt;ex.cookedAmount=cookedAmt;}else tempIngredients.push({productId:prod.id,rawAmount:rawAmt,cookedAmount:cookedAmt});document.getElementById('modal-ing').classList.remove('open');renderTempIngs();});
 
 function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
-if(window.Telegram&&window.Telegram.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}
-loadData();render();
+// =================== LOGIN ===================
+var USERS = {
+  'umid': 'umid2025',
+  'test': 'test123'
+};
+
+function checkLogin() {
+  var saved = localStorage.getItem('uma_login');
+  if (saved) {
+    try {
+      var u = JSON.parse(saved);
+      if (u && u.login && USERS[u.login] && USERS[u.login] === u.parol) {
+        USER_ID = 'user_' + u.login;
+        console.log('Logged in as:', USER_ID);
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app').style.display = '';
+        return true;
+      }
+    } catch(e) { localStorage.removeItem('uma_login'); }
+  }
+  console.log('Showing login screen');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  return false;
+}
+
+document.getElementById('login-btn').addEventListener('click', function() {
+  var login = document.getElementById('login-input').value.trim().toLowerCase();
+  var parol = document.getElementById('parol-input').value;
+  if (USERS[login] && USERS[login] === parol) {
+    localStorage.setItem('uma_login', JSON.stringify({login: login, parol: parol}));
+    USER_ID = 'user_' + login;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = '';
+    loadData();
+    render();
+    sbLoad().then(function(ok){ if(ok) render(); });
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('parol-input').value = '';
+  }
+});
+
+document.getElementById('parol-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') document.getElementById('login-btn').click();
+});
+
+if(window.Telegram&&window.Telegram.WebApp){
+  Telegram.WebApp.ready();
+  Telegram.WebApp.expand();
+  var tgUser = window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user;
+  if(tgUser && tgUser.id) USER_ID = String(tgUser.id);
+}
+// Check login
+if (checkLogin()) {
+  document.getElementById('app').style.display = '';
+  loadData();
+  render();
+  sbLoad().then(function(ok){ if(ok) render(); }).catch(function(e){ console.error('SB init error:', e); });
+}
 </script>
 </body>
 </html>
