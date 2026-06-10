@@ -256,75 +256,46 @@
 
 <script>
 var STORAGE_KEY = 'umatizim_data';
+var UZ_DAYS = ['Yakshanba','Dushanba','Seshanba','Chorshanba','Payshanba','Juma','Shanba'];
+var UZ_MONTHS = ['Yan','Fev','Mar','Apr','May','Iyun','Iyul','Avg','Sen','Okt','Noy','Dek'];
+var MEAL_TIMES = [
+  {key:'nonushta',icon:'🌅',name:'Nonushta'},
+  {key:'snack',icon:'🍎',name:'Oraliq ovqat'},
+  {key:'obed',icon:'☀️',name:'Tushlik'},
+  {key:'ujin',icon:'🌙',name:'Kechki ovqat'},
+  {key:'kechga',icon:'🌛',name:'Kechga'}
+];
+var DEFAULT_PRODUCTS = [
+  {id:'tovuq',name:'Tovuq',icon:'🥩',unit:'g',coef:0.72,coefLabel:'100g xom → 72g pishgan',dailyCooked:440},
+  {id:'tuxum',name:'Tuxum',icon:'🥚',unit:'ta',coef:1,coefLabel:null,dailyRaw:5},
+  {id:'tvorog',name:'Tvorog',icon:'🥛',unit:'ta',coef:1,coefLabel:null,dailyRaw:1},
+  {id:'guruch',name:'Guruch',icon:'🌾',unit:'g',coef:2.14,coefLabel:'100g xom → 214g pishgan',dailyCooked:500},
+  {id:'grechka',name:'Grechka',icon:'🌾',unit:'g',coef:2.5,coefLabel:'100g xom → 250g pishgan',dailyCooked:600},
+  {id:'brokoli',name:'Brokoli',icon:'🥦',unit:'ta',coef:1,coefLabel:null,dailyRaw:2},
+  {id:'olma',name:'Olma',icon:'🍎',unit:'ta',coef:1,coefLabel:null,dailyRaw:1},
+  {id:'banan',name:'Banan',icon:'🍌',unit:'ta',coef:1,coefLabel:null,dailyRaw:1},
+  {id:'ovsyanka',name:'Ovsyanka',icon:'🥣',unit:'g',coef:1,coefLabel:null,dailyRaw:100}
+];
+var DEFAULT_OVQATLAR = [
+  {id:'klassika',name:'Klassika',icon:'🍱',ingredients:[{productId:'tovuq',rawAmount:305,cookedAmount:220},{productId:'guruch',rawAmount:117,cookedAmount:250},{productId:'brokoli',rawAmount:1,cookedAmount:1}]},
+  {id:'tuxum_meal',name:'Tuxum',icon:'🍳',ingredients:[{productId:'tuxum',rawAmount:5,cookedAmount:5}]},
+  {id:'tvorog_meal',name:'Tvorog',icon:'🥛',ingredients:[{productId:'tvorog',rawAmount:1,cookedAmount:1}]},
+  {id:'olma_meal',name:'Olma',icon:'🍎',ingredients:[{productId:'olma',rawAmount:1,cookedAmount:1}]}
+];
+var DEFAULT_DAY_PLAN = {nonushta:'tuxum_meal',snack:'olma_meal',obed:'klassika',ujin:'klassika',kechga:'tvorog_meal'};
+
 var pageStack=['home'];
 var selectedDate=null,zapas=[],ovqatlar=[],dayPlans={},kitoblar=[];
 var selectedZapasProduct=null,editingZapasIdx=null;
 var editingMealTime=null,pendingMealChange=null;
 var editingOvqatId=null,tempIngredients=[],ingSelectedProduct=null;
 var editingKitobId=null,activeKitobId=null,finishingKitobId=null;
-var SB_URL = 'https://qtrniovpkrwimeohamkc.supabase.co';
-var SB_KEY = 'sb_publishable_XwiSTQrkI0d1Wfj2nLqdLg_qPn48OEu';
-var SB_H = {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
-var USER_ID = 'guest';
-
-async function sbSave(){
-  var payload = {zapas:zapas,ovqatlar:ovqatlar,dayPlans:dayPlans,kitoblar:kitoblar};
-  try{
-    var r = await fetch(SB_URL+'/rest/v1/uma_data',{
-      method:'POST',
-      headers:Object.assign({},SB_H,{'Prefer':'resolution=merge-duplicates,return=minimal'}),
-      body:JSON.stringify({id:USER_ID, data:payload})
-    });
-    console.log('SB saved for USER_ID:', USER_ID, 'status:', r.status);
-  }catch(e){ console.error('SB save error:',e); }
-}
-
-async function sbLoad(){
-  try{
-    console.log('SB loading for USER_ID:', USER_ID);
-    var r = await fetch(SB_URL+'/rest/v1/uma_data?id=eq.'+USER_ID, {headers:SB_H});
-    var rows = await r.json();
-    console.log('SB rows:', JSON.stringify(rows).substring(0,100));
-    if(rows&&rows.length&&rows[0].data&&rows[0].data.kitoblar!==undefined){
-      var d = rows[0].data;
-      zapas = d.zapas||[];
-      ovqatlar = d.ovqatlar||[];
-      if(!ovqatlar.length) ovqatlar = JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));
-      dayPlans = d.dayPlans||{};
-      kitoblar = d.kitoblar||[];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({zapas:zapas,ovqatlar:ovqatlar,dayPlans:dayPlans,kitoblar:kitoblar}));
-      console.log('SB load success, kitoblar:', kitoblar.length);
-      return true;
-    }
-    // No data yet — push localStorage to Supabase
-    var localRaw = localStorage.getItem(STORAGE_KEY);
-    if(localRaw){
-      var local = JSON.parse(localRaw);
-      if(local.kitoblar&&local.kitoblar.length){
-        console.log('Pushing localStorage to SB');
-        await fetch(SB_URL+'/rest/v1/uma_data',{
-          method:'POST',
-          headers:Object.assign({},SB_H,{'Prefer':'resolution=merge-duplicates,return=minimal'}),
-          body:JSON.stringify({id:USER_ID, data:local})
-        });
-      }
-    }
-    return false;
-  }catch(e){ console.error('SB load error:',e); return false; }
-}
 
 function loadData(){
-  try{
-    var d=localStorage.getItem(STORAGE_KEY);
-    if(d){var p=JSON.parse(d);zapas=p.zapas||[];ovqatlar=p.ovqatlar||[];dayPlans=p.dayPlans||{};kitoblar=p.kitoblar||[];}
-    if(!ovqatlar.length)ovqatlar=JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));
-  }catch(e){zapas=[];ovqatlar=JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));dayPlans={};kitoblar=[];}
+  try{var d=localStorage.getItem(STORAGE_KEY);if(d){var p=JSON.parse(d);zapas=p.zapas||[];ovqatlar=p.ovqatlar||[];dayPlans=p.dayPlans||{};kitoblar=p.kitoblar||[];}if(!ovqatlar.length)ovqatlar=JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));}
+  catch(e){zapas=[];ovqatlar=JSON.parse(JSON.stringify(DEFAULT_OVQATLAR));dayPlans={};kitoblar=[];}
 }
-function saveData(){
-  var payload = {zapas:zapas,ovqatlar:ovqatlar,dayPlans:dayPlans,kitoblar:kitoblar};
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(payload));
-  sbSave().catch(function(e){console.error('Sync failed:',e);});
-}
+function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify({zapas:zapas,ovqatlar:ovqatlar,dayPlans:dayPlans,kitoblar:kitoblar}));}
 function dateStr(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
 function fmtDate(d){return('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2);}
 function fmtDateStr(s){if(!s)return'';var p=s.split('-');return p[2]+'.'+p[1];}
@@ -733,30 +704,8 @@ document.getElementById('ing-cancel').addEventListener('click',function(){docume
 document.getElementById('ing-save').addEventListener('click',function(){if(!ingSelectedProduct)return;var rawAmt=parseFloat(document.getElementById('ing-input').value);if(!rawAmt||rawAmt<=0){document.getElementById('ing-input').focus();return;}var prod=ingSelectedProduct;var cookedAmt=prod.coef!==1?Math.round(rawAmt*prod.coef*10)/10:rawAmt;var ex=tempIngredients.find(function(i){return i.productId===prod.id;});if(ex){ex.rawAmount=rawAmt;ex.cookedAmount=cookedAmt;}else tempIngredients.push({productId:prod.id,rawAmount:rawAmt,cookedAmount:cookedAmt});document.getElementById('modal-ing').classList.remove('open');renderTempIngs();});
 
 function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
-if(window.Telegram&&window.Telegram.WebApp){
-  Telegram.WebApp.ready();
-  Telegram.WebApp.expand();
-  var tgUser = window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user;
-  if(tgUser && tgUser.id) USER_ID = String(tgUser.id);
-}
-// Fallback: if no Telegram user, use persistent device ID
-if(USER_ID === 'guest'){
-  var deviceId = localStorage.getItem('uma_device_id');
-  if(!deviceId){
-    deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
-    localStorage.setItem('uma_device_id', deviceId);
-  }
-  USER_ID = deviceId;
-}
-console.log('USER_ID at init:', USER_ID);
-// Load from localStorage first (instant render)
-loadData();
-render();
-// Then load from Supabase and re-render if newer data
-sbLoad().then(function(ok){
-  console.log('sbLoad result:', ok);
-  if(ok) render();
-}).catch(function(e){ console.error('SB init error:', e); });
+if(window.Telegram&&window.Telegram.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}
+loadData();render();
 </script>
 </body>
 </html>
