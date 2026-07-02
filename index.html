@@ -183,7 +183,10 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .kaiten-add-col-btn{width:36px;height:36px;border-radius:50%;border:1.5px dashed var(--white-20);background:var(--white-06);color:var(--white-50);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit}
 .kaiten-filter-chip{flex-shrink:0;padding:8px 16px;border-radius:20px;border:1px solid var(--white-10);background:var(--white-06);color:var(--white-80);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s,color .15s}
 .kaiten-filter-chip.active{background:var(--lime);color:var(--green-dark);border-color:var(--lime)}
-.kaiten-col-list{display:flex;flex-direction:column;gap:8px}
+.kaiten-col-list{display:flex;flex-direction:column;gap:8px;border-radius:10px;transition:background 0.15s}
+.kaiten-col.kaiten-drop-active{background:rgba(212,255,77,0.08);outline:1.5px dashed var(--lime)}
+.kaiten-card{cursor:grab}
+.kaiten-card:active{cursor:grabbing}
 .kaiten-card{background:#ffffff;border:1px solid var(--white-10);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px}
 .sek-card{background:#f3f1ec;border:1px solid #e2dfd6;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px}
 .sek-date{font-size:13px;font-weight:700;color:#2e2c28;letter-spacing:.2px}
@@ -276,6 +279,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
     <div class="page-header">
       <button class="back-btn" onclick="goBack('p-entry1')">← Orqaga</button>
       <span class="page-title" id="page-title-kaiten">Kaiten</span>
+      <button class="abtn" style="margin-left:auto" onclick="kaitenShowArchive()">🗄 Arxiv</button>
     </div>
   </div>
   <div id="kaiten-filter" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;-webkit-overflow-scrolling:touch;"></div>
@@ -342,11 +346,21 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
     {id:'o2', name:'Moliya direktori (ЧФ)', fio:'', parentId:'o1'}
   ];
   var orgMenuOpen = null;
+  function orgTextareaEnterHandler(e, el){
+    if(e.key === 'Enter'){
+      e.stopPropagation();
+      if(!e.shiftKey){
+        e.preventDefault();
+        var start = el.selectionStart, end = el.selectionEnd;
+        el.value = el.value.slice(0,start) + '\n' + el.value.slice(end);
+        el.selectionStart = el.selectionEnd = start + 1;
+      }
+    }
+  }
   function orgIsAdmin(){
-    try{
-      if(typeof isAdmin !== 'undefined') return !!isAdmin;
-      return !!(window && window.isAdmin);
-    }catch(e){ return false; }
+    if(window.isAdmin === true) return true;
+    try{ if(isAdmin === true) return true; }catch(e){}
+    return false;
   }
   var orgDetailOpen = null;
   var orgInfoOpen = null;
@@ -407,15 +421,24 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
     var menuOpen = orgMenuOpen === node.id;
     var detailOpen = orgDetailOpen === node.id;
     var draggable = orgIsAdmin() && node.parentId;
+    var isBolim = node.cardType === 'bolim';
     var cardAvatarHtml = '';
-    try{ cardAvatarHtml = orgAvatarHtml(node,36); }catch(e){ console.error('card avatar error', e); }
+    if(!isBolim && !node.autsors && !node.xodimKerak){ try{ cardAvatarHtml = orgAvatarHtml(node,36); }catch(e){ console.error('card avatar error', e); } }
+    var badges = '';
+    if(node.sinov) badges += `<span style="display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;background:rgba(255,193,7,0.18);color:#ffc107;margin-right:4px">SINOV</span>`;
+    if(node.autsors) badges += `<span style="display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;background:rgba(255,255,255,0.12);color:var(--white-70);margin-right:4px">AUTSORS</span>`;
+    if(node.xodimKerak) badges += `<span style="display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;background:rgba(232,93,93,0.18);color:#e85d5d">XODIM KERAK</span>`;
+    var bgStyle = isBolim ? ';background:rgba(212,255,77,0.10)' : (node.color && node.color!=='#ffffff' ? `;background:${node.color}` : '');
+    var borderStyle = isBolim ? ';border:1.5px solid var(--lime)' : '';
+    var textColorStyle = (node.color==='#ffffff' && !isBolim) ? ';color:#16573a' : '';
     return `<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">
-      <div class="section-item${node.color==='#ffffff'?' org-white-dots':''}" id="org-node-${node.id}" style="width:240px;flex-shrink:0;position:relative;cursor:pointer;display:flex;align-items:center;gap:10px${node.color&&node.color!=='#ffffff'?`;background:${node.color}`:''}${node.color==='#ffffff'?';color:#16573a':''}" onclick="orgToggleDetail('${node.id}')"
+      <div class="section-item${(node.color==='#ffffff'&&!isBolim)?' org-white-dots':''}" id="org-node-${node.id}" style="width:240px;flex-shrink:0;position:relative;cursor:pointer;display:flex;align-items:center;gap:10px${bgStyle}${borderStyle}${textColorStyle}" onclick="orgToggleDetail('${node.id}')"
         ${draggable?`draggable="true" ondragstart="orgDragStart(event,'${node.id}')" ondragover="orgDragOver(event,'${node.id}')" ondragleave="orgDragLeave(event,'${node.id}')" ondrop="orgDrop(event,'${node.id}')" ondragend="orgDragEnd(event)"`:''}>
         ${cardAvatarHtml}
         <div style="flex:1;min-width:0">
-          <div class="section-name" style="${node.color==='#ffffff'?'color:#16573a':''}">${esc(node.name)}</div>
+          <div class="section-name" style="${(node.color==='#ffffff'&&!isBolim)?'color:#16573a':'color:var(--white)'}${isBolim?';font-weight:800;letter-spacing:0.3px':''}">${esc(node.name)}</div>
           ${node.fio?`<div style="font-size:11px;${node.color==='#ffffff'?'color:#16573a99':'color:var(--white-50)'};margin-top:2px">${esc(node.fio)}</div>`:''}
+          ${badges?`<div style="margin-top:4px">${badges}</div>`:''}
         </div>
         ${orgIsAdmin()?`<button class="abtn" onclick="event.stopPropagation();orgOpenMenu('${node.id}')" style="margin-left:6px${node.color==='#ffffff'?';border-color:rgba(22,87,58,0.15);background:rgba(22,87,58,0.06);color:#16573a':''}">⋮</button>`:''}
       </div>
@@ -485,18 +508,22 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
     if(!node) return;
     var telDisplay = (node.tels&&node.tels.length)?node.tels.join(', '):(node.tel||'—');
     var tgDisplay = (node.tgs&&node.tgs.length)?node.tgs.join(', '):(node.tg||'—');
+    var isBolim = node.cardType === 'bolim';
     var avatarHtml = '';
-    try{ avatarHtml = orgAvatarHtml(node,56); }catch(e){ console.error('avatar render error', e); }
-    var html=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    if(!isBolim && !node.autsors && !node.xodimKerak){ try{ avatarHtml = orgAvatarHtml(node,56); }catch(e){ console.error('avatar render error', e); } }
+    var statusBadges = '';
+    if(node.sinov) statusBadges += `<span style="display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(255,193,7,0.18);color:#ffc107;margin-right:6px">SINOV MUDDATIDA</span>`;
+    if(node.autsors) statusBadges += `<span style="display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(255,255,255,0.12);color:var(--white-70);margin-right:6px">AUTSORS</span>`;
+    if(node.xodimKerak) statusBadges += `<span style="display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(232,93,93,0.18);color:#e85d5d">XODIM KERAK</span>`;
+    var html=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:${statusBadges?'8px':'16px'}">
         ${avatarHtml}
         <div style="font-size:15px;font-weight:700;color:var(--white)">${esc(node.name)}</div>
       </div>
+      ${statusBadges?`<div style="margin-bottom:16px">${statusBadges}</div>`:''}
       <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;margin-bottom:16px">
-        <div><span class="flbl">F.I.O</span><br><span style="color:var(--white-80)">${esc(node.fio||'—')}</span></div>
+        ${isBolim?'':`<div><span class="flbl">F.I.O</span><br><span style="color:var(--white-80)">${esc(node.fio||'—')}</span></div>
         <div><span class="flbl">Tel raqam</span><br><span style="color:var(--white-80)">${esc(telDisplay)}</span></div>
-        <div><span class="flbl">Telegram</span><br><span style="color:var(--white-80)">${esc(tgDisplay)}</span></div>
-        <div><span class="flbl">Ish kunlari/vaqti</span><br><span style="color:var(--white-80)">${esc(node.workhours||'—')}</span></div>
-        <div><span class="flbl">Ishga kirgan sana</span><br><span style="color:var(--white-80)">${esc(node.startdate||'—')}</span></div>
+        <div><span class="flbl">Telegram</span><br><span style="color:var(--white-80)">${esc(tgDisplay)}</span></div>`}
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <button class="add-item-btn" style="margin-top:0" onclick="orgShowTasksModal('${id}')">Vazifalar ro'yxati</button>
@@ -508,13 +535,13 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
   }
   function orgShowTasksModal(id){
     var node=orgData.find(n=>n.id===id);
-    var tasksHtml=(node.tasks&&node.tasks.length)?node.tasks.map((t,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--white-10)">
-      <span style="flex:1;color:var(--white-80)">${i+1}. ${esc(t)}</span>
+    var tasksHtml=(node.tasks&&node.tasks.length)?node.tasks.map((t,i)=>`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--white-10)">
+      <span style="flex:1;color:var(--white-80);white-space:pre-wrap">${i+1}. ${esc(t)}</span>
       ${orgIsAdmin()?`<button class="abtn abtn-red" onclick="orgDelTaskModal('${id}',${i})">x</button>`:''}
     </div>`).join(''):'<div style="color:var(--white-50);padding:12px 0">Vazifalar yo\'q</div>';
     var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">${esc(node.name)} — Vazifalar</div>
       <div style="margin-bottom:12px">${tasksHtml}</div>
-      ${orgIsAdmin()?`<div class="frow"><input class="fi" id="org-task-inp" placeholder="Yangi vazifa..."></div>
+      ${orgIsAdmin()?`<div class="frow"><textarea class="fi" id="org-task-inp" placeholder="Yangi vazifa..." rows="3" enterkeyhint="enter" onkeydown="orgTextareaEnterHandler(event,this)" style="resize:vertical;font-family:inherit"></textarea></div>
       <div class="fbtns"><button class="fsave" onclick="orgAddTaskModal('${id}')">Qo'shish</button></div>`:''}
       <button class="fcancel" style="margin-top:8px" onclick="orgCloseModal()">Yopish</button>`;
     orgShowModal(html);
@@ -532,10 +559,10 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
     node.tasks.splice(idx,1);
     orgSave(); orgShowTasksModal(id);
   }
-  var orgChecklistTmpDays=[], orgChecklistTmpText='', orgChecklistTmpStart='09:00', orgChecklistTmpEnd='10:00';
+  var orgChecklistTmpDays=[], orgChecklistTmpText='', orgChecklistTmpTime='09:00', orgChecklistEditIdx=-1;
   var ORG_CL_DAY_LABELS=[['mon','Dush'],['tue','Sesh'],['wed','Chor'],['thu','Pay'],['fri','Jum'],['sat','Shan'],['sun','Yak']];
   function orgResetChecklistTmp(){
-    orgChecklistTmpDays=[]; orgChecklistTmpText=''; orgChecklistTmpStart='09:00'; orgChecklistTmpEnd='10:00';
+    orgChecklistTmpDays=[]; orgChecklistTmpText=''; orgChecklistTmpTime='09:00'; orgChecklistEditIdx=-1;
   }
   function orgShowChecklistModal(id){
     var node=orgData.find(n=>n.id===id);
@@ -544,10 +571,10 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
       var daysStr=(c.days||[]).map(d=>{var f=ORG_CL_DAY_LABELS.find(x=>x[0]===d);return f?f[1]:d;}).join(', ');
       return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--white-10)">
         <div style="flex:1">
-          <div style="color:var(--white-80)">${i+1}. ${esc(c.text)}</div>
-          <div style="font-size:11px;color:var(--white-50);margin-top:2px">${esc(c.start||'')}-${esc(c.end||'')} • ${esc(daysStr)}</div>
+          <div style="color:var(--white-80);white-space:pre-wrap">${i+1}. ${esc(c.text)}</div>
+          <div style="font-size:11px;color:var(--white-50);margin-top:2px">${esc(c.time||'')} • ${esc(daysStr)}</div>
         </div>
-        ${orgIsAdmin()?`<button class="abtn abtn-red" onclick="orgDelChecklistModal('${id}',${i})">x</button>`:''}
+        ${orgIsAdmin()?`<button class="abtn" onclick="orgEditChecklistModal('${id}',${i})">✏</button><button class="abtn abtn-red" onclick="orgDelChecklistModal('${id}',${i})">x</button>`:''}
       </div>`;
     }).join('') : '<div style="color:var(--white-50);padding:12px 0">Cheklist bo&#39;sh</div>';
 
@@ -556,47 +583,62 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
       return `<button onclick="orgToggleChecklistDay('${id}','${key}')" style="flex:1;padding:8px 4px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;background:${active?'var(--lime)':'var(--white-06)'};color:${active?'var(--green-dark)':'var(--white-50)'}">${label}</button>`;
     }).join('');
 
+    var isEditing = orgChecklistEditIdx > -1;
     var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">${esc(node.name)} — Cheklist</div>
       <div style="margin-bottom:12px">${itemsHtml}</div>
       ${orgIsAdmin()?`
-      <div class="frow"><label class="flbl">Vazifa matni</label><input class="fi" id="org-cl-text" placeholder="Vazifa matni..." value="${esc(orgChecklistTmpText)}"></div>
+      ${isEditing?`<div style="font-size:12px;color:var(--lime);margin-bottom:8px">✏ Punkt tahrirlanmoqda...</div>`:''}
+      <div class="frow"><label class="flbl">Vazifa matni</label><textarea class="fi" id="org-cl-text" placeholder="Vazifa matni..." rows="3" enterkeyhint="enter" onkeydown="orgTextareaEnterHandler(event,this)" style="resize:vertical;font-family:inherit">${esc(orgChecklistTmpText)}</textarea></div>
       <div class="frow">
-        <label class="flbl">Vaqt oralig'i</label>
-        <div style="display:flex;gap:8px;align-items:center;margin-top:5px">
-          <input class="fi" type="time" id="org-cl-start" value="${esc(orgChecklistTmpStart)}" style="margin-top:0">
-          <span style="color:var(--white-50)">—</span>
-          <input class="fi" type="time" id="org-cl-end" value="${esc(orgChecklistTmpEnd)}" style="margin-top:0">
-        </div>
+        <label class="flbl">Vaqt</label>
+        <input class="fi" type="time" id="org-cl-time" value="${esc(orgChecklistTmpTime)}" style="margin-top:5px">
       </div>
       <div class="frow">
         <label class="flbl">Kunlar</label>
         <div style="display:flex;gap:4px;margin-top:5px">${daysHtml}</div>
       </div>
-      <div class="fbtns"><button class="fsave" onclick="orgAddChecklistModal('${id}')">Qo'shish</button></div>
+      <div class="fbtns">
+        <button class="fsave" onclick="orgAddChecklistModal('${id}')">${isEditing?'Saqlash':"Qo'shish"}</button>
+        ${isEditing?`<button class="fcancel" onclick="orgResetChecklistTmp();orgShowChecklistModal('${id}')">Bekor</button>`:''}
+      </div>
       `:''}
       <button class="fcancel" style="margin-top:8px" onclick="orgCloseModal();orgResetChecklistTmp()">Yopish</button>`;
     orgShowModal(html);
   }
+  function orgEditChecklistModal(id, idx){
+    var node=orgData.find(n=>n.id===id);
+    var item=node.checklist[idx];
+    if(!item) return;
+    orgChecklistEditIdx = idx;
+    orgChecklistTmpText = item.text||'';
+    orgChecklistTmpTime = item.time||'09:00';
+    orgChecklistTmpDays = (item.days||[]).slice();
+    orgShowChecklistModal(id);
+  }
   function orgToggleChecklistDay(id, key){
     var textEl=document.getElementById('org-cl-text');
-    var startEl=document.getElementById('org-cl-start');
-    var endEl=document.getElementById('org-cl-end');
+    var timeEl=document.getElementById('org-cl-time');
     if(textEl) orgChecklistTmpText=textEl.value;
-    if(startEl) orgChecklistTmpStart=startEl.value;
-    if(endEl) orgChecklistTmpEnd=endEl.value;
+    if(timeEl) orgChecklistTmpTime=timeEl.value;
     var idx=orgChecklistTmpDays.indexOf(key);
     if(idx>-1) orgChecklistTmpDays.splice(idx,1); else orgChecklistTmpDays.push(key);
     orgShowChecklistModal(id);
   }
   function orgAddChecklistModal(id){
     var text=document.getElementById('org-cl-text').value.trim();
-    var start=document.getElementById('org-cl-start').value;
-    var end=document.getElementById('org-cl-end').value;
+    var time=document.getElementById('org-cl-time').value;
     if(!text){notify('Matn kiriting!');return;}
+    if(!time){notify('Vaqtni kiriting!');return;}
     if(!orgChecklistTmpDays.length){notify('Kamida bitta kun tanlang!');return;}
     var node=orgData.find(n=>n.id===id);
     if(!node.checklist)node.checklist=[];
-    node.checklist.push({text,start,end,days:orgChecklistTmpDays.slice()});
+    if(orgChecklistEditIdx > -1 && node.checklist[orgChecklistEditIdx]){
+      var existing = node.checklist[orgChecklistEditIdx];
+      existing.text = text; existing.time = time; existing.days = orgChecklistTmpDays.slice();
+      existing.sent_dates = [];
+    } else {
+      node.checklist.push({id:'cl'+Date.now()+'_'+Math.random().toString(36).slice(2,7), text:text, time:time, days:orgChecklistTmpDays.slice()});
+    }
     orgSave(); notify('Saqlandi ✓');
     orgResetChecklistTmp();
     orgShowChecklistModal(id);
@@ -666,18 +708,57 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
     div.innerHTML='<input class="fi" id="oem-tg-'+count+'" placeholder="@username" style="margin-top:0;flex:1"><button class="abtn abtn-red" onclick="this.parentNode.remove()" style="margin-top:0">✕</button>';
     wrap.appendChild(div);
   }
+  function orgSetEditType(id, type){
+    var node=orgData.find(n=>n.id===id);
+    node._tmpCardType = type;
+    var btnX=document.getElementById('oem-type-xodim'), btnB=document.getElementById('oem-type-bolim');
+    var isBolim = type==='bolim';
+    var rowIds = ['oem-fio-row-'+id,'oem-tel-row-'+id,'oem-tg-row-'+id,'oem-status-row-'+id];
+    rowIds.forEach(function(rid){
+      var el=document.getElementById(rid);
+      if(el) el.style.display = isBolim ? 'none' : '';
+    });
+    orgTogglePhotoRowVisibility(id);
+    var photoRow=document.getElementById('oem-photo-row-'+id);
+    if(photoRow && isBolim) photoRow.style.display = 'none';
+    var nameLabel=document.getElementById('oem-name-label');
+    if(nameLabel) nameLabel.textContent = isBolim ? "Bo'lim nomi" : 'Lavozim';
+    if(btnX&&btnB){
+      btnX.style.background = type==='xodim' ? 'var(--lime)' : 'var(--white-06)';
+      btnX.style.color = type==='xodim' ? 'var(--green-dark)' : 'var(--white-50)';
+      btnB.style.background = type==='bolim' ? 'var(--lime)' : 'var(--white-06)';
+      btnB.style.color = type==='bolim' ? 'var(--green-dark)' : 'var(--white-50)';
+    }
+  }
+  function orgTogglePhotoRowVisibility(id){
+    var cbAutsors = document.getElementById('oem-autsors');
+    var cbXodimKerak = document.getElementById('oem-xodimkerak');
+    var row = document.getElementById('oem-photo-row-'+id);
+    var shouldHide = (cbAutsors && cbAutsors.checked) || (cbXodimKerak && cbXodimKerak.checked);
+    if(row) row.style.display = shouldHide ? 'none' : '';
+  }
   function orgShowEditModal(id){
     var node=orgData.find(n=>n.id===id);
-    var days=node.workdays||[];
     var tels = node.tels||(node.tel?[node.tel]:['+998']);
     var tgs = node.tgs||(node.tg?[node.tg]:[]);
-    var dayLabels=[['mon','Dush'],['tue','Sesh'],['wed','Chor'],['thu','Pay'],['fri','Jum'],['sat','Shan'],['sun','Yak']];
-    var daysHtml=dayLabels.map(([key,label])=>{
-      var active=days.includes(key);
-      return `<button onclick="orgToggleDay('${id}','${key}')" style="flex:1;padding:8px 4px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;background:${active?'var(--lime)':'var(--white-06)'};color:${active?'var(--green-dark)':'var(--white-50)'}">${label}</button>`;
-    }).join('');
+    var isBolimNow = node.cardType === 'bolim';
     var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">Tahrirlash</div>
-      <div class="frow"><label class="flbl">Rasm</label>
+      <div class="frow">
+        <label class="flbl">Turi</label>
+        <div style="display:flex;gap:6px;margin-top:5px">
+          <button id="oem-type-xodim" onclick="orgSetEditType('${id}','xodim')" style="flex:1;padding:8px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;background:${!isBolimNow?'var(--lime)':'var(--white-06)'};color:${!isBolimNow?'var(--green-dark)':'var(--white-50)'}">Xodim</button>
+          <button id="oem-type-bolim" onclick="orgSetEditType('${id}','bolim')" style="flex:1;padding:8px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;background:${isBolimNow?'var(--lime)':'var(--white-06)'};color:${isBolimNow?'var(--green-dark)':'var(--white-50)'}">Bo'lim</button>
+        </div>
+      </div>
+      <div class="frow" id="oem-status-row-${id}" style="${isBolimNow?'display:none':''}">
+        <label class="flbl">Status</label>
+        <div style="display:flex;gap:14px;margin-top:8px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--white-80);cursor:pointer"><input type="checkbox" id="oem-sinov" ${node.sinov?'checked':''}> Sinov muddatida</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--white-80);cursor:pointer"><input type="checkbox" id="oem-autsors" ${node.autsors?'checked':''} onchange="orgTogglePhotoRowVisibility('${id}')"> Autsors xodim</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--white-80);cursor:pointer"><input type="checkbox" id="oem-xodimkerak" ${node.xodimKerak?'checked':''} onchange="orgTogglePhotoRowVisibility('${id}')"> Xodim kerak</label>
+        </div>
+      </div>
+      <div class="frow" id="oem-photo-row-${id}" style="${node.cardType==='bolim'||node.autsors||node.xodimKerak?'display:none':''}"><label class="flbl">Rasm</label>
         <div style="display:flex;align-items:center;gap:10px;margin-top:5px">
           <div id="oem-photo-preview-${id}">${node.photo?`<img src="${esc(node.photo)}" style="width:48px;height:48px;border-radius:50%;object-fit:cover">`:orgAvatarHtml(node,48)}</div>
           <input type="file" id="oem-photo-inp-${id}" accept="image/*" style="display:none" onchange="orgUploadPhoto('${id}')">
@@ -686,53 +767,21 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
         </div>
         <input type="hidden" id="oem-photo-url-${id}" value="${esc(node.photo||'')}">
       </div>
-      <div class="frow"><label class="flbl">Lavozim</label><input class="fi" id="oem-name" value="${esc(node.name)}"></div>
-      <div class="frow"><label class="flbl">FIO</label><input class="fi" id="oem-fio" value="${esc(node.fio||'')}"></div>
-      <div class="frow"><label class="flbl">Tel raqam</label>
+      <div class="frow"><label class="flbl" id="oem-name-label">${isBolimNow?"Bo'lim nomi":'Lavozim'}</label><input class="fi" id="oem-name" value="${esc(node.name)}"></div>
+      <div class="frow" id="oem-fio-row-${id}" style="${isBolimNow?'display:none':''}"><label class="flbl">FIO</label><input class="fi" id="oem-fio" value="${esc(node.fio||'')}"></div>
+      <div class="frow" id="oem-tel-row-${id}" style="${isBolimNow?'display:none':''}"><label class="flbl">Tel raqam</label>
         <div id="oem-tels-${id}">${orgTelHtml(tels)}</div>
         <button class="abtn" style="margin-top:6px" onclick="orgAddTel('${id}')">+ Tel qo'shish</button>
       </div>
-      <div class="frow"><label class="flbl">Telegram</label>
+      <div class="frow" id="oem-tg-row-${id}" style="${isBolimNow?'display:none':''}"><label class="flbl">Telegram</label>
         <div id="oem-tgs-${id}">${orgTgHtml(tgs)}</div>
         <button class="abtn" style="margin-top:6px" onclick="orgAddTg('${id}')">+ Telegram qo'shish</button>
       </div>
-      <div class="frow">
-        <label class="flbl">Ish kunlari</label>
-        <div id="oem-days-${id}" style="display:flex;gap:4px;margin-top:5px">${daysHtml}</div>
-      </div>
-      <div class="frow">
-        <label class="flbl">Ish vaqti</label>
-        <div style="display:flex;gap:8px;align-items:center;margin-top:5px">
-          <input class="fi" type="time" id="oem-start" value="${esc(node.workstart||'09:00')}" style="margin-top:0">
-          <span style="color:var(--white-50)">—</span>
-          <input class="fi" type="time" id="oem-end" value="${esc(node.workend||'18:00')}" style="margin-top:0">
-        </div>
-      </div>
-      <div class="frow"><label class="flbl">Ishga kirgan sana</label><input class="fi" id="oem-startdate" value="${esc(node.startdate||'')}"></div>
       <div class="fbtns">
         <button class="fsave" onclick="orgSaveEditModal('${id}')">Saqlash</button>
         <button class="fcancel" onclick="orgCloseModal()">Bekor</button>
       </div>`;
     orgShowModal(html);
-    if(!node._tmpDays) node._tmpDays = days.slice();
-  }
-  function orgToggleDay(id, key){
-    var node=orgData.find(n=>n.id===id);
-    if(!node._tmpDays) node._tmpDays = (node.workdays||[]).slice();
-    var idx=node._tmpDays.indexOf(key);
-    if(idx>-1) node._tmpDays.splice(idx,1); else node._tmpDays.push(key);
-    node.workdays = node._tmpDays;
-    orgShowEditModal(id);
-  }
-  var ORG_DAY_LABELS={mon:'Dush',tue:'Sesh',wed:'Chor',thu:'Pay',fri:'Jum',sat:'Shan',sun:'Yak'};
-  var ORG_DAY_ORDER=['mon','tue','wed','thu','fri','sat','sun'];
-  function orgBuildWorkhoursText(node){
-    var days=(node.workdays||[]).slice().sort((a,b)=>ORG_DAY_ORDER.indexOf(a)-ORG_DAY_ORDER.indexOf(b));
-    if(!days.length) return '';
-    var dayStr=days.map(d=>ORG_DAY_LABELS[d]).join(', ');
-    var start=node.workstart||'', end=node.workend||'';
-    var timeStr = (start&&end) ? `${start}-${end}` : '';
-    return timeStr ? `${dayStr}, ${timeStr}` : dayStr;
   }
   async function orgUploadPhoto(id){
     var inp = document.getElementById('oem-photo-inp-'+id);
@@ -771,9 +820,37 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
     var name=document.getElementById('oem-name').value.trim();
     if(!name){notify('Nom kiriting!');return;}
     node.name=name;
-    node.fio=document.getElementById('oem-fio').value.trim();
+    var newType = node._tmpCardType || (node.cardType==='bolim'?'bolim':'xodim');
+    if(newType==='bolim'){
+      node.cardType = 'bolim';
+      node.fio = '';
+      node.photo = '';
+    } else {
+      delete node.cardType;
+      node.fio=document.getElementById('oem-fio').value.trim();
+    }
+    delete node._tmpCardType;
+    if(newType==='bolim'){
+      node.sinov = false;
+      node.autsors = false;
+      node.xodimKerak = false;
+      node.photo = '';
+      node.tels = [];
+      node.tel = '';
+      node.tgs = [];
+      node.tg = '';
+      orgSave(); notify('Saqlandi ✓'); orgCloseModal(); renderOrg();
+      return;
+    }
+    var sinovEl = document.getElementById('oem-sinov');
+    var autsorsEl = document.getElementById('oem-autsors');
+    var xodimKerakEl = document.getElementById('oem-xodimkerak');
+    node.sinov = !!(sinovEl && sinovEl.checked);
+    node.autsors = !!(autsorsEl && autsorsEl.checked);
+    node.xodimKerak = !!(xodimKerakEl && xodimKerakEl.checked);
+    if(node.autsors || node.xodimKerak) node.photo = '';
     var photoUrlEl = document.getElementById('oem-photo-url-'+id);
-    if(photoUrlEl) node.photo = photoUrlEl.value || '';
+    if(photoUrlEl && !node.autsors && !node.xodimKerak) node.photo = photoUrlEl.value || '';
     // Tel raqamlar
     var telWrap=document.getElementById('oem-tels-'+id);
     var tels=telWrap?Array.from(telWrap.querySelectorAll('input')).map(function(el){return el.value.trim();}).filter(Boolean):[];
@@ -784,12 +861,6 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
     var tgs=tgWrap?Array.from(tgWrap.querySelectorAll('input')).map(function(el){return el.value.trim();}).filter(Boolean):[];
     node.tgs=tgs;
     node.tg=tgs[0]||'';
-    node.workdays = node._tmpDays || node.workdays || [];
-    node.workstart = document.getElementById('oem-start').value;
-    node.workend = document.getElementById('oem-end').value;
-    node.workhours = orgBuildWorkhoursText(node);
-    delete node._tmpDays;
-    node.startdate=document.getElementById('oem-startdate').value.trim();
     orgSave(); notify('Saqlandi ✓'); orgCloseModal(); renderOrg();
   }
   function orgAddChildModal(id){
@@ -797,10 +868,32 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
     var cont=document.getElementById('org-form-'+id);
     if(!cont){renderOrg();setTimeout(()=>orgAddChildModal(id),100);return;}
     cont.innerHTML=`<div class="form-box fade" style="width:240px;margin:8px auto">
+      <div class="frow"><label class="flbl">Turi</label>
+        <div style="display:flex;gap:6px;margin-top:5px">
+          <button id="oa-type-xodim-${id}" onclick="orgSetAddType('${id}','xodim')" style="flex:1;padding:8px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;background:var(--lime);color:var(--green-dark)">Xodim</button>
+          <button id="oa-type-bolim-${id}" onclick="orgSetAddType('${id}','bolim')" style="flex:1;padding:8px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;background:var(--white-06);color:var(--white-50)">Bo'lim</button>
+        </div>
+      </div>
       <div class="frow"><label class="flbl">Lavozim</label><input class="fi" id="oa-name-${id}" placeholder="Lavozim nomi..."></div>
-      <div class="frow"><label class="flbl">FIO</label><input class="fi" id="oa-fio-${id}" placeholder="F.I.O..."></div>
+      <div class="frow" id="oa-fio-row-${id}"><label class="flbl">FIO</label><input class="fi" id="oa-fio-${id}" placeholder="F.I.O..."></div>
       <div class="fbtns"><button class="fsave" onclick="orgSaveAdd('${id}')">Saqlash</button><button class="fcancel" onclick="renderOrg()">Bekor</button></div>
     </div>`;
+    orgAddTypeTmp[id] = 'xodim';
+  }
+  var orgAddTypeTmp = {};
+  function orgSetAddType(id, type){
+    orgAddTypeTmp[id] = type;
+    var btnX=document.getElementById('oa-type-xodim-'+id), btnB=document.getElementById('oa-type-bolim-'+id);
+    var fioRow=document.getElementById('oa-fio-row-'+id);
+    var nameInp=document.getElementById('oa-name-'+id);
+    if(btnX&&btnB){
+      btnX.style.background = type==='xodim' ? 'var(--lime)' : 'var(--white-06)';
+      btnX.style.color = type==='xodim' ? 'var(--green-dark)' : 'var(--white-50)';
+      btnB.style.background = type==='bolim' ? 'var(--lime)' : 'var(--white-06)';
+      btnB.style.color = type==='bolim' ? 'var(--green-dark)' : 'var(--white-50)';
+    }
+    if(fioRow) fioRow.style.display = type==='bolim' ? 'none' : '';
+    if(nameInp) nameInp.placeholder = type==='bolim' ? "Bo'lim nomi..." : 'Lavozim nomi...';
   }
   function orgAddSiblingModal(id,dir){
     orgCloseModal();
@@ -809,26 +902,54 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
     var cont=document.getElementById('org-form-'+id);
     if(!cont){renderOrg();setTimeout(()=>orgAddSiblingModal(id,dir),100);return;}
     cont.innerHTML=`<div class="form-box fade" style="width:240px;margin:8px auto">
+      <div class="frow"><label class="flbl">Turi</label>
+        <div style="display:flex;gap:6px;margin-top:5px">
+          <button id="os-type-xodim-${id}" onclick="orgSetSiblingType('${id}','xodim')" style="flex:1;padding:8px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;background:var(--lime);color:var(--green-dark)">Xodim</button>
+          <button id="os-type-bolim-${id}" onclick="orgSetSiblingType('${id}','bolim')" style="flex:1;padding:8px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;background:var(--white-06);color:var(--white-50)">Bo'lim</button>
+        </div>
+      </div>
       <div class="frow"><label class="flbl">Lavozim</label><input class="fi" id="os-name-${id}" placeholder="Lavozim nomi..."></div>
-      <div class="frow"><label class="flbl">FIO</label><input class="fi" id="os-fio-${id}" placeholder="F.I.O..."></div>
+      <div class="frow" id="os-fio-row-${id}"><label class="flbl">FIO</label><input class="fi" id="os-fio-${id}" placeholder="F.I.O..."></div>
       <div class="fbtns"><button class="fsave" onclick="orgSaveSibling('${id}','${dir}')">Saqlash</button><button class="fcancel" onclick="renderOrg()">Bekor</button></div>
     </div>`;
+    orgAddTypeTmp[id] = 'xodim';
+  }
+  function orgSetSiblingType(id, type){
+    orgAddTypeTmp[id] = type;
+    var btnX=document.getElementById('os-type-xodim-'+id), btnB=document.getElementById('os-type-bolim-'+id);
+    var fioRow=document.getElementById('os-fio-row-'+id);
+    var nameInp=document.getElementById('os-name-'+id);
+    if(btnX&&btnB){
+      btnX.style.background = type==='xodim' ? 'var(--lime)' : 'var(--white-06)';
+      btnX.style.color = type==='xodim' ? 'var(--green-dark)' : 'var(--white-50)';
+      btnB.style.background = type==='bolim' ? 'var(--lime)' : 'var(--white-06)';
+      btnB.style.color = type==='bolim' ? 'var(--green-dark)' : 'var(--white-50)';
+    }
+    if(fioRow) fioRow.style.display = type==='bolim' ? 'none' : '';
+    if(nameInp) nameInp.placeholder = type==='bolim' ? "Bo'lim nomi..." : 'Lavozim nomi...';
   }
   function orgSaveAdd(parentId){
     var name=document.getElementById('oa-name-'+parentId).value.trim();
-    var fio=document.getElementById('oa-fio-'+parentId).value.trim();
+    var type=orgAddTypeTmp[parentId]||'xodim';
+    var fio= type==='bolim' ? '' : document.getElementById('oa-fio-'+parentId).value.trim();
     if(!name){notify('Nom kiriting!');return;}
-    orgData.push({id:'o'+Date.now(),name,fio,parentId:parentId==='null'?null:parentId});
+    var newNode={id:'o'+Date.now(),name,fio,parentId:parentId==='null'?null:parentId};
+    if(type==='bolim') newNode.cardType='bolim';
+    orgData.push(newNode);
+    delete orgAddTypeTmp[parentId];
     orgSave();notify('Saqlandi ✓');renderOrg();
   }
   function orgSaveSibling(refId,dir){
     var name=document.getElementById('os-name-'+refId).value.trim();
-    var fio=document.getElementById('os-fio-'+refId).value.trim();
+    var type=orgAddTypeTmp[refId]||'xodim';
+    var fio= type==='bolim' ? '' : document.getElementById('os-fio-'+refId).value.trim();
     if(!name){notify('Nom kiriting!');return;}
     var ref=orgData.find(n=>n.id===refId);
     var newNode={id:'o'+Date.now(),name,fio,parentId:ref.parentId};
+    if(type==='bolim') newNode.cardType='bolim';
     var idx=orgData.indexOf(ref);
     orgData.splice(dir==='left'?idx:idx+1,0,newNode);
+    delete orgAddTypeTmp[refId];
     orgSave();notify('Saqlandi ✓');renderOrg();
   }
   function orgDelModal(id){
@@ -1536,13 +1657,9 @@ showLogin('sirly');
             USER_PERMS = user.permissions || null;
             CURRENT_USER_TG = user.tg || '';
             CURRENT_USER_ORG_ID = user.orgNodeId || '';
-            var freshRole = user.role || 'guest';
+            var freshRole = String(user.role || 'guest').trim().toLowerCase();
             if(freshRole === 'editor' && !isAdmin){
               isAdmin = true;
-              if(typeof renderOrg==='function') renderOrg();
-              if(typeof entryTitlesRender==='function') entryTitlesRender();
-            } else if(freshRole !== 'editor' && isAdmin){
-              isAdmin = false;
               if(typeof renderOrg==='function') renderOrg();
               if(typeof entryTitlesRender==='function') entryTitlesRender();
             }
@@ -2324,14 +2441,54 @@ function kaitenMyRoleForTask(t){
   }
   return isAdmin ? 'yaratuvchi' : 'other';
 }
+var kaitenCommentPendingFile = {};
 function kaitenAddComment(id){
   var inp=document.getElementById('kc-text-'+id);
   var text=inp.value.trim();
-  if(!text){ notify('Matn kiriting!'); return; }
+  var file=kaitenCommentPendingFile[id];
+  if(!text && !file){ notify('Matn yoki fayl biriktiring!'); return; }
   var t=kaitenTasks.find(x=>x.id===id);
   if(!t.comments)t.comments=[];
-  t.comments.push({role:kaitenMyRoleForTask(t), text, time:new Date().toISOString()});
+  var entry = {role:kaitenMyRoleForTask(t), text:text, time:new Date().toISOString()};
+  if(file) entry.file = file;
+  t.comments.push(entry);
+  delete kaitenCommentPendingFile[id];
   kaitenSave(); renderKaiten();
+}
+async function kaitenUploadCommentFile(id){
+  var inp = document.getElementById('kc-file-inp-'+id);
+  if(!inp.files.length) return;
+  var f = inp.files[0];
+  var textInp = document.getElementById('kc-text-'+id);
+  var savedText = textInp ? textInp.value : '';
+  notify('Fayl yuklanmoqda...');
+  try{
+    var safeName = hujjatSafeFilename(f.name);
+    var path = 'kaiten-comments/'+id+'_'+Date.now()+'_'+safeName;
+    var r = await fetch(SB_URL+'/storage/v1/object/'+HUJJAT_BUCKET+'/'+path,{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+SB_KEY,'Content-Type':f.type||'application/octet-stream','x-upsert':'true'},
+      body:f
+    });
+    if(r.ok){
+      var url = SB_URL+'/storage/v1/object/public/'+HUJJAT_BUCKET+'/'+path;
+      kaitenCommentPendingFile[id] = {name:f.name, url:url};
+      notify('Fayl tayyor ✓');
+      renderKaiten();
+      var newTextInp = document.getElementById('kc-text-'+id);
+      if(newTextInp && savedText) newTextInp.value = savedText;
+    } else {
+      notify('Fayl yuklashda xato!');
+    }
+  }catch(e){ notify('Fayl yuklashda xato!'); }
+}
+function kaitenRemoveCommentFile(id){
+  var textInp = document.getElementById('kc-text-'+id);
+  var savedText = textInp ? textInp.value : '';
+  delete kaitenCommentPendingFile[id];
+  renderKaiten();
+  var newTextInp = document.getElementById('kc-text-'+id);
+  if(newTextInp && savedText) newTextInp.value = savedText;
 }
 function kaitenDelComment(id, idx){
   askConfirm("Xabarni o'chirasizmi?",()=>{
@@ -2400,11 +2557,14 @@ function kaitenFieldsHtml(prefix, task){
     var parts = task.deadline.split('T');
     dateVal = parts[0]||''; timeVal=(parts[1]||'').slice(0,5);
   }
-  var links = task.links||[''];
+  var links = task.links && task.links.length ? task.links : [{name:'',url:''}];
   var linksHtml = links.map(function(l,i){
-    return '<div style="display:flex;gap:6px;margin-top:'+(i===0?'5':'4')+'px">'
-      +'<input class="fi" type="url" id="'+prefix+'-link-'+i+'" value="'+esc(l)+'" placeholder="https://..." style="margin-top:0;flex:1">'
-      +(i>0?'<button class="abtn abtn-red" onclick="kaitenRemoveLink(\''+prefix+'\','+i+')" style="margin-top:0">\u2715</button>':'')
+    var lname = (typeof l === 'object') ? (l.name||'') : '';
+    var lurl = (typeof l === 'object') ? (l.url||'') : (l||'');
+    return '<div style="border:1px solid var(--white-10);border-radius:8px;padding:8px;margin-top:'+(i===0?'5':'4')+'px">'
+      +(i>0?'<div style="text-align:right"><button class="abtn abtn-red" onclick="kaitenRemoveLink(\''+prefix+'\','+i+')" style="padding:2px 6px;margin-bottom:4px">\u2715</button></div>':'')
+      +'<input class="fi" id="'+prefix+'-link-name-'+i+'" value="'+esc(lname)+'" placeholder="Link nomi (masalan: Rekvizitlar)" style="margin-top:0;margin-bottom:4px">'
+      +'<input class="fi" type="url" id="'+prefix+'-link-'+i+'" value="'+esc(lurl)+'" placeholder="https://..." style="margin-top:0">'
       +'</div>';
   }).join('');
   var contacts = task.contacts||[{name:'',role:'',tel:''}];
@@ -2421,20 +2581,25 @@ function kaitenFieldsHtml(prefix, task){
   }).join('');
   var files = task.files||[];
   var filesHtml = files.map(function(f,i){
-    return '<div style="display:flex;align-items:center;gap:6px;margin-top:4px">'
+    return '<div class="kaiten-existing-file" id="'+prefix+'-existfile-'+i+'" data-name="'+esc(f.name)+'" data-url="'+esc(f.url)+'" style="border:1px solid var(--white-10);border-radius:8px;padding:8px;margin-top:4px">'
+      +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">'
       +'<a href="'+esc(f.url)+'" target="_blank" style="font-size:12px;color:var(--lime);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">\ud83d\udcce '+esc(f.name)+'</a>'
-      +'<button class="abtn abtn-red" onclick="kaitenRemoveExistingFile(\''+prefix+'\','+i+')" style="padding:2px 6px">\u2715</button>'
+      +'<button class="abtn abtn-red" onclick="this.parentNode.parentNode.remove()" style="padding:2px 6px">\u2715</button>'
+      +'</div>'
+      +'<input class="fi kaiten-file-note" value="'+esc(f.note||'')+'" placeholder="Izoh (masalan: Rekvizitlar, Aloqa MChJ)" style="margin-top:0">'
       +'</div>';
   }).join('');
   return ''
     +'<input type="hidden" id="'+prefix+'-dept" value="'+esc(dept)+'">'
     +'<input type="hidden" id="'+prefix+'-link-count" value="'+links.length+'">'
     +'<input type="hidden" id="'+prefix+'-contact-count" value="'+contacts.length+'">'
-    +'<div class="frow"><label class="flbl">Vazifa matni <span style="color:#ff7070">*</span></label>'
-    +'<textarea class="fi" id="'+prefix+'-text" style="min-height:70px;resize:vertical" placeholder="Vazifa tavsifi...">'+esc(task.text||'')+'</textarea></div>'
+    +'<div class="frow"><label class="flbl">Vazifa nomi <span style="color:#ff7070">*</span></label>'
+    +'<input class="fi" id="'+prefix+'-text" placeholder="Vazifa nomi..." value="'+esc(task.text||'')+'"></div>'
+    +'<div class="frow"><label class="flbl">Vazifa haqida ma\'lumot</label>'
+    +'<textarea class="fi" id="'+prefix+'-desc" style="min-height:70px;resize:vertical" placeholder="Batafsil tavsif (ixtiyoriy)...">'+esc(task.description||'')+'</textarea></div>'
     +'<div class="frow"><label class="flbl">Xodim <span style="color:#ff7070">*</span></label>'
     +'<select class="fi" id="'+prefix+'-emp"><option value="">\u2014 tanlang \u2014</option></select></div>'
-    +'<div class="frow"><label class="flbl">Yakuniy muddat <span style="color:#ff7070">*</span></label>'
+    +'<div class="frow"><label class="flbl">Yakuniy muddat</label>'
     +'<div style="display:flex;gap:8px;margin-top:5px">'
     +'<input class="fi" type="date" id="'+prefix+'-deadline-date" value="'+esc(dateVal)+'" style="margin-top:0">'
     +'<input class="fi" type="time" id="'+prefix+'-deadline-time" value="'+esc(timeVal)+'" style="margin-top:0">'
@@ -2458,8 +2623,10 @@ function kaitenAddLink(prefix){
   var countEl=document.getElementById(prefix+'-link-count');
   var i=parseInt(countEl.value); countEl.value=i+1;
   var div=document.createElement('div');
-  div.style.cssText='display:flex;gap:6px;margin-top:4px';
-  div.innerHTML='<input class="fi" type="url" id="'+prefix+'-link-'+i+'" placeholder="https://..." style="margin-top:0;flex:1"><button class="abtn abtn-red" onclick="this.parentNode.remove()" style="margin-top:0">\u2715</button>';
+  div.style.cssText='border:1px solid var(--white-10);border-radius:8px;padding:8px;margin-top:4px';
+  div.innerHTML='<div style="text-align:right"><button class="abtn abtn-red" onclick="this.parentNode.remove()" style="padding:2px 6px;margin-bottom:4px">\u2715</button></div>'
+    +'<input class="fi" id="'+prefix+'-link-name-'+i+'" placeholder="Link nomi (masalan: Rekvizitlar)" style="margin-top:0;margin-bottom:4px">'
+    +'<input class="fi" type="url" id="'+prefix+'-link-'+i+'" placeholder="https://..." style="margin-top:0">';
   wrap.appendChild(div);
 }
 function kaitenRemoveLink(prefix,i){
@@ -2489,7 +2656,6 @@ async function kaitenUploadFiles(prefix){
   var status=document.getElementById(prefix+'-file-status');
   var list=document.getElementById(prefix+'-files-list');
   if(!inp||!inp.files.length) return;
-  if(!kaitenUploadedFiles[prefix]) kaitenUploadedFiles[prefix]=[];
   status.textContent='Yuklanmoqda...';
   for(var f of inp.files){
     try{
@@ -2498,25 +2664,20 @@ async function kaitenUploadFiles(prefix){
       var r=await fetch(SB_URL+'/storage/v1/object/'+HUJJAT_BUCKET+'/'+path,{method:'POST',headers:{'Authorization':'Bearer '+SB_KEY,'Content-Type':f.type||'application/octet-stream','x-upsert':'true'},body:f});
       if(r.ok){
         var url=SB_URL+'/storage/v1/object/public/'+HUJJAT_BUCKET+'/'+path;
-        kaitenUploadedFiles[prefix].push({name:f.name,url:url});
-        var idx2=kaitenUploadedFiles[prefix].length-1;
+        var idx2 = list.querySelectorAll('.kaiten-existing-file,.kaiten-new-file').length;
         var div=document.createElement('div');
-        div.style.cssText='display:flex;align-items:center;gap:6px;margin-top:4px';
-        div.innerHTML='<a href="'+url+'" target="_blank" style="font-size:12px;color:var(--lime);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">\ud83d\udcce '+f.name+'</a><button class="abtn abtn-red" onclick="kaitenRemoveUploadedFile(\''+prefix+'\','+idx2+',this.parentNode)" style="padding:2px 6px">\u2715</button>';
+        div.className='kaiten-new-file';
+        div.setAttribute('data-name', f.name);
+        div.setAttribute('data-url', url);
+        div.style.cssText='border:1px solid var(--white-10);border-radius:8px;padding:8px;margin-top:4px';
+        div.innerHTML='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><a href="'+url+'" target="_blank" style="font-size:12px;color:var(--lime);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">\ud83d\udcce '+f.name+'</a><button class="abtn abtn-red" onclick="this.parentNode.parentNode.remove()" style="padding:2px 6px">\u2715</button></div>'
+          +'<input class="fi kaiten-file-note" placeholder="Izoh (masalan: Rekvizitlar, Aloqa MChJ)" style="margin-top:0">';
         list.appendChild(div);
       }
     }catch(e){}
   }
   status.textContent='Yuklandi \u2713';
   inp.value='';
-}
-function kaitenRemoveExistingFile(prefix,i){
-  var list=document.getElementById(prefix+'-files-list');
-  if(list&&list.children[i]) list.children[i].remove();
-}
-function kaitenRemoveUploadedFile(prefix,i,el){
-  if(kaitenUploadedFiles[prefix]) kaitenUploadedFiles[prefix].splice(i,1);
-  if(el) el.remove();
 }
 function kaitenFillFormValues(prefix, task){
   task = task || {};
@@ -2571,6 +2732,8 @@ function kaitenReadFields(prefix){
   var deadlineTime = document.getElementById(prefix+'-deadline-time').value;
   var deadline = deadlineDate ? (deadlineDate + 'T' + (deadlineTime||'00:00')) : '';
   var text = document.getElementById(prefix+'-text').value.trim();
+  var descEl = document.getElementById(prefix+'-desc');
+  var description = descEl ? descEl.value.trim() : '';
   var empFio='', empRole='', empTg='';
   if(empRaw){ var p=empRaw.split('|'); empFio=p[0]; empRole=p[1]||''; empTg=p[2]||''; }
   var nazFio='', nazRole='', nazDept='';
@@ -2578,14 +2741,33 @@ function kaitenReadFields(prefix){
   // Links
   var links=[];
   var linkWrap=document.getElementById(prefix+'-links-wrap');
-  if(linkWrap){ Array.from(linkWrap.querySelectorAll('input[type=url]')).forEach(function(el){ if(el.value.trim()) links.push(el.value.trim()); }); }
+  if(linkWrap){
+    Array.from(linkWrap.querySelectorAll('input[type=url]')).forEach(function(el){
+      var url = el.value.trim();
+      if(!url) return;
+      var idx = el.id.slice((prefix+'-link-').length);
+      var nameEl = document.getElementById(prefix+'-link-name-'+idx);
+      var name = nameEl ? nameEl.value.trim() : '';
+      links.push({name:name, url:url});
+    });
+  }
   // Contacts
   var contacts=[];
   var contactWrap=document.getElementById(prefix+'-contacts-wrap');
   if(contactWrap){ var rows=contactWrap.querySelectorAll('.kaiten-contact-row,[id^="'+prefix+'-contact-"]'); rows.forEach(function(row,i){ var nameEl=row.querySelector('[id$="-cname-'+i+'"],input[id*="cname"]'); var roleEl=row.querySelector('[id$="-crole-'+i+'"],input[id*="crole"]'); var telEl=row.querySelector('[id$="-ctel-'+i+'"],input[id*="ctel"]'); var name=(nameEl&&nameEl.value.trim())||''; var role=(roleEl&&roleEl.value.trim())||''; var tel=(telEl&&telEl.value.trim())||''; if(name||role||tel) contacts.push({name,role,tel}); }); }
-  // Files — existing + newly uploaded
-  var files = kaitenUploadedFiles[prefix]||[];
-  return {dept,empFio,empRole,empTg,nazFio,nazRole,nazDept,deadline,text,links,contacts,files};
+  // Files — read from DOM (existing + newly uploaded), each carrying its own note
+  var files=[];
+  var filesListEl=document.getElementById(prefix+'-files-list');
+  if(filesListEl){
+    Array.from(filesListEl.querySelectorAll('.kaiten-existing-file,.kaiten-new-file')).forEach(function(row){
+      var name = row.getAttribute('data-name');
+      var url = row.getAttribute('data-url');
+      var noteEl = row.querySelector('.kaiten-file-note');
+      var note = noteEl ? noteEl.value.trim() : '';
+      if(name && url) files.push({name:name, url:url, note:note});
+    });
+  }
+  return {dept,empFio,empRole,empTg,nazFio,nazRole,nazDept,deadline,text,description,links,contacts,files};
 }
 function kaitenMyId(){
   // Unique identity key for "who created/owns" a task — prefers org link, falls back to login
@@ -2622,9 +2804,8 @@ setTimeout(refreshAllBadges, 2000);
 
 function kaitenAddTask(){
   var f = kaitenReadFields('kt');
-  if(!f.text){ notify('Vazifa matnini kiriting!'); return; }
+  if(!f.text){ notify('Vazifa nomini kiriting!'); return; }
   if(!f.empFio){ notify('Xodimni tanlang!'); return; }
-  if(!f.deadline){ notify('Yakuniy muddatni kiriting!'); return; }
   askConfirm("Vazifani aniq tushunarli qilib berdingizmi? Esdan chiqmadimi hech narsa?",()=>{
     f.id='kt'+Date.now(); f.status='todo';
     f.createdBy = kaitenMyId();
@@ -2683,7 +2864,7 @@ function kaitenSaveEdit(id){
   if(!t) return;
   if(!kaitenCanEditTask(t)){ notify("Bu vazifani tahrirlash huquqingiz yo'q"); return; }
   var f = kaitenReadFields('ke');
-  if(!f.text){ notify('Vazifa matnini kiriting!'); return; }
+  if(!f.text){ notify('Vazifa nomini kiriting!'); return; }
   Object.assign(t, f);
   kaitenSave(); notify('Saqlandi ✓'); orgCloseModal(); renderKaiten();
 }
@@ -2695,6 +2876,84 @@ function kaitenDelTask(id){
     kaitenTasks = kaitenTasks.filter(t=>t.id!==id);
     kaitenSave(); renderKaiten(); notify("O'chirildi ✓");
   });
+}
+function kaitenArchiveTask(id){
+  var t = kaitenTasks.find(x=>x.id===id);
+  if(!t) return;
+  if(!kaitenCanEditTask(t)){ notify("Bu vazifani arxivlash huquqingiz yo'q"); return; }
+  askConfirm("Vazifani arxivga jo'natasizmi?",()=>{
+    t.archived = true;
+    t.archivedAt = new Date().toISOString();
+    kaitenSave(); renderKaiten(); notify("Arxivga jo'natildi ✓");
+  });
+}
+function kaitenUnarchiveTask(id){
+  var t = kaitenTasks.find(x=>x.id===id);
+  if(!t) return;
+  t.archived = false;
+  delete t.archivedAt;
+  kaitenSave(); renderKaiten(); kaitenShowArchive(); notify("Doskaga qaytarildi ✓");
+}
+function kaitenDeleteArchivedTask(id){
+  askConfirm("Vazifani butunlay o'chirasizmi? Bu amalni qaytarib bo'lmaydi.",()=>{
+    kaitenTasks = kaitenTasks.filter(t=>t.id!==id);
+    kaitenSave(); kaitenShowArchive(); notify("Butunlay o'chirildi ✓");
+  });
+}
+function kaitenShowArchive(){
+  var archived = kaitenTasks.filter(t=>t.archived);
+  archived.sort(function(a,b){ return new Date(b.archivedAt||0) - new Date(a.archivedAt||0); });
+  var listHtml = archived.length ? archived.map(function(t){
+    var meta = t.empFio?(t.empFio+(t.empRole?' ('+t.empRole+')':'')):'';
+    var archivedDate = t.archivedAt ? kaitenFormatDateOnly(t.archivedAt) : '';
+    return `<div style="padding:10px 0;border-bottom:1px solid var(--white-10)">
+      <div style="font-size:13px;color:var(--white-80);font-weight:600">${esc(t.text)}</div>
+      ${meta?`<div style="font-size:11px;color:var(--white-50);margin-top:2px">${esc(meta)}</div>`:''}
+      ${archivedDate?`<div style="font-size:11px;color:var(--white-50);margin-top:2px">Arxivlangan: ${esc(archivedDate)}</div>`:''}
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="abtn" onclick="kaitenUnarchiveTask('${t.id}')">↩ Qaytarish</button>
+        <button class="abtn abtn-red" onclick="kaitenDeleteArchivedTask('${t.id}')">✕ Butunlay o'chirish</button>
+      </div>
+    </div>`;
+  }).join('') : '<div style="color:var(--white-50);padding:16px 0;text-align:center">Arxiv bo&#39;sh</div>';
+  var html = `<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">🗄 Arxiv</div>
+    <div style="max-height:60vh;overflow-y:auto">${listHtml}</div>
+    <button class="fcancel" style="margin-top:12px" onclick="orgCloseModal()">Yopish</button>`;
+  orgShowModal(html);
+}
+var kaitenDragTaskId = null;
+function kaitenDragStart(e, id){
+  kaitenDragTaskId = id;
+  try{ e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', id); }catch(err){}
+  if(e.currentTarget) e.currentTarget.style.opacity = '0.5';
+}
+function kaitenDragEnd(e){
+  if(e.currentTarget) e.currentTarget.style.opacity = '';
+  kaitenDragTaskId = null;
+  document.querySelectorAll('.kaiten-col').forEach(function(el){ el.classList.remove('kaiten-drop-active'); });
+}
+function kaitenDragOver(e, colId){
+  e.preventDefault();
+  if(e.currentTarget) e.currentTarget.classList.add('kaiten-drop-active');
+}
+function kaitenDragLeave(e, colId){
+  if(e.currentTarget) e.currentTarget.classList.remove('kaiten-drop-active');
+}
+function kaitenDrop(e, colId){
+  e.preventDefault();
+  if(e.currentTarget) e.currentTarget.classList.remove('kaiten-drop-active');
+  var id = kaitenDragTaskId || (e.dataTransfer && e.dataTransfer.getData('text/plain'));
+  if(!id) return;
+  var t = kaitenTasks.find(x=>x.id===id);
+  if(!t || t.status===colId) return;
+  var order = kaitenColumns.map(c=>c.id);
+  var oldIdx = order.indexOf(t.status);
+  var oldTitle = kaitenColumns[oldIdx]?.title || t.status;
+  t.status = colId;
+  var newIdx = order.indexOf(colId);
+  var colTitle = kaitenColumns[newIdx]?.title || colId;
+  kaitenSave(); renderKaiten();
+  kaitenNotifyMove(t, oldTitle, colTitle);
 }
 function kaitenMove(id, dir){
   var order=kaitenColumns.map(c=>c.id);
@@ -2756,23 +3015,35 @@ function kaitenCard(t){
   var chatOpen = kaitenChatOpen===t.id;
   var chatHtml='';
   if(chatOpen){
+    var descHtml = t.description ? `<div style="font-size:12px;color:#16573a;background:rgba(22,87,58,0.06);border-radius:8px;padding:8px;margin-bottom:8px;white-space:pre-wrap">${esc(t.description)}</div>` : '';
     var msgsHtml = comments.length ? comments.map((c,i)=>`<div style="padding:6px 0;border-bottom:1px solid rgba(22,87,58,0.12)">
         <div style="font-size:11px;font-weight:700;color:#1e7a4a">${esc(KAITEN_ROLE_LABELS[c.role]||c.role)}
           <span style="color:#16573a99;font-weight:400">• ${esc(kaitenFormatDeadline(c.time))}</span>
           ${isAdmin?`<button class="abtn abtn-red" style="float:right;padding:2px 6px" onclick="kaitenDelComment('${t.id}',${i})">x</button>`:''}
         </div>
-        <div style="font-size:12px;color:#16573a;margin-top:2px">${esc(c.text)}</div>
+        ${c.text?`<div style="font-size:12px;color:#16573a;margin-top:2px">${esc(c.text)}</div>`:''}
+        ${c.file?`<a href="${esc(c.file.url)}" target="_blank" style="display:flex;align-items:center;gap:4px;font-size:11px;color:#1e7a4a;margin-top:4px">📎 ${esc(c.file.name)}</a>`:''}
       </div>`).join('') : '<div style="color:#16573a99;font-size:12px;padding:6px 0">Xabarlar yo&#39;q</div>';
+    var pendingFile = kaitenCommentPendingFile[t.id];
+    var pendingFileHtml = pendingFile ? `<div style="font-size:11px;color:#1e7a4a;background:rgba(22,87,58,0.06);border-radius:6px;padding:4px 8px;margin-top:6px;display:flex;align-items:center;gap:6px"><span>📎 ${esc(pendingFile.name)}</span><button class="abtn abtn-red" style="padding:1px 6px;margin-left:auto" onclick="kaitenRemoveCommentFile('${t.id}')">x</button></div>` : '';
     chatHtml = `<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(22,87,58,0.12)">
+      ${descHtml}
       ${msgsHtml}
       <div style="display:flex;gap:6px;margin-top:6px">
         <input class="fi" id="kc-text-${t.id}" placeholder="Xabar..." style="margin-top:0;font-size:12px;background:rgba(22,87,58,0.06);color:#16573a;border-color:rgba(22,87,58,0.15)">
+        <input type="file" id="kc-file-inp-${t.id}" style="display:none" onchange="kaitenUploadCommentFile('${t.id}')">
+        <button class="abtn" style="margin-top:0;padding:8px 10px;color:#16573a;border-color:rgba(22,87,58,0.15)" onclick="document.getElementById('kc-file-inp-${t.id}').click()">📎</button>
         <button class="fsave" style="margin-top:0;padding:8px 10px" onclick="kaitenAddComment('${t.id}')">➤</button>
       </div>
+      ${pendingFileHtml}
     </div>`;
   }
-  var linksHtml = (t.links&&t.links.length)?t.links.map(function(l){ return `<a href="${esc(l)}" target="_blank" style="display:block;font-size:11px;color:#1e7a4a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">🔗 ${esc(l)}</a>`; }).join(''):'';
-  var filesHtml = (t.files&&t.files.length)?t.files.map(function(f){ return `<a href="${esc(f.url)}" target="_blank" style="display:block;font-size:11px;color:#1e7a4a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">📎 ${esc(f.name)}</a>`; }).join(''):'';
+  var linksHtml = (t.links&&t.links.length)?t.links.map(function(l){
+    var lname = (typeof l === 'object') ? (l.name||l.url) : l;
+    var lurl = (typeof l === 'object') ? l.url : l;
+    return `<a href="${esc(lurl)}" target="_blank" style="display:block;font-size:11px;color:#1e7a4a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">🔗 ${esc(lname)}</a>`;
+  }).join(''):'';
+  var filesHtml = (t.files&&t.files.length)?t.files.map(function(f){ return `<a href="${esc(f.url)}" target="_blank" style="display:block;font-size:11px;color:#1e7a4a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">📎 ${esc(f.note?f.note+' — '+f.name:f.name)}</a>`; }).join(''):'';
   var contactsHtml = (t.contacts&&t.contacts.length)?t.contacts.map(function(c){ return `<div style="font-size:11px;color:#16573a99;margin-top:2px">👤 ${esc(c.name)}${c.role?' · '+esc(c.role):''}${c.tel?' · '+esc(c.tel):''}</div>`; }).join(''):'';
   var alarmHtml = t.alarm ? `<div style="font-size:11px;color:#1e7a4a;font-weight:600;margin-top:2px;display:flex;align-items:center;gap:6px">⏰ Budilnik: ${esc(kaitenFormatDeadline(t.alarm))}<button class="abtn abtn-red" style="padding:1px 6px" onclick="kaitenConfirmRemoveAlarm('${t.id}')">✕</button></div>` : '';
   var alarmDateVal = '', alarmTimeVal = '';
@@ -2788,7 +3059,7 @@ function kaitenCard(t){
         <button class="abtn" style="margin-top:0" onclick="kaitenToggleAlarmForm('${t.id}')">Bekor</button>
       </div>
     </div>` : '';
-  return `<div class="kaiten-card">
+  return `<div class="kaiten-card" draggable="true" data-task-id="${t.id}" ondragstart="kaitenDragStart(event,'${t.id}')" ondragend="kaitenDragEnd(event)">
     <div class="kaiten-card-text">${esc(t.text)}</div>
     ${meta?`<div class="kaiten-card-meta">${esc(meta)}</div>`:''}
     ${nazText?`<div class="kaiten-card-naz">${esc(nazText)}</div>`:''}
@@ -2806,6 +3077,7 @@ function kaitenCard(t){
       <div style="margin-left:auto;display:flex;gap:6px">
       ${canEdit?`
       <button class="abtn" onclick="kaitenShowEditForm('${t.id}')">✏</button>
+      <button class="abtn" onclick="kaitenArchiveTask('${t.id}')">🗄</button>
       <button class="abtn abtn-red" onclick="kaitenDelTask('${t.id}')">✕</button>
       `:''}
       </div>
@@ -2829,12 +3101,12 @@ function kaitenRenderBoardStructure(){
   if(!boardEl) return;
   var existingAddForm = document.getElementById('kaiten-add-form');
   var savedAddForm = existingAddForm ? existingAddForm.innerHTML : '';
-  var h = kaitenColumns.map((col,i)=>`<div class="kaiten-col">
+  var h = kaitenColumns.map((col,i)=>`<div class="kaiten-col" ondragover="kaitenDragOver(event,'${col.id}')" ondragleave="kaitenDragLeave(event,'${col.id}')" ondrop="kaitenDrop(event,'${col.id}')">
       <div class="kaiten-col-title">
         <span class="kaiten-col-title-text" id="kaiten-title-${col.id}"></span>
         ${isAdmin?`<button class="kaiten-col-edit-btn" onclick="kaitenRenameColumn('${col.id}')">✏</button>`:''}
       </div>
-      <div class="kaiten-col-list" id="kaiten-list-${col.id}"></div>
+      <div class="kaiten-col-list" id="kaiten-list-${col.id}" style="min-height:60px"></div>
       ${i===0?'<div id="kaiten-add-form"></div>':''}
     </div>`).join('');
   if(isAdmin){
@@ -2906,7 +3178,8 @@ function renderKaiten(){
       kaitenRenderBoardStructure();
     }
   }
-  var visibleTasks = kaitenFilterDept ? kaitenTasks.filter(t=>t.dept===kaitenFilterDept) : kaitenTasks;
+  var activeTasks = kaitenTasks.filter(t=>!t.archived);
+  var visibleTasks = kaitenFilterDept ? activeTasks.filter(t=>t.dept===kaitenFilterDept) : activeTasks;
   var cols={};
   kaitenColumns.forEach(c=>cols[c.id]=[]);
   visibleTasks.forEach(t=>{
