@@ -75,6 +75,23 @@ async def sb_patch(table: str, row_id: str, data: dict) -> None:
     resp.raise_for_status()
 
 
+async def claim_row(table: str, row_id: str) -> bool:
+    """Faqat hozir ham 'pending' bo'lgan qatorni 'processing'ga o'tkazadi.
+    Agar boshqa bot nusxasi allaqachon shu qatorni band qilgan bo'lsa,
+    bu funksiya False qaytaradi va biz uni qayta yubormaymiz.
+    Shu orqali bir nechta bot nusxasi bir vaqtda ishlasa ham,
+    xabar hech qachon IKKI MARTA yuborilmaydi."""
+    resp = await http_client.patch(
+        f"{SUPABASE_URL}/rest/v1/{table}",
+        headers={**SB_HEADERS, "Prefer": "return=representation"},
+        params={"id": f"eq.{row_id}", "status": "eq.pending"},
+        json={"status": "processing"},
+    )
+    resp.raise_for_status()
+    claimed_rows = resp.json()
+    return len(claimed_rows) > 0
+
+
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -100,6 +117,8 @@ async def process_group_messages(app: Application) -> None:
     for row in rows:
         row_id = row.get("id")
         try:
+            if not await claim_row("bot_group_messages", row_id):
+                continue  # boshqa bot nusxasi allaqachon oldi
             text = row.get("text") or ""
             if not text.strip():
                 await sb_patch("bot_group_messages", row_id, {"status": "failed"})
@@ -137,6 +156,8 @@ async def process_reminders(app: Application) -> None:
     for row in rows:
         row_id = row.get("id")
         try:
+            if not await claim_row("bot_reminders", row_id):
+                continue  # boshqa bot nusxasi allaqachon oldi
             chat_id = row.get("chat_id")
             text = row.get("text") or ""
             if not chat_id or not text.strip():
@@ -174,6 +195,8 @@ async def process_file_requests(app: Application) -> None:
     for row in rows:
         row_id = row.get("id")
         try:
+            if not await claim_row("file_send_requests", row_id):
+                continue  # boshqa bot nusxasi allaqachon oldi
             chat_id = row.get("chat_id")
             kind = row.get("kind")
             if not chat_id:
