@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Tizim</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1171,6 +1172,31 @@ var SB_URL = 'https://qtrniovpkrwimeohamkc.supabase.co';
 var CHAT_ID = -1003914304171;
 var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0cm5pb3Zwa3J3aW1lb2hhbWtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMTY4NjUsImV4cCI6MjA5NjU5Mjg2NX0.j4gUqZlqMHR0ltIMCDB-UfWPvuPVs9B9HF0If2fPxhU';
 var SB_H = {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+
+var sbClient = null;
+var kaitenRealtimeStarted = false;
+function kaitenSetupRealtime(){
+  if(kaitenRealtimeStarted) return;
+  try{
+    if(!window.supabase){ console.error('supabase-js yuklanmadi'); return; }
+    if(!sbClient) sbClient = window.supabase.createClient(SB_URL, SB_KEY);
+    sbClient
+      .channel('kaiten-live')
+      .on('postgres_changes', {event:'*', schema:'public', table:'biznes_data', filter:'id=eq.kaiten'}, function(payload){
+        try{
+          var row = payload.new;
+          if(row && row.data){
+            kaitenApplyData(row.data);
+            var p = document.getElementById('p-kaiten');
+            if(p && p.classList.contains('active')) renderKaiten();
+            if(typeof refreshAllBadges==='function') refreshAllBadges();
+          }
+        }catch(e){ console.error('kaiten realtime apply xato', e); }
+      })
+      .subscribe();
+    kaitenRealtimeStarted = true;
+  }catch(e){ console.error('kaiten realtime setup xato', e); }
+}
 
 async function umaApiLoad(uid){
   try{
@@ -3351,7 +3377,7 @@ function sirlyStart(role){
   load().then(function(){ updateBc(); });
   acadLoad().catch(function(){});
   orgLoad().catch(function(){}).then(function(){ renderOrg(); });
-  kaitenLoad().catch(function(){}).then(function(){ if(document.getElementById('p-kaiten').classList.contains('active')) renderKaiten(); });
+  kaitenLoad().catch(function(){}).then(function(){ if(document.getElementById('p-kaiten').classList.contains('active')) renderKaiten(); kaitenSetupRealtime(); });
   sekretarLoad().catch(function(){});
   bolimTitlesLoad().catch(function(){}).then(function(){ if(document.getElementById('p-entry2').classList.contains('active')) renderBolimCards(); });
 }
