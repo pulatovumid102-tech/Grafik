@@ -353,14 +353,19 @@ async function dashboardUploadPartnership(input){
 async function renderPartnershipFrame(){
   var wrap = document.getElementById('partnership-frame-wrap');
   if(!wrap) return;
-  wrap.innerHTML = `<div style="text-align:center;padding:32px;color:var(--white-50);font-size:13px">Tekshirilmoqda...</div>`;
+  wrap.innerHTML = `<div style="text-align:center;padding:32px;color:var(--white-50);font-size:13px">Yuklanmoqda...</div>`;
   try{
-    var r = await fetch(partnershipPublicUrl(true), {method:'HEAD'});
-    if(r.ok){
-      wrap.innerHTML = `<iframe src="${partnershipPublicUrl(true)}" style="width:100%;height:calc(100vh - 90px);border:none;border-radius:12px;background:#fff"></iframe>`;
-    } else {
+    var r = await fetch(partnershipPublicUrl(true));
+    if(!r.ok){
       wrap.innerHTML = `<div style="text-align:center;padding:32px;color:var(--white-50);font-size:13px">Hali fayl yuklanmagan.${isAdmin?" Dashboard sahifasiga qaytib, yuklang.":""}</div>`;
+      return;
     }
+    var html = await r.text();
+    var iframe = document.createElement('iframe');
+    iframe.style.cssText = 'width:100%;height:calc(100vh - 90px);border:none;border-radius:12px;background:#fff';
+    iframe.srcdoc = html;
+    wrap.innerHTML = '';
+    wrap.appendChild(iframe);
   }catch(e){
     wrap.innerHTML = `<div style="text-align:center;padding:32px;color:var(--white-50);font-size:13px">Yuklab bo'lmadi: ${esc(e.message)}</div>`;
   }
