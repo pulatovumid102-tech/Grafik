@@ -2984,7 +2984,6 @@ function kaitenFormatDateOnly(dl){
 function kaitenSaveEdit(id){
   var t = kaitenTasks.find(function(x){return x.id===id;});
   if(!t) return;
-  if(!kaitenCanEditTask(t)){ notify("Bu vazifani tahrirlash huquqingiz yo'q"); return; }
   var f = kaitenReadFields('ke');
   if(!f.text){ notify('Vazifa nomini kiriting!'); return; }
   Object.assign(t, f);
@@ -3135,9 +3134,9 @@ function kaitenCard(t){
   var tl = kaitenTimeLeft(t.deadline);
   var comments = t.comments||[];
   var chatOpen = kaitenChatOpen===t.id;
+  var descHtml = t.description ? `<div style="font-size:12px;color:#16573a99;margin-top:4px;white-space:pre-wrap">${esc(t.description)}</div>` : '';
   var chatHtml='';
   if(chatOpen){
-    var descHtml = t.description ? `<div style="font-size:12px;color:#16573a;background:rgba(22,87,58,0.06);border-radius:8px;padding:8px;margin-bottom:8px;white-space:pre-wrap">${esc(t.description)}</div>` : '';
     var msgsHtml = comments.length ? comments.map((c,i)=>`<div style="padding:6px 0;border-bottom:1px solid rgba(22,87,58,0.12)">
         <div style="font-size:11px;font-weight:700;color:#1e7a4a">${esc(KAITEN_ROLE_LABELS[c.role]||c.role)}
           <span style="color:#16573a99;font-weight:400">• ${esc(kaitenFormatDeadline(c.time))}</span>
@@ -3149,7 +3148,6 @@ function kaitenCard(t){
     var pendingFile = kaitenCommentPendingFile[t.id];
     var pendingFileHtml = pendingFile ? `<div style="font-size:11px;color:#1e7a4a;background:rgba(22,87,58,0.06);border-radius:6px;padding:4px 8px;margin-top:6px;display:flex;align-items:center;gap:6px"><span>📎 ${esc(pendingFile.name)}</span><button class="abtn abtn-red" style="padding:1px 6px;margin-left:auto" onclick="kaitenRemoveCommentFile('${t.id}')">x</button></div>` : '';
     chatHtml = `<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(22,87,58,0.12)">
-      ${descHtml}
       ${msgsHtml}
       <div style="display:flex;gap:6px;margin-top:6px">
         <input class="fi" id="kc-text-${t.id}" placeholder="Xabar..." style="margin-top:0;font-size:12px;background:rgba(22,87,58,0.06);color:#16573a;border-color:rgba(22,87,58,0.15)">
@@ -3183,6 +3181,7 @@ function kaitenCard(t){
     </div>` : '';
   return `<div class="kaiten-card" draggable="true" data-task-id="${t.id}" ondragstart="kaitenDragStart(event,'${t.id}')" ondragend="kaitenDragEnd(event)">
     <div class="kaiten-card-text">${esc(t.text)}</div>
+    ${descHtml}
     ${meta?`<div class="kaiten-card-meta">${esc(meta)}</div>`:''}
     ${nazText?`<div class="kaiten-card-naz">${esc(nazText)}</div>`:''}
     ${t.deadline?`<div class="kaiten-card-deadline">⏰ ${esc(kaitenFormatDeadline(t.deadline))}</div>`:''}
@@ -3197,8 +3196,8 @@ function kaitenCard(t){
       ${!chatOpen?'':''}
       <button class="abtn" onclick="kaitenToggleAlarmForm('${t.id}')">⏰</button>
       <div style="margin-left:auto;display:flex;gap:6px">
-      ${canEdit?`
       <button class="abtn" onclick="kaitenShowEditForm('${t.id}')">✏</button>
+      ${canEdit?`
       <button class="abtn" onclick="kaitenArchiveTask('${t.id}')">🗄</button>
       <button class="abtn abtn-red" onclick="kaitenDelTask('${t.id}')">✕</button>
       `:''}
