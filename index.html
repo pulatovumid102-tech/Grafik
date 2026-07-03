@@ -1308,9 +1308,12 @@ async function adminCreateProfile(){
     }
     document.getElementById('admin-new-profile-form').innerHTML='';
     loadAdminList();
-    // Botga xabar yuborish
+    // Botga xabar yuborish — guruhga emas, shu profilni yaratayotgan odamning shaxsiy chatiga
     var msgText = '👤 Yangi profil yaratildi\nIsm: '+(node.fio||'—')+'\nLogin: '+login+'\nParol: '+parol;
-    fetch(SB_URL+'/rest/v1/bot_group_messages',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'prof'+Date.now(),text:msgText,status:'pending'})}).catch(function(){});
+    var creatorTg = tgGetUser();
+    if(creatorTg && creatorTg.id){
+      fetch(SB_URL+'/rest/v1/file_send_requests',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'prof'+Date.now(),status:'pending',chat_id:creatorTg.id,kind:'message',message_text:msgText})}).catch(function(){});
+    }
   }catch(e){
     errEl.textContent = 'Xatolik: '+e.message;
     errEl.style.display='block';
