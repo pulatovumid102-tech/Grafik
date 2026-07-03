@@ -271,8 +271,101 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
       <div class="nav-card-title" id="entry-title-sekretar" style="margin-top:4px">Sekretar</div>
       <div class="nav-card-arrow">→</div>
     </div>
+    <div class="nav-card" id="card-dashboard" onclick="goTo('p-dashboard')">
+      <button class="entry-edit-btn" onclick="event.stopPropagation();entryEditTitle('dashboard')" style="display:none">✏</button>
+      <div class="nav-card-title" id="entry-title-dashboard" style="margin-top:4px">Dashboard</div>
+      <div class="nav-card-arrow">→</div>
+    </div>
   </div>
 </div>
+
+<div class="page" id="p-dashboard">
+  <div class="page-topbar">
+    <div class="page-header">
+      <button class="back-btn" onclick="goBack('p-entry1')">← Orqaga</button>
+      <span class="page-title" id="page-title-dashboard">Dashboard</span>
+    </div>
+  </div>
+  <div class="section-list">
+    <div class="section-item" onclick="goTo('p-partnership-frame')">
+      <div style="display:flex;align-items:center;flex:1;min-width:0">
+        <div class="section-num">01</div>
+        <div class="section-name">Partnership bo'limi</div>
+      </div>
+      <span class="chevron">›</span>
+    </div>
+  </div>
+  <div id="dashboard-upload-box"></div>
+</div>
+
+<div class="page" id="p-partnership-frame">
+  <div class="page-topbar">
+    <div class="page-header">
+      <button class="back-btn" onclick="goBack('p-dashboard')">← Orqaga</button>
+      <span class="page-title">Partnership bo'limi</span>
+    </div>
+  </div>
+  <div id="partnership-frame-wrap"></div>
+</div>
+
+<script>
+var PARTNERSHIP_PATH = 'dashboard/partnership.html';
+function partnershipPublicUrl(bust){
+  return SB_URL+'/storage/v1/object/public/'+HUJJAT_BUCKET+'/'+PARTNERSHIP_PATH+(bust?('?t='+Date.now()):'');
+}
+function renderDashboardUploadBox(){
+  var box = document.getElementById('dashboard-upload-box');
+  if(!box) return;
+  if(!isAdmin){ box.innerHTML=''; return; }
+  box.innerHTML = `<div class="form-box fade" style="margin-top:14px">
+      <div class="flbl" style="margin-bottom:8px">Partnership sahifasi (HTML fayl)</div>
+      <div style="font-size:12px;color:var(--white-50);margin-bottom:10px">Yangi versiyani yuklasangiz, eskisi almashtiriladi.</div>
+      <input type="file" id="dashboard-partnership-file" accept=".html,text/html" style="display:none" onchange="dashboardUploadPartnership(this)">
+      <button class="add-item-btn" style="margin-top:0" onclick="document.getElementById('dashboard-partnership-file').click()">＋ HTML fayl yuklash</button>
+      <div id="dashboard-upload-status" style="font-size:12px;color:var(--lime);margin-top:8px"></div>
+    </div>`;
+}
+async function dashboardUploadPartnership(input){
+  var f = input.files[0];
+  if(!f) return;
+  var status = document.getElementById('dashboard-upload-status');
+  if(status) status.textContent = 'Yuklanmoqda...';
+  try{
+    var r = await fetch(SB_URL+'/storage/v1/object/'+HUJJAT_BUCKET+'/'+PARTNERSHIP_PATH,{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'text/html','x-upsert':'true'},
+      body:f
+    });
+    if(r.ok){
+      if(status) status.textContent = 'Yuklandi ✓';
+      notify('Fayl yuklandi ✓');
+    }else{
+      var errBody = await r.text();
+      if(status) status.textContent = 'Xatolik ('+r.status+'): '+errBody;
+      notify('Yuklashda xato!');
+    }
+  }catch(e){
+    if(status) status.textContent = 'Xatolik: '+e.message;
+    notify('Yuklashda xato!');
+  }
+  input.value = '';
+}
+async function renderPartnershipFrame(){
+  var wrap = document.getElementById('partnership-frame-wrap');
+  if(!wrap) return;
+  wrap.innerHTML = `<div style="text-align:center;padding:32px;color:var(--white-50);font-size:13px">Tekshirilmoqda...</div>`;
+  try{
+    var r = await fetch(partnershipPublicUrl(true), {method:'HEAD'});
+    if(r.ok){
+      wrap.innerHTML = `<iframe src="${partnershipPublicUrl(true)}" style="width:100%;height:calc(100vh - 90px);border:none;border-radius:12px;background:#fff"></iframe>`;
+    } else {
+      wrap.innerHTML = `<div style="text-align:center;padding:32px;color:var(--white-50);font-size:13px">Hali fayl yuklanmagan.${isAdmin?" Dashboard sahifasiga qaytib, yuklang.":""}</div>`;
+    }
+  }catch(e){
+    wrap.innerHTML = `<div style="text-align:center;padding:32px;color:var(--white-50);font-size:13px">Yuklab bo'lmadi: ${esc(e.message)}</div>`;
+  }
+}
+</script>
 
 <div class="page" id="p-kaiten">
   <div class="page-topbar">
@@ -2299,6 +2392,8 @@ function sirlyRender(p){
   else if(p==='p-hujjat-detail')renderHujjatDetail();
   else if(p==='p-sekretar')renderSekretar();
   else if(p==='p-sekretar-arxiv')renderSekretarArchive();
+  else if(p==='p-dashboard')renderDashboardUploadBox();
+  else if(p==='p-partnership-frame')renderPartnershipFrame();
   updateBc();
 }
 function updateBc(){
