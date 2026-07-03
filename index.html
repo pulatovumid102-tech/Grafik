@@ -2942,6 +2942,8 @@ function kaitenAddTask(){
   }, 'Ha', "Yo'q");
 }
 function kaitenFallbackName(){
+  var tgUser = tgGetUser();
+  if(tgUser && tgUser.username) return '@'+tgUser.username;
   return CURRENT_USER_TG ? ('@'+CURRENT_USER_TG.replace(/^@/,'')) : (USER_ID||'Foydalanuvchi');
 }
 function kaitenCreatorNameNow(){
@@ -2964,12 +2966,19 @@ function kaitenNotifyGroup(t){
     var creator = kaitenCreatorName(t);
     var assignee = t.empFio||'—';
     if(t.empTg){ assignee += ' (@'+t.empTg.replace(/^@/,'')+')'; }
-    var createdDate = t.createdAt ? kaitenFormatDateOnly(t.createdAt) : kaitenFormatDateOnly(new Date().toISOString());
+    var divider = '━━━━━━━━━━━━━';
     var lines = [
-      creator+' '+createdDate+' kuni '+t.dept+'da '+assignee+' uchun',
-      '"'+t.text+'" vazifasini yaratdi.'
+      divider,
+      '🆕 YANGI VAZIFA',
+      divider,
+      '👤 '+creator,
+      '🏢 '+t.dept,
+      '🙋 '+assignee,
+      '',
+      '📌 "'+t.text+'"'
     ];
-    if(t.deadline) lines.push('Yakuniy muddat: '+kaitenFormatDeadline(t.deadline)+'.');
+    if(t.deadline) lines.push('⏰ '+kaitenFormatDeadline(t.deadline));
+    lines.push(divider);
     fetch(SB_URL+'/rest/v1/bot_group_messages',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'gm'+Date.now()+'_'+Math.random().toString(36).slice(2,7), text:lines.join(String.fromCharCode(10)), status:'pending'})}).catch(function(){});
   }catch(e){}
 }
@@ -3094,8 +3103,8 @@ function kaitenNotifyMove(t, oldTitle, colTitle){
   try{
     var assignee = t.empFio||'—';
     var lines=[
-      assignee+' '+t.dept+'dagi "'+t.text+'" vazifasini',
-      oldTitle+' ustunidan '+colTitle+' ustuniga ko\'chirdi.'
+      '🙋 '+assignee+' 🏢 '+t.dept+'dagi 📌 "'+t.text+'" vazifasini',
+      '↪ '+oldTitle+' ustunidan '+colTitle+' ustuniga ko\'chirdi.'
     ];
     fetch(SB_URL+'/rest/v1/bot_group_messages',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'gm'+Date.now()+'_'+Math.random().toString(36).slice(2,7),text:lines.join(String.fromCharCode(10)),status:'pending'})}).catch(function(){});
   }catch(e){}
