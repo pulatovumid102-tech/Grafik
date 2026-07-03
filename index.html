@@ -1161,7 +1161,7 @@ function hasSectionPerm(secId){
   return USER_PERMS.sections.includes(secId);
 }
 function applyEntryCardPerms(){
-  var map={'card-bolimlar':'bolimlar','card-org':'org','card-kaiten':'kaiten','card-hujjatlar':'hujjatlar','card-sekretar':'sekretar'};
+  var map={'card-bolimlar':'bolimlar','card-org':'org','card-kaiten':'kaiten','card-hujjatlar':'hujjatlar','card-sekretar':'sekretar','card-dashboard':'dashboard'};
   Object.keys(map).forEach(function(cid){
     var el=document.getElementById(cid);
     if(el) el.style.display = hasPerm(map[cid]) ? '' : 'none';
@@ -1312,6 +1312,7 @@ function adminPermsHtml(perms, allBolimSections){
     chk('kaiten','Kaiten', perms.kaiten!==false)+
     chk('hujjatlar','Hujjatlar', perms.hujjatlar!==false)+
     chk('sekretar','Sekretar', perms.sekretar!==false)+
+    chk('dashboard','Dashboard', perms.dashboard!==false)+
     chk('bolimlar','Bo&#39;limlar', bolimlarChecked)+
     '<div id="aperm-sections-wrap" style="'+(bolimlarChecked?'':'opacity:.4;pointer-events:none')+'">'+secHtml+'</div>'+
   '</div>';
@@ -1336,6 +1337,7 @@ function adminReadPerms(){
     kaiten: document.getElementById('aperm-kaiten').checked,
     hujjatlar: document.getElementById('aperm-hujjatlar').checked,
     sekretar: document.getElementById('aperm-sekretar').checked,
+    dashboard: document.getElementById('aperm-dashboard').checked,
     bolimlar: document.getElementById('aperm-bolimlar').checked,
     sections: sections
   };
