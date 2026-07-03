@@ -1570,6 +1570,7 @@ async function doAppLogin(){
     USER_ID = CURRENT_APP + '_' + login;
     STORAGE_KEY = 'umatizim_data_' + USER_ID;
     localStorage.setItem('app_login', JSON.stringify({app:CURRENT_APP, login:login, parol:parol, role:'editor'}));
+    tgSaveSession(login, parol, 'editor');
     document.getElementById('login-screen').style.display = 'none';
     startApp(CURRENT_APP, 'editor');
     return;
@@ -1592,6 +1593,7 @@ async function doAppLogin(){
         CURRENT_USER_ORG_ID = user.orgNodeId || '';
         USER_PERMS = user.permissions || null;
         localStorage.setItem('app_login', JSON.stringify({app:CURRENT_APP, login:login, parol:parol, role:userRole, tg:CURRENT_USER_TG, orgNodeId:CURRENT_USER_ORG_ID, permissions:USER_PERMS}));
+        tgSaveSession(login, parol, userRole);
         document.getElementById('login-screen').style.display = 'none';
         startApp(CURRENT_APP, userRole);
       } else if(user.status === 'pending'){
@@ -1619,9 +1621,64 @@ function startApp(app, role){
   sirlyStart(role);
 }
 
+function tgGetUser(){
+  try{ return window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.user; }catch(e){ return null; }
+}
+
+// Muvaffaqiyatli logindan so'ng, Telegram foydalanuvchi ID'siga sessiyani Supabase'ga saqlaydi.
+// Shunda mini-app qayta ochilganda (hatto localStorage tozalansa ham) editor huquqi yo'qolmaydi.
+function tgSaveSession(login, parol, role){
+  var tgUser = tgGetUser();
+  if(!tgUser || !tgUser.id) return;
+  var payload = {
+    tg_id: tgUser.id,
+    app: CURRENT_APP,
+    login: login,
+    parol: parol,
+    role: role,
+    tg: CURRENT_USER_TG || '',
+    org_node_id: CURRENT_USER_ORG_ID || '',
+    permissions: USER_PERMS,
+    ism: (tgUser.first_name||'') + (tgUser.last_name ? (' '+tgUser.last_name) : '')
+  };
+  fetch(SB_URL+'/rest/v1/telegram_sessions?on_conflict=tg_id', {
+    method:'POST',
+    headers:{...SB_H,'Prefer':'resolution=merge-duplicates,return=minimal'},
+    body:JSON.stringify(payload)
+  }).catch(function(){});
+}
+
+// Sahifa ochilganda, avval Telegram ID orqali saqlangan sessiyani tekshiradi.
+// Topilsa — parolsiz, avtomatik kiradi. Topilmasa — localStorage'ga qaraydi (eski usul).
+async function tgAutoLogin(){
+  var tgUser = tgGetUser();
+  if(!tgUser || !tgUser.id) return false;
+  try{
+    var r = await fetch(SB_URL+'/rest/v1/telegram_sessions?tg_id=eq.'+tgUser.id, {
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+    });
+    var rows = await r.json();
+    if(!rows || !rows.length) return false;
+    var s = rows[0];
+    CURRENT_APP = s.app || 'sirly';
+    USER_ID = CURRENT_APP + '_' + s.login;
+    STORAGE_KEY = 'umatizim_data_' + USER_ID;
+    CURRENT_USER_TG = s.tg || '';
+    CURRENT_USER_ORG_ID = s.org_node_id || '';
+    USER_PERMS = s.permissions || null;
+    localStorage.setItem('app_login', JSON.stringify({app:CURRENT_APP, login:s.login, parol:s.parol||'', role:s.role||'guest', tg:CURRENT_USER_TG, orgNodeId:CURRENT_USER_ORG_ID, permissions:USER_PERMS}));
+    startApp(CURRENT_APP, s.role || 'guest');
+    return true;
+  }catch(e){ return false; }
+}
+
 showLogin('sirly');
 
-(function(){
+(async function(){
+  var tgOk = false;
+  try{ tgOk = await tgAutoLogin(); }catch(e){}
+  if(tgOk) return;
+
   var saved = localStorage.getItem('app_login');
   if(!saved) return;
   try{
