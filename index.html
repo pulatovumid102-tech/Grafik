@@ -3214,7 +3214,10 @@ function kaitenSetFilter(idx){
 function renderKaitenFilter(){
   var el = document.getElementById('kaiten-filter');
   if(!el) return;
-  var h = KAITEN_DEPTS.map((d,i)=>`<button class="kaiten-filter-chip${kaitenFilterDept===d?' active':''}" onclick="kaitenSetFilter(${i})">${esc(d)}</button>`).join('');
+  var h = KAITEN_DEPTS.map((d,i)=>{
+    var count = kaitenTasks.filter(function(t){ return !t.archived && t.dept===d; }).length;
+    return `<button class="kaiten-filter-chip${kaitenFilterDept===d?' active':''}" onclick="kaitenSetFilter(${i})">${esc(d)} (${count})</button>`;
+  }).join('');
   el.innerHTML = h;
 }
 function kaitenRenderBoardStructure(){
