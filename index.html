@@ -2963,6 +2963,7 @@ function kaitenNotifyGroup(t){
   try{
     var creator = kaitenCreatorName(t);
     var assignee = t.empFio||'—';
+    if(t.empTg){ assignee += ' (@'+t.empTg.replace(/^@/,'')+')'; }
     var createdDate = t.createdAt ? kaitenFormatDateOnly(t.createdAt) : kaitenFormatDateOnly(new Date().toISOString());
     var lines = [
       creator+' '+createdDate+' kuni '+t.dept+'da '+assignee+' uchun',
