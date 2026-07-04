@@ -200,6 +200,37 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .sek-abtn{border:1px solid #ddd9cc;background:#ffffff;border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer;color:#5a574f;font-family:inherit;transition:background .15s}
 .sek-abtn:active{background:#ebe8df}
 .sek-abtn-red{border-color:#e0c9c4;color:#a8493d}
+.mm-card{background:#f3f1ec;border:1px solid #e2dfd6;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.mm-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.mm-restoran{font-size:14px;font-weight:700;color:#2e2c28}
+.mm-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.mm-badge-ochiq{background:rgba(232,93,93,0.15);color:#c0392b}
+.mm-badge-hal{background:rgba(27,175,122,0.15);color:#1e7a4a}
+.mm-row{font-size:13px;color:#5a574f;line-height:1.4}
+.mm-lbl{color:#9a9588;font-weight:600}
+.mm-turi{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:8px;background:rgba(237,161,0,0.15);color:#8a5c00}
+.mm-izoh{color:#2e2c28;font-size:13px;margin-top:2px;white-space:pre-wrap}
+.mm-btns{display:flex;gap:6px;margin-top:6px}
+.mm-filter-chip{flex-shrink:0;padding:8px 16px;border-radius:20px;border:1px solid var(--white-10);background:var(--white-06);color:var(--white-80);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s,color .15s}
+.mm-filter-chip.active{background:var(--lime);color:var(--green-dark);border-color:var(--lime)}
+.mm-dash-section{background:var(--green-card);border:1px solid var(--white-10);border-radius:14px;padding:16px;margin-bottom:14px}
+.mm-dash-title{font-size:13px;font-weight:700;color:var(--white);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.mm-dash-kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.mm-dash-kpi{background:var(--green-card);border:1px solid var(--white-10);border-radius:12px;padding:12px}
+.mm-dash-kpi-lbl{font-size:10px;color:var(--white-50);font-weight:700;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px}
+.mm-dash-kpi-val{font-size:22px;font-weight:800;color:var(--white)}
+.mm-bar-row{margin-bottom:10px}
+.mm-bar-head{display:flex;justify-content:space-between;font-size:12px;color:var(--white-80);margin-bottom:4px}
+.mm-bar-track{height:8px;background:var(--white-06);border-radius:6px;overflow:hidden}
+.mm-bar-fill{height:100%;border-radius:6px}
+.mm-pending-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--white-10);gap:10px}
+.mm-pending-item:last-child{border-bottom:none}
+.mm-pending-days{font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.bz-buxgalter-box{background:var(--green-card);border:1px solid var(--white-10);border-radius:14px;padding:14px}
+.bz-contact-card{background:var(--green-card);border:1px solid var(--white-10);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.bz-contact-role{font-size:11px;font-weight:700;color:var(--lime);text-transform:uppercase;letter-spacing:0.3px}
+.bz-contact-name{font-size:14px;font-weight:600;color:var(--white);margin-top:2px}
+.bz-contact-tel{font-size:13px;color:var(--white-80);margin-top:2px}
 .org-white-dots{background-image:radial-gradient(circle, rgba(22,87,58,0.15) 1px, transparent 1px)!important;background-size:14px 14px;background-color:#ffffff;}
 .kaiten-card-text{font-size:13px;color:#16573a;line-height:1.4}
 .kaiten-card-meta{font-size:13px;color:#16573a;font-weight:600}
@@ -245,39 +276,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
     <div class="home-title">Tizimga<br><span>xush kelibsiz</span></div>
     <div class="home-sub">Bo'limni tanlang</div>
   </div>
-  <div class="cards-grid">
-    <div class="nav-card" id="card-bolimlar" onclick="goTo('p-entry2')">
-      <button class="entry-edit-btn" onclick="event.stopPropagation();entryEditTitle('bolimlar')" style="display:none">✏</button>
-      <div class="nav-card-title" id="entry-title-bolimlar" style="margin-top:4px">Bo'limlar</div>
-      <div class="nav-card-arrow">→</div>
-    </div>
-    <div class="nav-card" id="card-org" onclick="goTo('p-org')">
-      <button class="entry-edit-btn" onclick="event.stopPropagation();entryEditTitle('org')" style="display:none">✏</button>
-      <div class="nav-card-title" id="entry-title-org" style="margin-top:4px">Org struktura</div>
-      <div class="nav-card-arrow">→</div>
-    </div>
-    <div class="nav-card" id="card-kaiten" onclick="goTo('p-kaiten')">
-      <span id="badge-kaiten" class="nav-card-badge" style="display:none"></span>
-      <button class="entry-edit-btn" onclick="event.stopPropagation();entryEditTitle('kaiten')" style="display:none">✏</button>
-      <div class="nav-card-title" id="entry-title-kaiten" style="margin-top:4px">Kaiten</div>
-      <div class="nav-card-arrow">→</div>
-    </div>
-    <div class="nav-card" id="card-hujjatlar" onclick="goTo('p-hujjatlar')">
-      <button class="entry-edit-btn" onclick="event.stopPropagation();entryEditTitle('hujjatlar')" style="display:none">✏</button>
-      <div class="nav-card-title" id="entry-title-hujjatlar" style="margin-top:4px">Hujjatlar</div>
-      <div class="nav-card-arrow">→</div>
-    </div>
-    <div class="nav-card" id="card-sekretar" onclick="goTo('p-sekretar')">
-      <button class="entry-edit-btn" onclick="event.stopPropagation();entryEditTitle('sekretar')" style="display:none">✏</button>
-      <div class="nav-card-title" id="entry-title-sekretar" style="margin-top:4px">Sekretar</div>
-      <div class="nav-card-arrow">→</div>
-    </div>
-    <div class="nav-card" id="card-dashboard" onclick="goTo('p-dashboard')">
-      <button class="entry-edit-btn" onclick="event.stopPropagation();entryEditTitle('dashboard')" style="display:none">✏</button>
-      <div class="nav-card-title" id="entry-title-dashboard" style="margin-top:4px">Dashboard</div>
-      <div class="nav-card-arrow">→</div>
-    </div>
-  </div>
+  <div class="cards-grid" id="entry-cards-grid"></div>
 </div>
 
 <div class="page" id="p-dashboard">
@@ -389,6 +388,71 @@ function renderPartnershipFrame(){
     </div>
   </div>
   <div id="sekretar-archive-list" class="section-list"></div>
+</div>
+
+<div class="page" id="p-muammoli">
+  <div class="page-topbar">
+    <div class="page-header">
+      <button class="back-btn" onclick="goBack('p-entry1')">← Orqaga</button>
+      <span class="page-title" id="page-title-muammoli">Muammoli mijozlar</span>
+      <button class="abtn" style="margin-left:auto" onclick="goTo('p-muammoli-dashboard')">📊 Dashboard</button>
+    </div>
+  </div>
+  <div id="muammoli-filter" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;-webkit-overflow-scrolling:touch;"></div>
+  <div class="search-wrap"><input class="search-inp" id="search-muammoli" placeholder="🔍 Restoran yoki mijoz nomi..." oninput="renderMuammoli()"></div>
+  <div id="muammoli-list" class="section-list"></div>
+  <div id="muammoli-form"></div>
+  <button class="add-item-btn" onclick="showMuammoliForm()">＋ Murojaat qo'shish</button>
+</div>
+
+<div class="page" id="p-muammoli-dashboard">
+  <div class="page-topbar">
+    <div class="page-header">
+      <button class="back-btn" onclick="goBack('p-muammoli')">← Orqaga</button>
+      <span class="page-title">Muammoli mijozlar — Dashboard</span>
+    </div>
+  </div>
+  <div id="muammoli-dash-body"></div>
+</div>
+
+<div class="page" id="p-baza415">
+  <div class="page-topbar">
+    <div class="page-header">
+      <button class="back-btn" onclick="goBack('p-entry1')">← Orqaga</button>
+      <span class="page-title" id="page-title-baza415">415 baza</span>
+    </div>
+  </div>
+  <div class="search-wrap"><input class="search-inp" id="search-baza415" placeholder="🔍 Restoran nomi..." oninput="renderBaza415List()"></div>
+  <div id="baza415-list" class="section-list"></div>
+  <div id="baza415-form"></div>
+  <button class="add-item-btn" onclick="showBaza415RestForm()">＋ Restoran qo'shish</button>
+</div>
+
+<div class="page" id="p-baza415-restoran">
+  <div class="page-topbar">
+    <div class="page-header">
+      <button class="back-btn" onclick="goBack('p-baza415')">← Orqaga</button>
+      <span class="page-title" id="baza415-rest-title">Restoran</span>
+    </div>
+  </div>
+  <div id="baza415-buxgalter-box" style="margin-bottom:14px"></div>
+  <div class="flbl" style="margin-bottom:8px">Filiallar</div>
+  <div id="baza415-filial-list" class="section-list"></div>
+  <div id="baza415-filial-form"></div>
+  <button class="add-item-btn" onclick="showBaza415FilialForm()">＋ Filial qo'shish</button>
+</div>
+
+<div class="page" id="p-baza415-filial">
+  <div class="page-topbar">
+    <div class="page-header">
+      <button class="back-btn" onclick="goBack('p-baza415-restoran')">← Orqaga</button>
+      <span class="page-title" id="baza415-filial-title">Filial</span>
+    </div>
+  </div>
+  <div class="flbl" style="margin-bottom:8px">Kontaktlar</div>
+  <div id="baza415-contact-list" class="section-list"></div>
+  <div id="baza415-contact-form"></div>
+  <button class="add-item-btn" onclick="showBaza415ContactForm()">＋ Kontakt qo'shish</button>
 </div>
 
 <div class="page" id="p-org">
@@ -1151,11 +1215,7 @@ function hasSectionPerm(secId){
   return USER_PERMS.sections.includes(secId);
 }
 function applyEntryCardPerms(){
-  var map={'card-bolimlar':'bolimlar','card-org':'org','card-kaiten':'kaiten','card-hujjatlar':'hujjatlar','card-sekretar':'sekretar','card-dashboard':'dashboard'};
-  Object.keys(map).forEach(function(cid){
-    var el=document.getElementById(cid);
-    if(el) el.style.display = hasPerm(map[cid]) ? '' : 'none';
-  });
+  if(typeof renderEntryCards==='function') renderEntryCards();
 }
 
 var SB_URL = 'https://qtrniovpkrwimeohamkc.supabase.co';
@@ -1303,6 +1363,8 @@ function adminPermsHtml(perms, allBolimSections){
     chk('hujjatlar','Hujjatlar', perms.hujjatlar!==false)+
     chk('sekretar','Sekretar', perms.sekretar!==false)+
     chk('dashboard','Dashboard', perms.dashboard!==false)+
+    chk('muammoli','Muammoli mijozlar', perms.muammoli!==false)+
+    chk('baza415','415 baza', perms.baza415!==false)+
     chk('bolimlar','Bo&#39;limlar', bolimlarChecked)+
     '<div id="aperm-sections-wrap" style="'+(bolimlarChecked?'':'opacity:.4;pointer-events:none')+'">'+secHtml+'</div>'+
   '</div>';
@@ -1328,6 +1390,8 @@ function adminReadPerms(){
     hujjatlar: document.getElementById('aperm-hujjatlar').checked,
     sekretar: document.getElementById('aperm-sekretar').checked,
     dashboard: document.getElementById('aperm-dashboard').checked,
+    muammoli: document.getElementById('aperm-muammoli').checked,
+    baza415: document.getElementById('aperm-baza415').checked,
     bolimlar: document.getElementById('aperm-bolimlar').checked,
     sections: sections
   };
@@ -2121,7 +2185,7 @@ function sekretarFieldsHtml(d){
     <div class="frow"><label class="flbl">Joy</label><input class="fi" id="sk-place" value="${esc(d.place||'')}" placeholder="Manzil..."></div>
     <div class="frow"><label class="flbl">Kishi — ismi</label><input class="fi" id="sk-pname" value="${esc(d.personName||'')}"></div>
     <div class="frow"><label class="flbl">Kishi — lavozimi</label><input class="fi" id="sk-prole" value="${esc(d.personRole||'')}"></div>
-    <div class="frow"><label class="flbl">Kishi — tel raqami</label><input class="fi" id="sk-pphone" value="${esc(d.personPhone||'')}"></div>
+    <div class="frow"><label class="flbl">Kishi — tel raqami</label><input class="fi" id="sk-pphone" value="${esc(d.personPhone||'+998')}"></div>
     <div class="frow"><label class="flbl">Maqsad</label><textarea class="fi" id="sk-purpose" style="min-height:60px;resize:vertical">${esc(d.purpose||'')}</textarea></div>
     <div class="frow"><label class="flbl">Link</label><input class="fi" id="sk-link" value="${esc(d.link||'')}" placeholder="https://..."></div>
     <div class="frow"><label class="flbl">Eslatma</label><textarea class="fi" id="sk-note" style="min-height:50px;resize:vertical">${esc(d.note||'')}</textarea></div>
@@ -2213,6 +2277,501 @@ async function sekretarScheduleReminder(it){
 function sekretarCancelReminder(it){
   fetch(SB_URL+'/rest/v1/bot_reminders?id=eq.rem_'+it.id,{method:'DELETE',headers:SB_H}).catch(function(){});
 }
+
+// =========================
+// MUAMMOLI MIJOZLAR
+// =========================
+var muammoliDb={items:[]};
+var muammoliDraft=null;
+var muammoliEditId=null;
+var muammoliFilter='hammasi';
+var MUAMMOLI_TURLARI=['Sifatsiz ovqat','Restoran yopiq','Pul qaytarish','Boshqa'];
+async function muammoliSave(){
+  try{await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.muammoli_mijozlar',{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({data:muammoliDb})});}
+  catch(e){localStorage.setItem('muammoli_mijozlar',JSON.stringify(muammoliDb));}
+}
+async function muammoliLoad(){
+  try{
+    var r=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.muammoli_mijozlar',{headers:SB_H});
+    var rows=await r.json();
+    if(rows&&rows.length&&rows[0].data){
+      muammoliDb=rows[0].data;
+      if(!muammoliDb.items)muammoliDb.items=[];
+    }else{
+      var d=localStorage.getItem('muammoli_mijozlar');
+      muammoliDb=d?JSON.parse(d):{items:[]};
+      try{await fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'muammoli_mijozlar',data:muammoliDb})});}catch(e2){}
+    }
+  }catch(e){
+    var d=localStorage.getItem('muammoli_mijozlar');
+    muammoliDb=d?JSON.parse(d):{items:[]};
+  }
+}
+function muammoliSetFilter(f){ muammoliFilter=f; renderMuammoli(); }
+function renderMuammoliFilter(){
+  var el=document.getElementById('muammoli-filter');
+  if(!el)return;
+  var counts={hammasi:muammoliDb.items.length,ochiq:muammoliDb.items.filter(x=>x.holati!=='hal_qilindi').length,hal_qilindi:muammoliDb.items.filter(x=>x.holati==='hal_qilindi').length};
+  var chips=[['hammasi','Hammasi'],['ochiq','Ochiq'],['hal_qilindi','Hal qilindi']];
+  el.innerHTML=chips.map(function(c){return `<button class="mm-filter-chip${muammoliFilter===c[0]?' active':''}" onclick="muammoliSetFilter('${c[0]}')">${c[1]} (${counts[c[0]]})</button>`;}).join('');
+}
+function muammoliFormatDate(iso){
+  if(!iso)return '';
+  try{
+    var d=new Date(iso);
+    var pad=n=>String(n).padStart(2,'0');
+    return pad(d.getDate())+'.'+pad(d.getMonth()+1)+'.'+d.getFullYear();
+  }catch(e){ return iso; }
+}
+function renderMuammoli(){
+  renderMuammoliFilter();
+  var q=(document.getElementById('search-muammoli')?.value||'').trim().toLowerCase();
+  var items=muammoliDb.items.slice().sort(function(a,b){ return new Date(b.createdAt||0)-new Date(a.createdAt||0); });
+  if(muammoliFilter==='ochiq')items=items.filter(x=>x.holati!=='hal_qilindi');
+  else if(muammoliFilter==='hal_qilindi')items=items.filter(x=>x.holati==='hal_qilindi');
+  if(q)items=items.filter(x=>(x.restoran||'').toLowerCase().includes(q)||(x.ism||'').toLowerCase().includes(q));
+  var h=items.map(muammoliCard).join('');
+  if(!h)h='<div style="text-align:center;padding:32px;color:var(--white-50);font-size:13px">Murojaatlar yo\'q</div>';
+  document.getElementById('muammoli-list').innerHTML=h;
+  document.getElementById('muammoli-form').innerHTML='';
+  muammoliDraft=null; muammoliEditId=null;
+}
+function muammoliCard(it){
+  var isHal=it.holati==='hal_qilindi';
+  return `<div class="mm-card">
+    <div class="mm-top">
+      <div class="mm-restoran">${esc(it.restoran||'—')}</div>
+      <span class="mm-badge ${isHal?'mm-badge-hal':'mm-badge-ochiq'}">${isHal?'Hal qilindi':'Ochiq'}</span>
+    </div>
+    <div class="mm-row"><span class="mm-lbl">Mijoz:</span> ${esc(it.ism||'—')}${it.tel?' · '+esc(it.tel):''}</div>
+    <div><span class="mm-turi">${esc(it.turi||'Boshqa')}</span></div>
+    ${it.izoh?`<div class="mm-izoh">${esc(it.izoh)}</div>`:''}
+    <div class="mm-row" style="font-size:11px;color:#8b877c">${muammoliFormatDate(it.createdAt)}</div>
+    <div class="mm-btns">
+      <button class="sek-abtn" onclick="muammoliToggleStatus('${it.id}')">${isHal?'↩ Qayta ochish':'✓ Hal qilindi'}</button>
+      <button class="sek-abtn" onclick="showMuammoliForm('${it.id}')">Tahrirlash</button>
+      <button class="sek-abtn sek-abtn-red" onclick="muammoliDelete('${it.id}')">O'chirish</button>
+    </div>
+  </div>`;
+}
+function muammoliToggleStatus(id){
+  var it=muammoliDb.items.find(x=>x.id===id);
+  if(!it)return;
+  it.holati=(it.holati==='hal_qilindi')?'ochiq':'hal_qilindi';
+  muammoliSave(); renderMuammoli(); notify(it.holati==='hal_qilindi'?"Hal qilindi ✓":"Qayta ochildi");
+}
+function muammoliDelete(id){
+  askConfirm("Murojaatni o'chirasizmi?",function(){
+    var it=muammoliDb.items.find(x=>x.id===id);
+    muammoliDb.items=muammoliDb.items.filter(x=>x.id!==id);
+    muammoliSave(); renderMuammoli(); notify("O'chirildi ✓");
+    if(it){
+      sendGroupMessage(
+        '🗑 MUROJAAT O\'CHIRILDI\n'+
+        '👤 Kim: '+kaitenCreatorNameNow()+'\n'+
+        '🏪 Restoran: '+(it.restoran||'—')+'\n'+
+        '🙋 Mijoz: '+(it.ism||'—')
+      );
+    }
+  });
+}
+function showMuammoliForm(id){
+  if(id){
+    var it=muammoliDb.items.find(x=>x.id===id);
+    if(!it)return;
+    muammoliDraft=JSON.parse(JSON.stringify(it));
+    muammoliEditId=id;
+  }else{
+    muammoliDraft={id:'mm'+Date.now(), turi:MUAMMOLI_TURLARI[0], holati:'ochiq'};
+    muammoliEditId=null;
+  }
+  muammoliRefreshForm();
+  document.getElementById('muammoli-form').scrollIntoView({behavior:'smooth', block:'center'});
+}
+function muammoliRefreshForm(){
+  var d=muammoliDraft;
+  var turiOptions=MUAMMOLI_TURLARI.map(t=>`<option value="${esc(t)}" ${d.turi===t?'selected':''}>${esc(t)}</option>`).join('');
+  var restoranOptions=baza415AllRestoranNomlari().map(n=>`<option value="${esc(n)}">`).join('');
+  document.getElementById('muammoli-form').innerHTML=`<div class="form-box fade">
+    <div class="frow"><label class="flbl">Restoran nomi</label><input class="fi" id="mm-restoran" list="mm-restoran-list" value="${esc(d.restoran||'')}" placeholder="Restoran nomini yozing va ro'yxatdan tanlang"><datalist id="mm-restoran-list">${restoranOptions}</datalist></div>
+    <div class="frow"><label class="flbl">Mijoz ismi</label><input class="fi" id="mm-ism" value="${esc(d.ism||'')}" placeholder="Mijozning ismi"></div>
+    <div class="frow"><label class="flbl">Mijoz raqami</label><input class="fi" id="mm-tel" value="${esc(d.tel||'+998')}" placeholder="+998..."></div>
+    <div class="frow"><label class="flbl">Murojaat turi</label><select class="fi" id="mm-turi">${turiOptions}</select></div>
+    <div class="frow"><label class="flbl">Izoh</label><textarea class="fi" id="mm-izoh" style="min-height:70px;resize:vertical">${esc(d.izoh||'')}</textarea></div>
+    <div class="fbtns"><button class="fsave" onclick="saveMuammoliForm()">Saqlash</button><button class="fcancel" onclick="renderMuammoli()">Bekor</button></div>
+  </div>`;
+  document.getElementById('mm-restoran').focus();
+}
+function saveMuammoliForm(){
+  if(!muammoliDraft)return;
+  var restoran=document.getElementById('mm-restoran').value.trim();
+  var ism=document.getElementById('mm-ism').value.trim();
+  var tel=document.getElementById('mm-tel').value.trim();
+  var turi=document.getElementById('mm-turi').value;
+  var izoh=document.getElementById('mm-izoh').value.trim();
+  if(!restoran){notify('Restoran nomini kiriting!');return;}
+  if(!baza415AllRestoranNomlari().includes(restoran)){notify("Restoran 415 baza ro'yxatidan tanlanishi kerak!");return;}
+  if(!ism){notify('Mijoz ismini kiriting!');return;}
+  muammoliDraft.restoran=restoran;
+  muammoliDraft.ism=ism;
+  muammoliDraft.tel=tel;
+  muammoliDraft.turi=turi;
+  muammoliDraft.izoh=izoh;
+  if(muammoliEditId){
+    var idx=muammoliDb.items.findIndex(x=>x.id===muammoliEditId);
+    if(idx>=0)muammoliDb.items[idx]=muammoliDraft;
+    sendGroupMessage(
+      '✏️ MUROJAAT TAHRIRLANDI\n'+
+      '👤 Kim: '+kaitenCreatorNameNow()+'\n'+
+      '🏪 Restoran: '+restoran+'\n'+
+      '🙋 Mijoz: '+ism
+    );
+  }else{
+    if(!muammoliDraft.createdAt)muammoliDraft.createdAt=new Date().toISOString();
+    if(!muammoliDraft.holati)muammoliDraft.holati='ochiq';
+    muammoliDb.items.push(muammoliDraft);
+    sendGroupMessage(
+      '⚠️ YANGI MUROJAAT\n'+
+      '🏪 Restoran: '+restoran+'\n'+
+      '🙋 Mijoz: '+ism+(tel?' ('+tel+')':'')+'\n'+
+      '📋 Turi: '+turi+'\n'+
+      '📝 Izoh: '+(izoh||'—')
+    );
+  }
+  muammoliSave(); notify('Saqlandi ✓'); renderMuammoli();
+}
+
+var MM_BAR_COLORS=['#a8e063','#eda100','#2a78d6','#e34948','#8b6914','#5a4a8b'];
+function muammoliDaysSince(iso){
+  if(!iso)return 0;
+  var d=new Date(iso);
+  var diff=Date.now()-d.getTime();
+  return Math.max(0,Math.floor(diff/86400000));
+}
+function renderMuammoliDashboard(){
+  var body=document.getElementById('muammoli-dash-body');
+  if(!body)return;
+  var items=muammoliDb.items||[];
+  var jami=items.length;
+  var ochiqList=items.filter(x=>x.holati!=='hal_qilindi');
+  var halList=items.filter(x=>x.holati==='hal_qilindi');
+
+  // Eng ko'p uchraydigan muammo turi
+  var turiCounts={};
+  items.forEach(function(it){ var t=it.turi||'Boshqa'; turiCounts[t]=(turiCounts[t]||0)+1; });
+  var turiSorted=Object.entries(turiCounts).sort(function(a,b){return b[1]-a[1];});
+  var turiMax=turiSorted.length?turiSorted[0][1]:0;
+
+  // Eng ko'p shikoyat qilingan restoranlar
+  var restoranCounts={};
+  items.forEach(function(it){ var r=it.restoran||'—'; restoranCounts[r]=(restoranCounts[r]||0)+1; });
+  var restoranSorted=Object.entries(restoranCounts).sort(function(a,b){return b[1]-a[1];}).slice(0,10);
+  var restoranMax=restoranSorted.length?restoranSorted[0][1]:0;
+
+  // Hal qilinmagan muammolar, kutish vaqti bo'yicha (eng uzoq kutgani birinchi)
+  var pendingSorted=ochiqList.slice().sort(function(a,b){ return muammoliDaysSince(b.createdAt)-muammoliDaysSince(a.createdAt); });
+
+  var barsHtml=function(sorted,max){
+    return sorted.map(function(entry,i){
+      var color=MM_BAR_COLORS[i%MM_BAR_COLORS.length];
+      var pct=max?Math.round(entry[1]/max*100):0;
+      return `<div class="mm-bar-row">
+        <div class="mm-bar-head"><span>${esc(entry[0])}</span><span style="font-weight:700;color:var(--white)">${entry[1]}</span></div>
+        <div class="mm-bar-track"><div class="mm-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      </div>`;
+    }).join('');
+  };
+
+  var pendingHtml=pendingSorted.length?pendingSorted.map(function(it){
+    var days=muammoliDaysSince(it.createdAt);
+    var color=days>=5?'#e34948':(days>=2?'#eda100':'#1baf7a');
+    var bg=days>=5?'rgba(227,73,72,0.15)':(days>=2?'rgba(237,161,0,0.15)':'rgba(27,175,122,0.15)');
+    return `<div class="mm-pending-item">
+      <div style="min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--white)">${esc(it.restoran||'—')} — ${esc(it.ism||'—')}</div>
+        <div style="font-size:11px;color:var(--white-50);margin-top:2px">${esc(it.turi||'Boshqa')}</div>
+      </div>
+      <span class="mm-pending-days" style="background:${bg};color:${color}">${days} kun</span>
+    </div>`;
+  }).join(''):'<div style="text-align:center;padding:20px;color:var(--white-50);font-size:13px">Hal qilinmagan murojaatlar yo\'q 🎉</div>';
+
+  body.innerHTML=`
+    <div class="mm-dash-kpis">
+      <div class="mm-dash-kpi"><div class="mm-dash-kpi-lbl">Jami murojaat</div><div class="mm-dash-kpi-val">${jami}</div></div>
+      <div class="mm-dash-kpi"><div class="mm-dash-kpi-lbl" style="color:#ff9090">Ochiq</div><div class="mm-dash-kpi-val" style="color:#ff9090">${ochiqList.length}</div></div>
+      <div class="mm-dash-kpi"><div class="mm-dash-kpi-lbl" style="color:var(--lime)">Hal qilindi</div><div class="mm-dash-kpi-val" style="color:var(--lime)">${halList.length}</div></div>
+    </div>
+    <div class="mm-dash-section">
+      <div class="mm-dash-title">📌 Eng ko'p uchraydigan muammo turi</div>
+      ${turiSorted.length?barsHtml(turiSorted,turiMax):'<div style="color:var(--white-50);font-size:13px">Ma\'lumot yo\'q</div>'}
+    </div>
+    <div class="mm-dash-section">
+      <div class="mm-dash-title">🏪 Eng ko'p shikoyat qilingan restoranlar</div>
+      ${restoranSorted.length?barsHtml(restoranSorted,restoranMax):'<div style="color:var(--white-50);font-size:13px">Ma\'lumot yo\'q</div>'}
+    </div>
+    <div class="mm-dash-section">
+      <div class="mm-dash-title">⏳ Hal qilinmagan murojaatlar (kutish vaqti bo'yicha)</div>
+      ${pendingHtml}
+    </div>
+  `;
+}
+
+// =========================
+// 415 BAZA (restoran kontaktlari)
+// =========================
+var baza415Db={restoranlar:[]};
+var curBaza415Rest=null;
+var curBaza415Filial=null;
+var baza415FilialDraft=null;
+var baza415FilialEditId=null;
+var baza415ContactDraft=null;
+var baza415ContactEditId=null;
+
+async function baza415Save(){
+  try{await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.baza415',{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({data:baza415Db})});}
+  catch(e){localStorage.setItem('baza415',JSON.stringify(baza415Db));}
+}
+async function baza415Load(){
+  try{
+    var r=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.baza415',{headers:SB_H});
+    var rows=await r.json();
+    if(rows&&rows.length&&rows[0].data){
+      baza415Db=rows[0].data;
+      if(!baza415Db.restoranlar)baza415Db.restoranlar=[];
+    }else{
+      var d=localStorage.getItem('baza415');
+      baza415Db=d?JSON.parse(d):{restoranlar:[]};
+      try{await fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'baza415',data:baza415Db})});}catch(e2){}
+    }
+  }catch(e){
+    var d=localStorage.getItem('baza415');
+    baza415Db=d?JSON.parse(d):{restoranlar:[]};
+  }
+}
+
+// ---- Restoranlar ro'yxati ----
+function renderBaza415List(){
+  var q=(document.getElementById('search-baza415')?.value||'').trim().toLowerCase();
+  var list=baza415Db.restoranlar||[];
+  var filtered=q?list.filter(r=>r.nom.toLowerCase().includes(q)):list;
+  var h=filtered.map(function(r,i){
+    var filialSoni=(r.filiallar||[]).length;
+    return `<div class="section-item" onclick="openBaza415Rest('${r.id}')">
+      <div style="display:flex;align-items:center;flex:1;min-width:0">
+        <div class="section-num">${String(i+1).padStart(2,'0')}</div>
+        <div style="min-width:0">
+          <div class="section-name">${esc(r.nom)}</div>
+          <div style="font-size:11px;color:var(--white-50);margin-top:2px">${filialSoni} ta filial${r.buxgalterTel?' · Buxgalter: '+esc(r.buxgalterTel):''}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        ${isAdmin?`<div class="action-btns"><button class="abtn" onclick="event.stopPropagation();showBaza415RestForm('${r.id}')">✏</button><button class="abtn abtn-red" onclick="event.stopPropagation();baza415DelRest('${r.id}')">✕</button></div>`:''}
+        <span class="chevron">›</span>
+      </div>
+    </div>`;
+  }).join('');
+  if(!filtered.length)h=`<div style="text-align:center;padding:32px;color:var(--white-50);font-size:13px">${q?'Topilmadi':"Restoranlar yo'q"}</div>`;
+  document.getElementById('baza415-list').innerHTML=h;
+  document.getElementById('baza415-form').innerHTML='';
+}
+function showBaza415RestForm(id){
+  var r=id?baza415Db.restoranlar.find(x=>x.id===id):null;
+  var isNew=!id;
+  document.getElementById('baza415-form').innerHTML=`<div class="form-box fade">
+    <div class="frow"><label class="flbl">Restoran nomi</label><input class="fi" id="bz-rest-nom" value="${esc(r?.nom||'')}" placeholder="Masalan: Mador"></div>
+    ${isNew?`
+    <div class="frow"><label class="flbl">Menejer ismi</label><input class="fi" id="bz-rest-menejer-ism" placeholder="Menejer ismi"></div>
+    <div class="frow"><label class="flbl">Menejer raqami</label><input class="fi" id="bz-rest-menejer-tel" value="+998" placeholder="+998..."></div>
+    <div class="frow"><label class="flbl">Kassir-1 ismi</label><input class="fi" id="bz-rest-kassir-ism" placeholder="Kassir ismi"></div>
+    <div class="frow"><label class="flbl">Kassir-1 raqami</label><input class="fi" id="bz-rest-kassir-tel" value="+998" placeholder="+998..."></div>
+    <div id="bz-rest-extra-wrap"></div>
+    <button type="button" class="abtn" style="margin-bottom:10px" onclick="baza415AddExtraContactRow()">＋ Kontakt qo'shish</button>
+    `:''}
+    <div class="frow"><label class="flbl">Buxgalter raqami</label><input class="fi" id="bz-rest-bux" value="${esc(r?.buxgalterTel||'+998')}" placeholder="+998..."></div>
+    <div class="fbtns"><button class="fsave" onclick="saveBaza415Rest('${id||''}')">Saqlash</button><button class="fcancel" onclick="renderBaza415List()">Bekor</button></div>
+  </div>`;
+  document.getElementById('bz-rest-nom').focus();
+}
+function baza415AddExtraContactRow(){
+  var wrap=document.getElementById('bz-rest-extra-wrap');
+  if(!wrap)return;
+  var i=wrap.querySelectorAll('.bz-extra-contact-row').length;
+  var div=document.createElement('div');
+  div.className='bz-extra-contact-row';
+  div.style.cssText='border:1px solid var(--white-10);border-radius:10px;padding:10px;margin-bottom:10px';
+  div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:11px;color:var(--white-50);font-weight:700">Qo'shimcha kontakt</span><button type="button" class="abtn abtn-red" onclick="this.closest('.bz-extra-contact-row').remove()" style="padding:2px 6px">✕</button></div>
+    <input class="fi" id="bz-rest-extra-rol-${i}" placeholder="Lavozimi (masalan: Ombor mudiri)" style="margin-top:0;margin-bottom:6px">
+    <input class="fi" id="bz-rest-extra-ism-${i}" placeholder="Ismi" style="margin-top:0;margin-bottom:6px">
+    <input class="fi" id="bz-rest-extra-tel-${i}" value="+998" placeholder="+998..." style="margin-top:0">`;
+  wrap.appendChild(div);
+}
+function saveBaza415Rest(id){
+  var nom=document.getElementById('bz-rest-nom').value.trim();
+  var bux=document.getElementById('bz-rest-bux').value.trim();
+  if(!nom){notify('Restoran nomini kiriting!');return;}
+  if(id){
+    var r=baza415Db.restoranlar.find(x=>x.id===id);
+    if(r){ r.nom=nom; r.buxgalterTel=bux; }
+  }else{
+    var menejerIsm=document.getElementById('bz-rest-menejer-ism').value.trim();
+    var menejerTel=document.getElementById('bz-rest-menejer-tel').value.trim();
+    var kassirIsm=document.getElementById('bz-rest-kassir-ism').value.trim();
+    var kassirTel=document.getElementById('bz-rest-kassir-tel').value.trim();
+    var kontaktlar=[];
+    if(menejerIsm||menejerTel)kontaktlar.push({id:'kt'+Date.now()+'_1', rol:'Menejer', ism:menejerIsm, tel:menejerTel});
+    if(kassirIsm||kassirTel)kontaktlar.push({id:'kt'+Date.now()+'_2', rol:'Kassir 1', ism:kassirIsm, tel:kassirTel});
+    document.querySelectorAll('.bz-extra-contact-row').forEach(function(row, idx){
+      var rolEl=row.querySelector('[id^="bz-rest-extra-rol-"]');
+      var ismEl=row.querySelector('[id^="bz-rest-extra-ism-"]');
+      var telEl=row.querySelector('[id^="bz-rest-extra-tel-"]');
+      var rol=(rolEl&&rolEl.value.trim())||'';
+      var ism=(ismEl&&ismEl.value.trim())||'';
+      var tel=(telEl&&telEl.value.trim())||'';
+      if(rol||ism||tel)kontaktlar.push({id:'kt'+Date.now()+'_x'+idx, rol:rol||'Boshqa', ism:ism, tel:tel});
+    });
+    var filiallar=kontaktlar.length?[{id:'fl'+Date.now(), nom:nom, kontaktlar:kontaktlar}]:[];
+    baza415Db.restoranlar.push({id:'bz'+Date.now(), nom, buxgalterTel:bux, filiallar:filiallar});
+    var lines=['🏪 YANGI RESTORAN QO\'SHILDI (415 baza)','Nomi: '+nom];
+    if(menejerIsm||menejerTel)lines.push('👤 Menejer: '+(menejerIsm||'—')+' — '+(menejerTel||'—'));
+    if(kassirIsm||kassirTel)lines.push('👤 Kassir-1: '+(kassirIsm||'—')+' — '+(kassirTel||'—'));
+    sendGroupMessage(lines.join('\n'));
+  }
+  baza415Save(); notify('Saqlandi ✓'); renderBaza415List();
+}
+function baza415DelRest(id){
+  askConfirm("Restoranni butunlay o'chirasizmi? (Barcha filial va kontaktlar bilan)",function(){
+    baza415Db.restoranlar=baza415Db.restoranlar.filter(x=>x.id!==id);
+    baza415Save(); renderBaza415List(); notify("O'chirildi ✓");
+  });
+}
+
+// ---- Restoran ichida: filiallar ----
+function getBaza415Rest(){ return baza415Db.restoranlar.find(r=>r.id===curBaza415Rest); }
+function openBaza415Rest(id){ curBaza415Rest=id; goTo('p-baza415-restoran'); }
+function renderBaza415Restoran(){
+  var r=getBaza415Rest();
+  if(!r)return;
+  document.getElementById('baza415-rest-title').textContent=r.nom;
+  document.getElementById('baza415-buxgalter-box').innerHTML=`<div class="bz-buxgalter-box">
+    <div class="flbl" style="margin-bottom:6px">Buxgalter raqami</div>
+    <div style="font-size:15px;font-weight:700;color:var(--white)">${r.buxgalterTel?esc(r.buxgalterTel):'<span style="color:var(--white-50);font-weight:400">Kiritilmagan</span>'}</div>
+    ${isAdmin?`<button class="abtn" style="margin-top:8px" onclick="showBaza415RestForm('${r.id}')">✏ Tahrirlash</button>`:''}
+  </div>`;
+  var filiallar=r.filiallar||[];
+  var h=filiallar.map(function(f,i){
+    var kontaktSoni=(f.kontaktlar||[]).length;
+    return `<div class="section-item" onclick="openBaza415Filial('${f.id}')">
+      <div style="display:flex;align-items:center;flex:1;min-width:0">
+        <div class="section-num">${String(i+1).padStart(2,'0')}</div>
+        <div style="min-width:0">
+          <div class="section-name">${esc(f.nom)}</div>
+          <div style="font-size:11px;color:var(--white-50);margin-top:2px">${kontaktSoni} ta kontakt</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        ${isAdmin?`<div class="action-btns"><button class="abtn" onclick="event.stopPropagation();showBaza415FilialForm('${f.id}')">✏</button><button class="abtn abtn-red" onclick="event.stopPropagation();baza415DelFilial('${f.id}')">✕</button></div>`:''}
+        <span class="chevron">›</span>
+      </div>
+    </div>`;
+  }).join('');
+  if(!filiallar.length)h='<div style="text-align:center;padding:24px;color:var(--white-50);font-size:13px">Filiallar yo\'q</div>';
+  document.getElementById('baza415-filial-list').innerHTML=h;
+  document.getElementById('baza415-filial-form').innerHTML='';
+}
+function showBaza415FilialForm(id){
+  var r=getBaza415Rest(); if(!r)return;
+  var f=id?r.filiallar.find(x=>x.id===id):null;
+  document.getElementById('baza415-filial-form').innerHTML=`<div class="form-box fade">
+    <div class="frow"><label class="flbl">Filial nomi</label><input class="fi" id="bz-filial-nom" value="${esc(f?.nom||'')}" placeholder="Masalan: Chilonzor filiali"></div>
+    <div class="fbtns"><button class="fsave" onclick="saveBaza415Filial('${id||''}')">Saqlash</button><button class="fcancel" onclick="renderBaza415Restoran()">Bekor</button></div>
+  </div>`;
+  document.getElementById('bz-filial-nom').focus();
+}
+function saveBaza415Filial(id){
+  var r=getBaza415Rest(); if(!r)return;
+  var nom=document.getElementById('bz-filial-nom').value.trim();
+  if(!nom){notify('Filial nomini kiriting!');return;}
+  if(!r.filiallar)r.filiallar=[];
+  if(id){
+    var f=r.filiallar.find(x=>x.id===id);
+    if(f)f.nom=nom;
+  }else{
+    r.filiallar.push({id:'fl'+Date.now(), nom, kontaktlar:[]});
+  }
+  baza415Save(); notify('Saqlandi ✓'); renderBaza415Restoran();
+}
+function baza415DelFilial(id){
+  askConfirm("Filialni butunlay o'chirasizmi? (Barcha kontaktlar bilan)",function(){
+    var r=getBaza415Rest(); if(!r)return;
+    r.filiallar=r.filiallar.filter(x=>x.id!==id);
+    baza415Save(); renderBaza415Restoran(); notify("O'chirildi ✓");
+  });
+}
+
+// ---- Filial ichida: kontaktlar ----
+function getBaza415Filial(){
+  var r=getBaza415Rest(); if(!r)return null;
+  return (r.filiallar||[]).find(f=>f.id===curBaza415Filial);
+}
+function openBaza415Filial(id){ curBaza415Filial=id; goTo('p-baza415-filial'); }
+function renderBaza415Filial(){
+  var f=getBaza415Filial();
+  if(!f)return;
+  document.getElementById('baza415-filial-title').textContent=f.nom;
+  var kontaktlar=f.kontaktlar||[];
+  var h=kontaktlar.map(function(k){
+    return `<div class="bz-contact-card">
+      <div style="min-width:0">
+        <div class="bz-contact-role">${esc(k.rol)}</div>
+        <div class="bz-contact-name">${esc(k.ism||'—')}</div>
+        <div class="bz-contact-tel">${esc(k.tel||'—')}</div>
+      </div>
+      ${isAdmin?`<div class="action-btns"><button class="abtn" onclick="showBaza415ContactForm('${k.id}')">✏</button><button class="abtn abtn-red" onclick="baza415DelContact('${k.id}')">✕</button></div>`:''}
+    </div>`;
+  }).join('');
+  if(!kontaktlar.length)h='<div style="text-align:center;padding:24px;color:var(--white-50);font-size:13px">Kontaktlar yo\'q</div>';
+  document.getElementById('baza415-contact-list').innerHTML=h;
+  document.getElementById('baza415-contact-form').innerHTML='';
+}
+function showBaza415ContactForm(id){
+  var f=getBaza415Filial(); if(!f)return;
+  var k=id?f.kontaktlar.find(x=>x.id===id):null;
+  document.getElementById('baza415-contact-form').innerHTML=`<div class="form-box fade">
+    <div class="frow"><label class="flbl">Lavozimi</label><input class="fi" id="bz-contact-rol" value="${esc(k?.rol||'')}" placeholder="Masalan: Menejer, Kassir, 2-Kassir, Ombor mudiri..."></div>
+    <div class="frow"><label class="flbl">Ismi</label><input class="fi" id="bz-contact-ism" value="${esc(k?.ism||'')}" placeholder="Ismi"></div>
+    <div class="frow"><label class="flbl">Tel raqami</label><input class="fi" id="bz-contact-tel" value="${esc(k?.tel||'+998')}" placeholder="+998..."></div>
+    <div class="fbtns"><button class="fsave" onclick="saveBaza415Contact('${id||''}')">Saqlash</button><button class="fcancel" onclick="renderBaza415Filial()">Bekor</button></div>
+  </div>`;
+  document.getElementById('bz-contact-rol').focus();
+}
+function saveBaza415Contact(id){
+  var f=getBaza415Filial(); if(!f)return;
+  var rol=document.getElementById('bz-contact-rol').value.trim();
+  var ism=document.getElementById('bz-contact-ism').value.trim();
+  var tel=document.getElementById('bz-contact-tel').value.trim();
+  if(!rol){notify('Lavozimni kiriting!');return;}
+  if(!f.kontaktlar)f.kontaktlar=[];
+  if(id){
+    var k=f.kontaktlar.find(x=>x.id===id);
+    if(k){ k.rol=rol; k.ism=ism; k.tel=tel; }
+  }else{
+    f.kontaktlar.push({id:'kt'+Date.now(), rol, ism, tel});
+  }
+  baza415Save(); notify('Saqlandi ✓'); renderBaza415Filial();
+}
+function baza415DelContact(id){
+  askConfirm("Kontaktni o'chirasizmi?",function(){
+    var f=getBaza415Filial(); if(!f)return;
+    f.kontaktlar=f.kontaktlar.filter(x=>x.id!==id);
+    baza415Save(); renderBaza415Filial(); notify("O'chirildi ✓");
+  });
+}
+
+// ---- Barcha restoran nomlari ro'yxati (Muammoli mijozlar formasi uchun) ----
+function baza415AllRestoranNomlari(){
+  return (baza415Db.restoranlar||[]).map(r=>r.nom).sort();
+}
+
 document.getElementById('logout-btn').addEventListener('click', function(){
   doLogoutAll();
 });
@@ -2231,34 +2790,80 @@ var BOLIM_IDS=['main','main2','main3'];
 var curBolim=0;
 var bolimTitles=["Support bo'limi","Support bo'limi 2","Support bo'limi 3"];
 
-var ENTRY_TITLE_DEFAULTS = {bolimlar:"Bo'limlar", org:"Org struktura", kaiten:"Kaiten", hujjatlar:"Hujjatlar", sekretar:"Sekretar"};
+var ENTRY_TITLE_DEFAULTS = {bolimlar:"Bo'limlar", org:"Org struktura", kaiten:"Kaiten", hujjatlar:"Hujjatlar", sekretar:"Sekretar", muammoli:"Muammoli mijozlar", baza415:"415 baza"};
 var entryTitles = Object.assign({}, ENTRY_TITLE_DEFAULTS);
+var ENTRY_CARD_DEFS={
+  bolimlar:{onclick:"goTo('p-entry2')"},
+  org:{onclick:"goTo('p-org')"},
+  kaiten:{onclick:"goTo('p-kaiten')", badge:true},
+  hujjatlar:{onclick:"goTo('p-hujjatlar')"},
+  sekretar:{onclick:"goTo('p-sekretar')"},
+  dashboard:{onclick:"goTo('p-dashboard')"},
+  muammoli:{onclick:"goTo('p-muammoli')"},
+  baza415:{onclick:"goTo('p-baza415')"}
+};
+var entryCardOrder=Object.keys(ENTRY_CARD_DEFS);
+function renderEntryCards(){
+  var grid=document.getElementById('entry-cards-grid');
+  if(!grid)return;
+  var order=entryCardOrder.filter(function(k){return ENTRY_CARD_DEFS[k];});
+  Object.keys(ENTRY_CARD_DEFS).forEach(function(k){ if(order.indexOf(k)===-1) order.push(k); });
+  var admin=(typeof isAdmin!=='undefined'&&isAdmin);
+  var h='';
+  order.forEach(function(key){
+    if(!hasPerm(key))return;
+    var def=ENTRY_CARD_DEFS[key];
+    var title=entryTitles[key]||ENTRY_TITLE_DEFAULTS[key]||key;
+    h+=`<div class="nav-card" id="card-${key}" data-key="${key}" onclick="${def.onclick}" ${admin?'draggable="true"':''}>
+      ${admin?`<div class="nav-card-drag" onclick="event.stopPropagation()"><span></span><span></span><span></span></div>`:''}
+      ${def.badge?`<span id="badge-${key}" class="nav-card-badge" style="display:none"></span>`:''}
+      <button class="entry-edit-btn" onclick="event.stopPropagation();entryEditTitle('${key}')" style="display:${admin?'':'none'}">✏</button>
+      <div class="nav-card-title" id="entry-title-${key}" style="margin-top:${admin?'20px':'4px'}">${esc(title)}</div>
+      <div class="nav-card-arrow">→</div>
+    </div>`;
+  });
+  grid.innerHTML=h;
+  if(admin){
+    initDrag(grid,()=>order.filter(k=>hasPerm(k)),arr=>{
+      // Faqat ko'ringan (ruxsat berilgan) kartalar orasida qayta tartiblanadi;
+      // ko'rinmaydiganlar oldingi joyida saqlanib qoladi.
+      var hidden=entryCardOrder.filter(k=>!hasPerm(k));
+      entryCardOrder=arr.concat(hidden);
+      entryTitlesSave();
+      renderEntryCards();
+    });
+    initTouchDrag(grid,()=>order.filter(k=>hasPerm(k)),arr=>{
+      var hidden=entryCardOrder.filter(k=>!hasPerm(k));
+      entryCardOrder=arr.concat(hidden);
+      entryTitlesSave();
+      renderEntryCards();
+    },'[draggable="true"]');
+  }
+  if(typeof refreshAllBadges==='function') refreshAllBadges();
+}
 async function entryTitlesLoad(){
   try{
     var r=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.entry_titles',{headers:SB_H});
     var rows=await r.json();
     if(rows&&rows.length&&rows[0].data&&rows[0].data.titles){
       entryTitles = Object.assign({}, ENTRY_TITLE_DEFAULTS, rows[0].data.titles);
+      if(rows[0].data.order&&rows[0].data.order.length) entryCardOrder=rows[0].data.order;
     } else {
-      try{await fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'entry_titles',data:{titles:entryTitles}})});}catch(e2){}
+      try{await fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'entry_titles',data:{titles:entryTitles,order:entryCardOrder}})});}catch(e2){}
     }
   }catch(e){}
   entryTitlesRender();
 }
 async function entryTitlesSave(){
-  try{await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.entry_titles',{method:'PATCH',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify({data:{titles:entryTitles}})}).then(function(r){return r.json();}).then(function(rows){
-    if(!rows||!rows.length){ fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'entry_titles',data:{titles:entryTitles}})}); }
+  try{await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.entry_titles',{method:'PATCH',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify({data:{titles:entryTitles,order:entryCardOrder}})}).then(function(r){return r.json();}).then(function(rows){
+    if(!rows||!rows.length){ fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'entry_titles',data:{titles:entryTitles,order:entryCardOrder}})}); }
   });}catch(e){}
 }
 function entryTitlesRender(){
+  if(typeof renderEntryCards==='function') renderEntryCards();
   Object.keys(entryTitles).forEach(function(key){
-    var navEl = document.getElementById('entry-title-'+key);
-    if(navEl) navEl.textContent = entryTitles[key];
     var pageEl = document.getElementById('page-title-'+key);
     if(pageEl) pageEl.textContent = entryTitles[key];
-  });
-  document.querySelectorAll('.entry-edit-btn').forEach(function(btn){
-    btn.style.display = (typeof isAdmin!=='undefined' && isAdmin) ? '' : 'none';
   });
 }
 function entryEditTitle(key){
@@ -2361,7 +2966,8 @@ function goTo(p){document.querySelectorAll('.page').forEach(x=>x.classList.remov
 function goBack(p){while(navStack[navStack.length-1]!==p&&navStack.length>1)navStack.pop();document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(p).classList.add('active');sirlyRender(p);updateLogoutBtn(p);window.scrollTo(0,0);}
 function updateLogoutBtn(p){document.getElementById('logout-btn').style.display=(p==='p-entry1')?'block':'none';}
 function sirlyRender(p){
-  if(p==='p-entry2'){
+  if(p==='p-entry1')renderEntryCards();
+  else if(p==='p-entry2'){
     renderBolimCards();
     bolimTitlesLoad().catch(function(){}).then(renderBolimCards);
   }
@@ -2378,6 +2984,11 @@ function sirlyRender(p){
   else if(p==='p-sekretar')renderSekretar();
   else if(p==='p-sekretar-arxiv')renderSekretarArchive();
   else if(p==='p-partnership-frame')renderPartnershipFrame();
+  else if(p==='p-muammoli')renderMuammoli();
+  else if(p==='p-muammoli-dashboard')renderMuammoliDashboard();
+  else if(p==='p-baza415')renderBaza415List();
+  else if(p==='p-baza415-restoran')renderBaza415Restoran();
+  else if(p==='p-baza415-filial')renderBaza415Filial();
   updateBc();
 }
 function updateBc(){
@@ -2715,7 +3326,7 @@ function kaitenFieldsHtml(prefix, task){
       +'</div>'
       +'<input class="fi" id="'+prefix+'-cname-'+i+'" value="'+esc(c.name||'')+'" placeholder="Ismi" style="margin-top:0;margin-bottom:4px">'
       +'<input class="fi" id="'+prefix+'-crole-'+i+'" value="'+esc(c.role||'')+'" placeholder="Lavozimi" style="margin-top:0;margin-bottom:4px">'
-      +'<input class="fi" id="'+prefix+'-ctel-'+i+'" value="'+esc(c.tel||'')+'" placeholder="Tel raqami" style="margin-top:0">'
+      +'<input class="fi" id="'+prefix+'-ctel-'+i+'" value="'+esc(c.tel||'+998')+'" placeholder="Tel raqami" style="margin-top:0">'
       +'</div>';
   }).join('');
   var files = task.files||[];
@@ -2782,7 +3393,7 @@ function kaitenAddContact(prefix){
   div.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-size:11px;color:var(--white-50)">'+(i+1)+'-kontakt</span><button class="abtn abtn-red" onclick="this.closest(\'[id]\').remove()" style="padding:2px 6px">\u2715</button></div>'
     +'<input class="fi" id="'+prefix+'-cname-'+i+'" placeholder="Ismi" style="margin-top:0;margin-bottom:4px">'
     +'<input class="fi" id="'+prefix+'-crole-'+i+'" placeholder="Lavozimi" style="margin-top:0;margin-bottom:4px">'
-    +'<input class="fi" id="'+prefix+'-ctel-'+i+'" placeholder="Tel raqami" style="margin-top:0">';
+    +'<input class="fi" id="'+prefix+'-ctel-'+i+'" value="+998" placeholder="Tel raqami" style="margin-top:0">';
   wrap.appendChild(div);
 }
 function kaitenRemoveContact(prefix,i){
@@ -2963,6 +3574,9 @@ function kaitenFallbackName(){
   var tgUser = tgGetUser();
   if(tgUser && tgUser.username) return '@'+tgUser.username;
   return CURRENT_USER_TG ? ('@'+CURRENT_USER_TG.replace(/^@/,'')) : (USER_ID||'Foydalanuvchi');
+}
+function sendGroupMessage(text){
+  fetch(SB_URL+'/rest/v1/bot_group_messages',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'gm'+Date.now()+'_'+Math.random().toString(36).slice(2,7), text:text, status:'pending'})}).catch(function(){});
 }
 function kaitenCreatorNameNow(){
   var fio = kaitenMyFio();
@@ -3371,6 +3985,8 @@ function sirlyStart(role){
   orgLoad().catch(function(){}).then(function(){ renderOrg(); });
   kaitenLoad().catch(function(){}).then(function(){ if(document.getElementById('p-kaiten').classList.contains('active')) renderKaiten(); kaitenSetupRealtime(); });
   sekretarLoad().catch(function(){});
+  muammoliLoad().catch(function(){});
+  baza415Load().catch(function(){});
   bolimTitlesLoad().catch(function(){}).then(function(){ if(document.getElementById('p-entry2').classList.contains('active')) renderBolimCards(); });
 }
 </script>
