@@ -2803,6 +2803,7 @@ var ENTRY_CARD_DEFS={
   baza415:{onclick:"goTo('p-baza415')"}
 };
 var entryCardOrder=Object.keys(ENTRY_CARD_DEFS);
+var entryCardColors={};
 function renderEntryCards(){
   var grid=document.getElementById('entry-cards-grid');
   if(!grid)return;
@@ -2814,12 +2815,18 @@ function renderEntryCards(){
     if(!hasPerm(key))return;
     var def=ENTRY_CARD_DEFS[key];
     var title=entryTitles[key]||ENTRY_TITLE_DEFAULTS[key]||key;
-    h+=`<div class="nav-card" id="card-${key}" data-key="${key}" onclick="${def.onclick}" ${admin?'draggable="true"':''}>
+    var color=entryCardColors[key];
+    var bgStyle=color?(color==='#ffffff'?';background:#ffffff':';background:'+color):'';
+    var textStyle=color==='#ffffff'?';color:#16573a':'';
+    h+=`<div class="nav-card${color==='#ffffff'?' org-white-dots':''}" id="card-${key}" data-key="${key}" style="${bgStyle}${textStyle}" onclick="${def.onclick}" ${admin?'draggable="true"':''}>
       ${admin?`<div class="nav-card-drag" onclick="event.stopPropagation()"><span></span><span></span><span></span></div>`:''}
       ${def.badge?`<span id="badge-${key}" class="nav-card-badge" style="display:none"></span>`:''}
-      <button class="entry-edit-btn" onclick="event.stopPropagation();entryEditTitle('${key}')" style="display:${admin?'':'none'}">✏</button>
-      <div class="nav-card-title" id="entry-title-${key}" style="margin-top:${admin?'20px':'4px'}">${esc(title)}</div>
-      <div class="nav-card-arrow">→</div>
+      ${admin?`<div class="nav-card-actions" onclick="event.stopPropagation()" style="opacity:1">
+        <button class="abtn" onclick="entryEditTitle('${key}')" style="${color==='#ffffff'?'border-color:rgba(22,87,58,0.15);background:rgba(22,87,58,0.06);color:#16573a':''}">✏</button>
+        <button class="abtn" onclick="entryOpenColorPicker('${key}')" style="${color==='#ffffff'?'border-color:rgba(22,87,58,0.15);background:rgba(22,87,58,0.06);color:#16573a':''}">🎨</button>
+      </div>`:''}
+      <div class="nav-card-title" id="entry-title-${key}" style="margin-top:${admin?'20px':'4px'}${textStyle}">${esc(title)}</div>
+      <div class="nav-card-arrow" style="${color==='#ffffff'?'color:#1e7a4a':''}">→</div>
     </div>`;
   });
   grid.innerHTML=h;
@@ -2848,15 +2855,16 @@ async function entryTitlesLoad(){
     if(rows&&rows.length&&rows[0].data&&rows[0].data.titles){
       entryTitles = Object.assign({}, ENTRY_TITLE_DEFAULTS, rows[0].data.titles);
       if(rows[0].data.order&&rows[0].data.order.length) entryCardOrder=rows[0].data.order;
+      if(rows[0].data.colors) entryCardColors=rows[0].data.colors;
     } else {
-      try{await fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'entry_titles',data:{titles:entryTitles,order:entryCardOrder}})});}catch(e2){}
+      try{await fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'entry_titles',data:{titles:entryTitles,order:entryCardOrder,colors:entryCardColors}})});}catch(e2){}
     }
   }catch(e){}
   entryTitlesRender();
 }
 async function entryTitlesSave(){
-  try{await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.entry_titles',{method:'PATCH',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify({data:{titles:entryTitles,order:entryCardOrder}})}).then(function(r){return r.json();}).then(function(rows){
-    if(!rows||!rows.length){ fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'entry_titles',data:{titles:entryTitles,order:entryCardOrder}})}); }
+  try{await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.entry_titles',{method:'PATCH',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify({data:{titles:entryTitles,order:entryCardOrder,colors:entryCardColors}})}).then(function(r){return r.json();}).then(function(rows){
+    if(!rows||!rows.length){ fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'entry_titles',data:{titles:entryTitles,order:entryCardOrder,colors:entryCardColors}})}); }
   });}catch(e){}
 }
 function entryTitlesRender(){
@@ -2884,6 +2892,28 @@ function entrySaveTitle(key){
   entryTitles[key] = val;
   entryTitlesSave();
   entryTitlesRender();
+  orgCloseModal();
+  notify('Saqlandi ✓');
+}
+function entryOpenColorPicker(key){
+  var current=entryCardColors[key];
+  var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">Karta rangi</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="entrySetColor('${key}','#7f1d1d')" style="flex:1;padding:14px;border:none;border-radius:10px;background:#7f1d1d;color:white;cursor:pointer;font-weight:600">Qizil</button>
+      <button onclick="entrySetColor('${key}','#713f12')" style="flex:1;padding:14px;border:none;border-radius:10px;background:#713f12;color:white;cursor:pointer;font-weight:600">Sariq</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button onclick="entrySetColor('${key}','#1e3a5f')" style="flex:1;padding:14px;border:none;border-radius:10px;background:#1e3a5f;color:white;cursor:pointer;font-weight:600">Ko'k</button>
+      <button onclick="entrySetColor('${key}','#ffffff')" style="flex:1;padding:14px;border:1px solid #ddd;border-radius:10px;background:#ffffff;color:#16573a;cursor:pointer;font-weight:600">Oq</button>
+    </div>
+    ${current?`<button class="fcancel" style="width:100%;margin-top:10px" onclick="entrySetColor('${key}','')">✕ Rangni olib tashlash</button>`:''}
+    <button class="fcancel" style="width:100%;margin-top:8px" onclick="orgCloseModal()">Yopish</button>`;
+  orgShowModal(html);
+}
+function entrySetColor(key,color){
+  if(color)entryCardColors[key]=color; else delete entryCardColors[key];
+  entryTitlesSave();
+  renderEntryCards();
   orgCloseModal();
   notify('Saqlandi ✓');
 }
