@@ -32,7 +32,7 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 #  pastdagi os.environ.get(...) orqali Variables bilan ustidan
 #  yozib qo'yish ham mumkin — hozircha shart emas)
 # ============================================================
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "8693834890:AAHgdy4LkMH6zVgnky2rFVoeoxCpmzsRdMM")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "8693834890:AAFE_y-TEw5mJ-j9lVXAbhUn8-u5qPf-H3o")
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://qtrniovpkrwimeohamkc.supabase.co").rstrip("/")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0cm5pb3Zwa3J3aW1lb2hhbWtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMTY4NjUsImV4cCI6MjA5NjU5Mjg2NX0.j4gUqZlqMHR0ltIMCDB-UfWPvuPVs9B9HF0If2fPxhU")
 GROUP_CHAT_ID = int(os.environ.get("GROUP_CHAT_ID", "-5531952742"))
@@ -126,10 +126,9 @@ async def process_group_messages(app: Application) -> None:
             if not text.strip():
                 await sb_patch("bot_group_messages", row_id, {"status": "failed"})
                 continue
-            target_chat_id = row.get("chat_id") or GROUP_CHAT_ID
-            await app.bot.send_message(chat_id=target_chat_id, text=text)
+            await app.bot.send_message(chat_id=GROUP_CHAT_ID, text=text)
             await sb_patch("bot_group_messages", row_id, {"status": "sent"})
-            log.info("Guruhga yuborildi: %s -> chat_id=%s", row_id, target_chat_id)
+            log.info("Guruhga yuborildi: %s", row_id)
         except Exception as e:
             log.error("Guruhga yuborishda xato (%s): %s", row_id, e)
             try:
