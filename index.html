@@ -2474,24 +2474,23 @@ function muammoliCard(it){
       <div class="mm-restoran">${esc(it.restoran||'—')}${overdue?' ⚠️':''}</div>
       <span class="mm-badge ${isHal?'mm-badge-hal':'mm-badge-ochiq'}">${isHal?'Hal qilindi':'Ochiq'}</span>
     </div>
+    <div class="mm-row" style="font-size:11px;color:#9a9588">${it.createdByName?'Yaratdi: '+esc(it.createdByName)+' · ':''}${muammoliFormatDate(it.createdAt)}</div>
     ${muammoliContactsHtml(it)}
-    ${it.createdByName?`<div class="mm-row" style="font-size:11px;color:#9a9588">Yaratdi: ${esc(it.createdByName)}</div>`:''}
     <div class="mm-row"><span class="mm-lbl">Mijoz:</span> ${esc(it.ism||'—')}${it.tel?' · <a href="tel:'+esc(it.tel.replace(/[^\d+]/g,''))+'" style="color:#1e7a4a;font-weight:700;text-decoration:none">📞 '+esc(it.tel)+'</a> <button onclick="copyToClipboard(\''+esc(it.tel).replace(/'/g,"\\'")+'\')" style="border:1px solid #ddd9cc;background:#f3f1ec;border-radius:6px;width:22px;height:22px;font-size:11px;cursor:pointer;vertical-align:middle">📋</button>':''}</div>
     <div><span class="mm-turi">${esc(it.turi||'Boshqa')}</span></div>
-    <div class="mm-row" style="margin-top:2px;cursor:pointer" onclick="muammoliOpenHolatModal('${it.id}')">
-      <span class="mm-lbl">Buyurtma holati:</span> ${it.buyurtmaHolati?esc(it.buyurtmaHolati):'<span style="color:#9a9588">tanlanmagan (bosing)</span>'} ✏
-    </div>
-    ${it.kvitansiyaRasm?`<div style="margin-top:4px"><a href="${esc(it.kvitansiyaRasm)}" target="_blank" style="font-size:12px;color:#1e7a4a;text-decoration:none">🧾 Kvitansiyani ko'rish</a></div>`:''}
     ${it.izoh?`<div class="mm-izoh">${esc(it.izoh)}</div>`:''}
-    <div style="display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer" onclick="muammoliToggleXabar('${it.id}')">
+    <div style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer" onclick="muammoliToggleXabar('${it.id}')">
       <span style="width:18px;height:18px;border-radius:4px;border:1.5px solid #b8b3a3;display:flex;align-items:center;justify-content:center;background:${it.xabarBerildi?'#1e7a4a':'transparent'};color:#fff;font-size:11px;flex-shrink:0">${it.xabarBerildi?'✓':''}</span>
       <span style="font-size:12px;color:#5a574f;font-weight:600">Restoranga xabar berildi</span>
     </div>
     ${it.xabarBerildi&&it.restoranJavobi?`<div class="mm-izoh" style="background:rgba(30,122,74,0.08);border-left:3px solid #1e7a4a"><b>Restoran javobi:</b> ${esc(it.restoranJavobi)}</div>`:''}
-    ${isHal?`<div class="mm-row" style="font-size:11px;color:#1e7a4a;font-weight:600">Hal qildi: ${esc(it.halQildiBy||'—')} · ${muammoliFormatDateTime(it.halQildiAt)}</div>`:''}
+    <div class="mm-row" style="margin-top:8px;cursor:pointer" onclick="muammoliOpenHolatModal('${it.id}')">
+      <span class="mm-lbl">Buyurtma holati:</span> ${it.buyurtmaHolati?esc(it.buyurtmaHolati):'<span style="color:#9a9588">tanlanmagan (bosing)</span>'} ✏
+    </div>
+    ${it.kvitansiyaRasm?`<div style="margin-top:4px"><a href="${esc(it.kvitansiyaRasm)}" target="_blank" style="font-size:12px;color:#1e7a4a;text-decoration:none">🧾 Kvitansiyani ko'rish</a></div>`:''}
+    ${isHal?`<div class="mm-row" style="font-size:11px;color:#1e7a4a;font-weight:600;margin-top:8px">Hal qildi: ${esc(it.halQildiBy||'—')} · ${muammoliFormatDateTime(it.halQildiAt)}</div>`:''}
     ${isHal&&it.yechimIzohi?`<div class="mm-izoh" style="background:rgba(30,122,74,0.08)"><b>Yechim:</b> ${esc(it.yechimIzohi)}</div>`:''}
-    <div class="mm-row" style="font-size:11px;color:#8b877c">${muammoliFormatDate(it.createdAt)}</div>
-    <div class="mm-btns">
+    <div class="mm-btns" style="margin-top:8px">
       <button class="sek-abtn" onclick="muammoliToggleStatus('${it.id}')">${isHal?'↩ Qayta ochish':'✓ Hal qilindi'}</button>
       <button class="sek-abtn" onclick="showMuammoliForm('${it.id}')">Tahrirlash</button>
       <button class="sek-abtn sek-abtn-red" onclick="muammoliDelete('${it.id}')">Arxivga</button>
