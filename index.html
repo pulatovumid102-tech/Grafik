@@ -2320,15 +2320,21 @@ async function muammoliLoad(){
     if(rows&&rows.length&&rows[0].data){
       muammoliDb=rows[0].data;
       if(!muammoliDb.items)muammoliDb.items=[];
+      if(!muammoliDb.turlar||!muammoliDb.turlar.length)muammoliDb.turlar=MUAMMOLI_TURLARI.slice();
     }else{
       var d=localStorage.getItem('muammoli_mijozlar');
-      muammoliDb=d?JSON.parse(d):{items:[]};
+      muammoliDb=d?JSON.parse(d):{items:[],turlar:MUAMMOLI_TURLARI.slice()};
+      if(!muammoliDb.turlar||!muammoliDb.turlar.length)muammoliDb.turlar=MUAMMOLI_TURLARI.slice();
       try{await fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'muammoli_mijozlar',data:muammoliDb})});}catch(e2){}
     }
   }catch(e){
     var d=localStorage.getItem('muammoli_mijozlar');
-    muammoliDb=d?JSON.parse(d):{items:[]};
+    muammoliDb=d?JSON.parse(d):{items:[],turlar:MUAMMOLI_TURLARI.slice()};
+    if(!muammoliDb.turlar||!muammoliDb.turlar.length)muammoliDb.turlar=MUAMMOLI_TURLARI.slice();
   }
+}
+function muammoliGetTurlar(){
+  return (muammoliDb.turlar&&muammoliDb.turlar.length?muammoliDb.turlar:MUAMMOLI_TURLARI).slice().sort((a,b)=>a.localeCompare(b,'uz'));
 }
 function muammoliSetFilter(f){ muammoliFilter=f; renderMuammoli(); }
 function renderMuammoliFilter(){
@@ -2565,7 +2571,10 @@ function showMuammoliForm(id){
 }
 function muammoliRefreshForm(){
   var d=muammoliDraft;
-  var turiOptions=MUAMMOLI_TURLARI.map(t=>`<option value="${esc(t)}" ${d.turi===t?'selected':''}>${esc(t)}</option>`).join('');
+  var turlar=muammoliGetTurlar();
+  var isCustomTuri=d.turi&&!turlar.includes(d.turi);
+  var turiOptions=turlar.map(t=>`<option value="${esc(t)}" ${d.turi===t?'selected':''}>${esc(t)}</option>`).join('')
+    +`<option value="__yangi__" ${isCustomTuri?'selected':''}>＋ Yangi tur qo'shish...</option>`;
   document.getElementById('muammoli-form').innerHTML=`<div class="form-box fade">
     <div class="frow" style="position:relative">
       <label class="flbl">Restoran nomi</label>
@@ -2574,13 +2583,28 @@ function muammoliRefreshForm(){
     </div>
     <div class="frow"><label class="flbl">Mijoz ismi</label><input class="fi" id="mm-ism" value="${esc(d.ism||'')}" placeholder="Mijozning ismi"></div>
     <div class="frow"><label class="flbl">Mijoz raqami</label><input class="fi" id="mm-tel" value="${esc(d.tel||'+998')}" placeholder="+998..."></div>
-    <div class="frow"><label class="flbl">Murojaat turi</label><select class="fi" id="mm-turi">${turiOptions}</select></div>
+    <div class="frow">
+      <label class="flbl">Murojaat turi</label>
+      <select class="fi" id="mm-turi" onchange="mmTuriChanged()">${turiOptions}</select>
+      <input class="fi" id="mm-turi-yangi" value="${isCustomTuri?esc(d.turi):''}" placeholder="Yangi tur nomi..." style="${isCustomTuri?'':'display:none'};margin-top:8px">
+    </div>
     <div class="frow"><label class="flbl">Izoh</label><textarea class="fi" id="mm-izoh" style="min-height:70px;resize:vertical">${esc(d.izoh||'')}</textarea></div>
     <div class="fbtns"><button class="fsave" onclick="saveMuammoliForm()">Saqlash</button><button class="fcancel" onclick="renderMuammoli()">Bekor</button></div>
   </div>`;
   document.getElementById('mm-restoran').focus();
   document.removeEventListener('click', mmRestoranOutsideClick);
   document.addEventListener('click', mmRestoranOutsideClick);
+}
+function mmTuriChanged(){
+  var sel=document.getElementById('mm-turi');
+  var inp=document.getElementById('mm-turi-yangi');
+  if(!sel||!inp)return;
+  if(sel.value==='__yangi__'){
+    inp.style.display='';
+    inp.focus();
+  }else{
+    inp.style.display='none';
+  }
 }
 function mmRestoranOutsideClick(e){
   var wrap=document.getElementById('mm-restoran-dropdown');
@@ -2616,7 +2640,16 @@ function saveMuammoliForm(){
   var restoran=document.getElementById('mm-restoran').value.trim();
   var ism=document.getElementById('mm-ism').value.trim();
   var tel=document.getElementById('mm-tel').value.trim();
-  var turi=document.getElementById('mm-turi').value;
+  var turiSel=document.getElementById('mm-turi').value;
+  var turi=turiSel;
+  if(turiSel==='__yangi__'){
+    turi=document.getElementById('mm-turi-yangi').value.trim();
+    if(!turi){notify('Yangi tur nomini kiriting!');return;}
+    if(!muammoliDb.turlar)muammoliDb.turlar=MUAMMOLI_TURLARI.slice();
+    if(!muammoliDb.turlar.some(t=>t.toLowerCase()===turi.toLowerCase())){
+      muammoliDb.turlar.push(turi);
+    }
+  }
   var izoh=document.getElementById('mm-izoh').value.trim();
   if(!restoran){notify('Restoran nomini kiriting!');return;}
   if(!baza415AllRestoranNomlari().includes(restoran)){notify("Restoran 415 baza ro'yxatidan tanlanishi kerak!");return;}
