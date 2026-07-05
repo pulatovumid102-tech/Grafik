@@ -3246,7 +3246,7 @@ function renderBaza415List(){
   var filtered=q?list.filter(r=>r.nom.toLowerCase().includes(q)):list;
   var h=filtered.map(function(r,i){
     var filialSoni=(r.filiallar||[]).length;
-    var hint=filialSoni===1?'':(filialSoni+' ta filial');
+    var hint=(filialSoni===0||filialSoni===1)?'':(filialSoni+' ta filial');
     return `<div class="section-item" onclick="openBaza415Rest('${r.id}')">
       <div style="display:flex;align-items:center;flex:1;min-width:0">
         <div class="section-num">${String(i+1).padStart(2,'0')}</div>
