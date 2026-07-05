@@ -2352,6 +2352,9 @@ var MUAMMOLI_SABABCHI_ICHKI=["Texnik bo'lim",'Buxgalteriya','Boshqa'];
 var MUAMMOLI_BUYURTMA_HOLATLARI=['Buyurtma bekor qilindi, pul qaytarildi','Promokod berildi'];
 var MUAMMOLI_MUDDAT_SOAT=24;
 var MUAMMOLI_TOLOV_SOM=5000;
+var MUAMMOLI_GROUP_RESTORAN=-5467968653;
+var MUAMMOLI_GROUP_TEXNIK=-5264364602;
+var MUAMMOLI_GROUP_BUXGALTERIYA=-1003267096591;
 async function muammoliSave(){
   try{await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.muammoli_mijozlar',{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({data:muammoliDb})});}
   catch(e){localStorage.setItem('muammoli_mijozlar',JSON.stringify(muammoliDb));}
@@ -3077,22 +3080,38 @@ function saveMuammoliForm(){
     muammoliDraft.toLov=MUAMMOLI_TOLOV_SOM;
     muammoliDb.items.push(muammoliDraft);
     if(isHamkor){
-      sendGroupMessage(
-        '🤝 YANGI HAMKOR SO\'ROVI\n'+
+      var mainMsgH='🤝 YANGI HAMKOR SO\'ROVI\n'+
         '👤 Qabul qildi: '+muammoliDraft.createdByName+'\n'+
         '🏪 Restoran: '+muammoliDraft.restoran+'\n'+
         '📋 Turi: '+turi+'\n'+
-        '📝 Izoh: '+(izoh||'—')
-      );
+        '📝 Izoh: '+(izoh||'—');
+      sendGroupMessage(mainMsgH);
+      if(muammoliDraft.sababchiBolim==='Texnik bo\'lim'){
+        sendGroupMessage(mainMsgH,MUAMMOLI_GROUP_TEXNIK);
+      }else if(muammoliDraft.sababchiBolim==='Buxgalteriya'){
+        sendGroupMessage(mainMsgH,MUAMMOLI_GROUP_BUXGALTERIYA);
+      }
     }else{
-      sendGroupMessage(
-        '⚠️ YANGI MUROJAAT\n'+
+      var mainMsg='⚠️ YANGI MUROJAAT\n'+
         '👤 Qabul qildi: '+muammoliDraft.createdByName+'\n'+
         '🏪 Sababchi: '+(muammoliDraft.restoran||muammoliDraft.sababchiIchki||'—')+'\n'+
         '🙋 Mijoz: '+muammoliDraft.ism+(muammoliDraft.tel?' ('+muammoliDraft.tel+')':'')+'\n'+
         '📋 Turi: '+turi+'\n'+
-        '📝 Izoh: '+(izoh||'—')
-      );
+        '📝 Izoh: '+(izoh||'—');
+      sendGroupMessage(mainMsg);
+      if(muammoliDraft.restoran){
+        sendGroupMessage(
+          '⚠️ QOIDABUZARLIK OGOHLANTIRISHI\n'+
+          '🏪 Restoran: '+muammoliDraft.restoran+'\n'+
+          '📋 Turi: '+turi+'\n'+
+          '📝 Tafsilot: '+(izoh||'—'),
+          MUAMMOLI_GROUP_RESTORAN
+        );
+      }else if(muammoliDraft.sababchiIchki==='Texnik bo\'lim'){
+        sendGroupMessage(mainMsg,MUAMMOLI_GROUP_TEXNIK);
+      }else if(muammoliDraft.sababchiIchki==='Buxgalteriya'){
+        sendGroupMessage(mainMsg,MUAMMOLI_GROUP_BUXGALTERIYA);
+      }
     }
   }
   muammoliSave(); notify('Saqlandi ✓'); renderMuammoli();
@@ -3811,6 +3830,27 @@ async function acadSave(){
   try{await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.'+key,{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({data:acadDb})});}
   catch(e){localStorage.setItem(ACAD_KEY+'_'+key,JSON.stringify(acadDb));}
 }
+function acadMigrateFlattenCats(){
+  var changed=false;
+  (acadDb.sections||[]).forEach(function(sec){
+    if(sec.cats&&sec.cats.length){
+      var flatItems=sec.items?sec.items.slice():[];
+      var introFallback=sec.intro;
+      sec.cats.forEach(function(cat){
+        (cat.items||[]).forEach(function(it){ flatItems.push(it); });
+        if(!introFallback&&cat.intro) introFallback=cat.intro;
+      });
+      sec.items=flatItems;
+      if(introFallback&&!sec.intro) sec.intro=introFallback;
+      delete sec.cats;
+      changed=true;
+    } else if(!sec.items){
+      sec.items=[];
+      changed=true;
+    }
+  });
+  return changed;
+}
 async function acadLoad(){
   var key=ACAD_IDS[curBolim];
   try{
@@ -3828,22 +3868,100 @@ async function acadLoad(){
     acadDb=d?JSON.parse(d):{sections:[]};
     if(key==='academy'&&!d){var old=localStorage.getItem(ACAD_KEY);if(old)acadDb=JSON.parse(old);}
   }
+  if(acadMigrateFlattenCats()) acadSave();
 }
 
 function formatAcadText(t){if(!t)return '';var s=esc(t);s=s.split('**').map((p,i)=>i%2===1?'<b>'+p+'</b>':p).join('');var lines=s.split('\n');var out=[],inList=false;lines.forEach(line=>{if(line.startsWith('* ')){if(!inList){out.push('<ul>');inList=true;}out.push('<li>'+line.slice(2)+'</li>');}else{if(inList){out.push('</ul>');inList=false;}out.push(line?(line+'<br>'):'<br>');}});if(inList)out.push('</ul>');return out.join('');}
-function openAcadSection(id){curAcadSec=id;curAcadCat=null;curAcadItem=null;goTo('p-acad-cats');}
-function renderAcadCats(){var sec=acadDb.sections.find(s=>s.id===curAcadSec);if(!sec)return;document.getElementById('acad-sec-title').textContent=sec.title;var q=(document.getElementById('search-acad-cats')?.value||'').trim().toLowerCase();var allCats=sec.cats||[];var cats=q?allCats.filter(c=>c.title.toLowerCase().includes(q)):allCats;var h='';cats.forEach((cat,i)=>{h+=`<div class="section-item" onclick="openAcadCat('${cat.id}')" ${(isAdmin&&!q)?'draggable="true"':''}><div style="display:flex;align-items:center;flex:1;min-width:0">${(isAdmin&&!q)?`<div class="drag-handle" onclick="event.stopPropagation()"><span></span><span></span><span></span></div>`:''}<div class="section-num">${String(i+1).padStart(2,'00')}</div><div style="min-width:0"><div class="section-name">${esc(cat.title)}</div>${cat.intro?`<div style="font-size:11px;color:var(--white-50);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(cat.intro.substring(0,60))}${cat.intro.length>60?'...':''}</div>`:''}</div></div><div style="display:flex;align-items:center;gap:6px;flex-shrink:0">${isAdmin?`<div class="action-btns"><button class="abtn" onclick="event.stopPropagation();showAcadCatForm('${curAcadSec}','${cat.id}')">✏</button><button class="abtn abtn-red" onclick="event.stopPropagation();delAcadCat('${curAcadSec}','${cat.id}')">✕</button></div>`:''}<span class="chevron">›</span></div></div>`;});if(!cats.length)h=`<div style="text-align:center;padding:32px;color:var(--white-50);font-size:13px">${q?'Topilmadi':"Kategoriyalar yo'q"}</div>`;document.getElementById('acad-cats-list').innerHTML=h;if(isAdmin){document.getElementById('acad-cats-form').innerHTML=`<button class="add-item-btn" onclick="showAcadCatForm('${curAcadSec}')">＋ Kategoriya qo'shish</button>`;if(!q){var listEl=document.getElementById('acad-cats-list');initDrag(listEl,()=>sec.cats,arr=>{sec.cats=arr;acadSave();renderAcadCats();});initTouchDrag(listEl,()=>sec.cats,arr=>{sec.cats=arr;acadSave();renderAcadCats();});}}else document.getElementById('acad-cats-form').innerHTML='';updateAcadBc();}
-function openAcadCat(id){curAcadCat=id;curAcadItem=null;goTo('p-acad-items');}
-function renderAcadItems(){var sec=acadDb.sections.find(s=>s.id===curAcadSec);if(!sec)return;var cat=sec.cats.find(c=>c.id===curAcadCat);if(!cat)return;document.getElementById('acad-cat-title').textContent=cat.title;var introBox=document.getElementById('acad-cat-intro-box');introBox.innerHTML=cat.intro?`<div class="acad-intro">${formatAcadText(cat.intro)}</div>`:'';var h='';(cat.items||[]).forEach((item,i)=>{h+=`<div class="section-item" onclick="openAcadItem('${item.id}')" ${isAdmin?'draggable="true"':''}><div style="display:flex;align-items:center;flex:1;min-width:0">${isAdmin?`<div class="drag-handle" onclick="event.stopPropagation()"><span></span><span></span><span></span></div>`:''}<div class="section-num">${String(i+1).padStart(2,'00')}</div><div class="section-name">${esc(item.title)}</div></div><div style="display:flex;align-items:center;gap:6px;flex-shrink:0">${isAdmin?`<div class="action-btns"><button class="abtn" onclick="event.stopPropagation();showAcadItemForm('${curAcadSec}','${curAcadCat}','${item.id}')">✏</button><button class="abtn abtn-red" onclick="event.stopPropagation();delAcadItem('${curAcadSec}','${curAcadCat}','${item.id}')">✕</button></div>`:''}<span class="chevron">›</span></div></div>`;});if(!cat.items||!cat.items.length)h='<div style="text-align:center;padding:32px;color:var(--white-50);font-size:13px">Mavzular yo\'q</div>';document.getElementById('acad-items-list').innerHTML=h;if(isAdmin){document.getElementById('acad-items-form').innerHTML=`<button class="add-item-btn" onclick="showAcadItemForm('${curAcadSec}','${curAcadCat}')">＋ Mavzu qo'shish</button>`;var listEl=document.getElementById('acad-items-list');initDrag(listEl,()=>cat.items,arr=>{cat.items=arr;acadSave();renderAcadItems();});initTouchDrag(listEl,()=>cat.items,arr=>{cat.items=arr;acadSave();renderAcadItems();});}else document.getElementById('acad-items-form').innerHTML='';updateAcadBc();}
+function openAcadSection(id){curAcadSec=id;curAcadItem=null;goTo('p-acad-items');}
+function renderAcadItems(){
+  var sec=acadDb.sections.find(s=>s.id===curAcadSec);if(!sec)return;
+  document.getElementById('acad-cat-title').textContent=sec.title;
+  var introBox=document.getElementById('acad-cat-intro-box');
+  introBox.innerHTML=`${sec.intro?`<div class="acad-intro">${formatAcadText(sec.intro)}</div>`:''}${isAdmin?`<button class="abtn" style="margin-bottom:10px" onclick="showAcadIntroForm('${sec.id}')">✏ Kirish matni</button>`:''}<div id="acad-intro-form"></div>`;
+  var items=sec.items||[];
+  var h='';
+  items.forEach((item,i)=>{
+    h+=`<div class="section-item" onclick="openAcadItem('${item.id}')" ${isAdmin?'draggable="true"':''}><div style="display:flex;align-items:center;flex:1;min-width:0">${isAdmin?`<div class="drag-handle" onclick="event.stopPropagation()"><span></span><span></span><span></span></div>`:''}<div class="section-num">${String(i+1).padStart(2,'00')}</div><div class="section-name">${esc(item.title)}</div></div><div style="display:flex;align-items:center;gap:6px;flex-shrink:0">${isAdmin?`<div class="action-btns"><button class="abtn" onclick="event.stopPropagation();showAcadItemForm('${curAcadSec}','${item.id}')">✏</button><button class="abtn abtn-red" onclick="event.stopPropagation();delAcadItem('${curAcadSec}','${item.id}')">✕</button></div>`:''}<span class="chevron">›</span></div></div>`;
+  });
+  if(!items.length)h='<div style="text-align:center;padding:32px;color:var(--white-50);font-size:13px">Mavzular yo\'q</div>';
+  document.getElementById('acad-items-list').innerHTML=h;
+  if(isAdmin){
+    document.getElementById('acad-items-form').innerHTML=`<button class="add-item-btn" onclick="showAcadItemForm('${curAcadSec}')">＋ Mavzu qo'shish</button>`;
+    var listEl=document.getElementById('acad-items-list');
+    initDrag(listEl,()=>sec.items,arr=>{sec.items=arr;acadSave();renderAcadItems();});
+    initTouchDrag(listEl,()=>sec.items,arr=>{sec.items=arr;acadSave();renderAcadItems();});
+  }else document.getElementById('acad-items-form').innerHTML='';
+  updateAcadBc();
+}
+function showAcadIntroForm(secId){
+  var sec=acadDb.sections.find(s=>s.id===secId);if(!sec)return;
+  document.getElementById('acad-intro-form').innerHTML=`<div class="form-box fade"><div class="frow"><label class="flbl">Kirish matni</label><textarea class="fi" id="aif-intro" style="min-height:80px;resize:vertical" placeholder="Bu bo'limda nima o'rganiladi...">${esc(sec.intro||'')}</textarea></div><div class="fbtns"><button class="fsave" onclick="saveAcadIntro('${secId}')">Saqlash</button><button class="fcancel" onclick="renderAcadItems()">Bekor</button></div></div>`;
+  document.getElementById('aif-intro').focus();
+}
+function saveAcadIntro(secId){
+  var sec=acadDb.sections.find(s=>s.id===secId);if(!sec)return;
+  sec.intro=document.getElementById('aif-intro').value.trim();
+  acadSave();notify('Saqlandi ✓');renderAcadItems();
+}
 function openAcadItem(id){curAcadItem=id;goTo('p-acad-detail');}
-function renderAcadDetail(){var sec=acadDb.sections.find(s=>s.id===curAcadSec);if(!sec)return;var cat=sec.cats.find(c=>c.id===curAcadCat);if(!cat)return;var item=cat.items.find(i=>i.id===curAcadItem);if(!item)return;document.getElementById('acad-item-title').textContent=item.title;var h='';if(item.standard)h+=`<div class="acad-section-block"><div class="acad-section-label acad-label-standard">Standart</div><div class="acad-content">${formatAcadText(item.standard)}</div></div>`;if(item.violation)h+=`<div class="acad-section-block"><div class="acad-section-label acad-label-violation">Qoidabuzarlik</div><div class="acad-content">${formatAcadText(item.violation)}</div></div>`;if(item.decision)h+=`<div class="acad-section-block"><div class="acad-section-label acad-label-decision">Qaror va harakat</div><div class="acad-content">${formatAcadText(item.decision)}</div></div>`;if(!item.standard&&!item.violation&&!item.decision&&item.content)h+=`<div class="acad-content" style="padding:4px 0;line-height:1.9;font-size:14px">${formatAcadText(item.content)}</div>`;if(isAdmin)h+=`<div style="margin-top:16px"><button class="fsave" onclick="showAcadItemForm('${curAcadSec}','${curAcadCat}','${item.id}',true)">✏ Tahrirlash</button></div><div id="acad-detail-form" style="margin-top:8px"></div>`;document.getElementById('acad-detail-body').innerHTML=h;updateAcadBc();}
-function updateAcadBc(){var sec=acadDb.sections.find(s=>s.id===curAcadSec);var cat=sec?.cats?.find(c=>c.id===curAcadCat);var item=cat?.items?.find(i=>i.id===curAcadItem);var pages=['p-acad-cats','p-acad-items','p-acad-detail'];var titles={'p-home':'Bosh sahifa','p-acad-cats':sec?.title||'','p-acad-items':cat?.title||'','p-acad-detail':item?.title||''};pages.forEach(p=>{var el=document.getElementById('bc-'+p.replace('p-',''));if(!el)return;var stack=['p-home',...pages.slice(0,pages.indexOf(p)+1)];var html='';stack.forEach((pp,ii)=>{if(ii<stack.length-1)html+=`<span class="bc-item" onclick="goBack('${pp}')">${titles[pp]}</span><span class="bc-sep">›</span>`;else html+=`<span class="bc-cur">${titles[pp]}</span>`;});el.innerHTML=html;});}
-function showAcadCatForm(secId,catId){var sec=acadDb.sections.find(s=>s.id===secId);var cat=catId?sec?.cats.find(c=>c.id===catId):null;document.getElementById('acad-cats-form').innerHTML=`<div class="form-box fade"><div class="frow"><label class="flbl">Kategoriya nomi</label><input class="fi" id="acf-title" value="${esc(cat?.title||'')}" placeholder="Kategoriya nomi..."></div><div class="frow"><label class="flbl">Kirish matni</label><textarea class="fi" id="acf-intro" style="min-height:80px;resize:vertical" placeholder="Bu bo'limda nima o'rganiladi...">${esc(cat?.intro||'')}</textarea></div><div class="fbtns"><button class="fsave" onclick="saveAcadCat('${secId}','${catId||''}')">Saqlash</button><button class="fcancel" onclick="renderAcadCats()">Bekor</button></div></div>`;document.getElementById('acf-title').focus();}
-function saveAcadCat(secId,catId){var sec=acadDb.sections.find(s=>s.id===secId);if(!sec)return;var title=document.getElementById('acf-title').value.trim();var intro=document.getElementById('acf-intro').value.trim();if(!title){notify('Nom kiriting!');return;}if(!sec.cats)sec.cats=[];if(catId){var c=sec.cats.find(x=>x.id===catId);if(c){c.title=title;c.intro=intro;}}else sec.cats.push({id:'ac'+Date.now(),title,intro,items:[]});acadSave();notify('Saqlandi ✓');renderAcadCats();}
-function delAcadCat(secId,catId){askConfirm("Kategoriyani o'chirasizmi?",()=>{var sec=acadDb.sections.find(s=>s.id===secId);if(!sec)return;sec.cats=sec.cats.filter(c=>c.id!==catId);acadSave();notify("O'chirildi ✓");renderAcadCats();});}
-function showAcadItemForm(secId,catId,itemId,inDetail){var sec=acadDb.sections.find(s=>s.id===secId);var cat=sec?.cats.find(c=>c.id===catId);var item=itemId?cat?.items.find(i=>i.id===itemId):null;var containerId=inDetail?'acad-detail-form':'acad-items-form';document.getElementById(containerId).innerHTML=`<div class="form-box fade"><div class="frow"><label class="flbl">Mavzu nomi</label><input class="fi" id="afi-title" value="${esc(item?.title||'')}" placeholder="Mavzu nomi..."></div><div class="frow"><label class="flbl" style="color:#a5b4fc">Standart</label><textarea class="fi" id="afi-standard" style="min-height:100px;resize:vertical;font-size:12px;font-family:monospace" placeholder="Qoida va ruxsat chegaralari...">${esc(item?.standard||'')}</textarea></div><div class="frow"><label class="flbl" style="color:#ff9090">Qoidabuzarlik</label><textarea class="fi" id="afi-violation" style="min-height:100px;resize:vertical;font-size:12px;font-family:monospace" placeholder="Qachon buzilgan hisoblanadi...">${esc(item?.violation||'')}</textarea></div><div class="frow"><label class="flbl" style="color:var(--lime)">Qaror va harakat</label><textarea class="fi" id="afi-decision" style="min-height:100px;resize:vertical;font-size:12px;font-family:monospace" placeholder="Qaror va harakatlar...">${esc(item?.decision||'')}</textarea></div><div class="fbtns"><button class="fsave" onclick="saveAcadItem('${secId}','${catId}','${itemId||''}','${inDetail||''}')">Saqlash</button><button class="fcancel" onclick="${inDetail?'renderAcadDetail()':'renderAcadItems()'}">Bekor</button></div></div>`;document.getElementById('afi-title').focus();}
-function saveAcadItem(secId,catId,itemId,inDetail){var sec=acadDb.sections.find(s=>s.id===secId);if(!sec)return;var cat=sec.cats.find(c=>c.id===catId);if(!cat)return;var title=document.getElementById('afi-title').value.trim();var standard=document.getElementById('afi-standard').value.trim();var violation=document.getElementById('afi-violation').value.trim();var decision=document.getElementById('afi-decision').value.trim();if(!title){notify('Nom kiriting!');return;}if(!cat.items)cat.items=[];if(itemId){var it=cat.items.find(x=>x.id===itemId);if(it){it.title=title;it.standard=standard;it.violation=violation;it.decision=decision;}}else cat.items.push({id:'ai'+Date.now(),title,standard,violation,decision});acadSave();notify('Saqlandi ✓');if(inDetail)renderAcadDetail();else renderAcadItems();}
-function delAcadItem(secId,catId,itemId){askConfirm("Mavzuni o'chirasizmi?",()=>{var sec=acadDb.sections.find(s=>s.id===secId);if(!sec)return;var cat=sec.cats.find(c=>c.id===catId);if(!cat)return;cat.items=cat.items.filter(i=>i.id!==itemId);acadSave();notify("O'chirildi ✓");renderAcadItems();});}
+function renderAcadDetail(){
+  var sec=acadDb.sections.find(s=>s.id===curAcadSec);if(!sec)return;
+  var item=(sec.items||[]).find(i=>i.id===curAcadItem);if(!item)return;
+  document.getElementById('acad-item-title').textContent=item.title;
+  var h='';
+  if(item.standard)h+=`<div class="acad-section-block"><div class="acad-section-label acad-label-standard">Standart</div><div class="acad-content">${formatAcadText(item.standard)}</div></div>`;
+  if(item.violation)h+=`<div class="acad-section-block"><div class="acad-section-label acad-label-violation">Qoidabuzarlik</div><div class="acad-content">${formatAcadText(item.violation)}</div></div>`;
+  if(item.decision)h+=`<div class="acad-section-block"><div class="acad-section-label acad-label-decision">Qaror va harakat</div><div class="acad-content">${formatAcadText(item.decision)}</div></div>`;
+  if(!item.standard&&!item.violation&&!item.decision&&item.content)h+=`<div class="acad-content" style="padding:4px 0;line-height:1.9;font-size:14px">${formatAcadText(item.content)}</div>`;
+  if(isAdmin)h+=`<div style="margin-top:16px"><button class="fsave" onclick="showAcadItemForm('${curAcadSec}','${item.id}',true)">✏ Tahrirlash</button></div><div id="acad-detail-form" style="margin-top:8px"></div>`;
+  document.getElementById('acad-detail-body').innerHTML=h;
+  updateAcadBc();
+}
+function updateAcadBc(){
+  var sec=acadDb.sections.find(s=>s.id===curAcadSec);
+  var item=(sec?.items||[]).find(i=>i.id===curAcadItem);
+  var pages=['p-acad-items','p-acad-detail'];
+  var titles={'p-home':'Bosh sahifa','p-acad-items':sec?.title||'','p-acad-detail':item?.title||''};
+  pages.forEach(p=>{
+    var el=document.getElementById('bc-'+p.replace('p-',''));if(!el)return;
+    var stack=['p-home',...pages.slice(0,pages.indexOf(p)+1)];
+    var html='';
+    stack.forEach((pp,ii)=>{
+      if(ii<stack.length-1)html+=`<span class="bc-item" onclick="goBack('${pp}')">${titles[pp]}</span><span class="bc-sep">›</span>`;
+      else html+=`<span class="bc-cur">${titles[pp]}</span>`;
+    });
+    el.innerHTML=html;
+  });
+}
+function showAcadItemForm(secId,itemId,inDetail){
+  var sec=acadDb.sections.find(s=>s.id===secId);
+  var item=itemId?(sec?.items||[]).find(i=>i.id===itemId):null;
+  var containerId=inDetail?'acad-detail-form':'acad-items-form';
+  document.getElementById(containerId).innerHTML=`<div class="form-box fade"><div class="frow"><label class="flbl">Mavzu nomi</label><input class="fi" id="afi-title" value="${esc(item?.title||'')}" placeholder="Mavzu nomi..."></div><div class="frow"><label class="flbl" style="color:#a5b4fc">Standart</label><textarea class="fi" id="afi-standard" style="min-height:100px;resize:vertical;font-size:12px;font-family:monospace" placeholder="Qoida va ruxsat chegaralari...">${esc(item?.standard||'')}</textarea></div><div class="frow"><label class="flbl" style="color:#ff9090">Qoidabuzarlik</label><textarea class="fi" id="afi-violation" style="min-height:100px;resize:vertical;font-size:12px;font-family:monospace" placeholder="Qachon buzilgan hisoblanadi...">${esc(item?.violation||'')}</textarea></div><div class="frow"><label class="flbl" style="color:var(--lime)">Qaror va harakat</label><textarea class="fi" id="afi-decision" style="min-height:100px;resize:vertical;font-size:12px;font-family:monospace" placeholder="Qaror va harakatlar...">${esc(item?.decision||'')}</textarea></div><div class="fbtns"><button class="fsave" onclick="saveAcadItem('${secId}','${itemId||''}','${inDetail||''}')">Saqlash</button><button class="fcancel" onclick="${inDetail?'renderAcadDetail()':'renderAcadItems()'}">Bekor</button></div></div>`;
+  document.getElementById('afi-title').focus();
+}
+function saveAcadItem(secId,itemId,inDetail){
+  var sec=acadDb.sections.find(s=>s.id===secId);if(!sec)return;
+  var title=document.getElementById('afi-title').value.trim();
+  var standard=document.getElementById('afi-standard').value.trim();
+  var violation=document.getElementById('afi-violation').value.trim();
+  var decision=document.getElementById('afi-decision').value.trim();
+  if(!title){notify('Nom kiriting!');return;}
+  if(!sec.items)sec.items=[];
+  if(itemId){
+    var it=sec.items.find(x=>x.id===itemId);
+    if(it){it.title=title;it.standard=standard;it.violation=violation;it.decision=decision;}
+  }else sec.items.push({id:'ai'+Date.now(),title,standard,violation,decision});
+  acadSave();notify('Saqlandi ✓');
+  if(inDetail)renderAcadDetail();else renderAcadItems();
+}
+function delAcadItem(secId,itemId){
+  askConfirm("Mavzuni o'chirasizmi?",()=>{
+    var sec=acadDb.sections.find(s=>s.id===secId);if(!sec)return;
+    sec.items=(sec.items||[]).filter(i=>i.id!==itemId);
+    acadSave();notify("O'chirildi ✓");renderAcadItems();
+  });
+}
 function toggleMsg(id){var wrap=document.getElementById('nm-wrap-'+id);var btn=document.getElementById('nm-btn-'+id);if(!wrap)return;var collapsed=wrap.classList.contains('node-msg-collapsed');if(collapsed){wrap.classList.remove('node-msg-collapsed');btn.textContent='▲';}else{wrap.classList.add('node-msg-collapsed');btn.textContent='▼';}}
 
 // =================== KAITEN ===================
@@ -4347,8 +4465,10 @@ function copyToClipboard(text){
     fallback();
   }
 }
-function sendGroupMessage(text){
-  fetch(SB_URL+'/rest/v1/bot_group_messages',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'gm'+Date.now()+'_'+Math.random().toString(36).slice(2,7), text:text, status:'pending'})}).catch(function(){});
+function sendGroupMessage(text,chatId){
+  var payload={id:'gm'+Date.now()+'_'+Math.random().toString(36).slice(2,7), text:text, status:'pending'};
+  if(chatId) payload.chat_id=chatId;
+  fetch(SB_URL+'/rest/v1/bot_group_messages',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify(payload)}).catch(function(){});
 }
 function kaitenCreatorNameNow(){
   var fio = kaitenMyFio();
