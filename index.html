@@ -462,6 +462,7 @@ function renderPartnershipFrame(){
     <div class="page-header">
       <button class="back-btn" onclick="goBack('p-entry1')">← Orqaga</button>
       <span class="page-title" id="page-title-org">Org struktura</span>
+      <button class="abtn" style="margin-left:auto" onclick="goTo('p-ish-grafigi')">📅 Ish grafigi</button>
     </div>
   </div>
   <div id="org-pan-wrap" class="org-pan-wrap" style="overflow:scroll;width:100%;height:calc(100vh - 120px);-webkit-overflow-scrolling:touch;">
@@ -1129,6 +1130,30 @@ function renderPartnershipFrame(){
     if(pan) pan.scrollLeft = (pan.scrollWidth - pan.clientWidth) / 2;
   }, 200);
   </script>
+</div>
+
+<div class="page" id="p-ish-grafigi">
+  <div class="page-topbar">
+    <div class="page-header">
+      <button class="back-btn" onclick="goBack('p-org')">← Orqaga</button>
+      <span class="page-title">Ish grafigi</span>
+    </div>
+  </div>
+  <div id="ish-grafigi-list" class="section-list"></div>
+</div>
+
+<div class="page" id="p-ish-grafigi-bolim">
+  <div class="page-topbar">
+    <div class="page-header">
+      <button class="back-btn" onclick="goBack('p-ish-grafigi')">← Orqaga</button>
+      <span class="page-title" id="ish-grafigi-bolim-title">Bo'lim</span>
+    </div>
+  </div>
+  <div id="ish-grafigi-bolim-standart"></div>
+  <div class="flbl" style="margin:14px 0 8px">Haftalik xodimlar soni (soat bo'yicha)</div>
+  <div id="ish-grafigi-headcount" style="overflow-x:auto"></div>
+  <div class="flbl" style="margin:14px 0 8px">Xodimlar</div>
+  <div id="ish-grafigi-xodimlar-list" class="section-list"></div>
 </div>
 
 <div class="page" id="p-entry2">
@@ -2592,8 +2617,8 @@ function muammoliCard(it){
 
     ${!isHamkor?`<div class="mm-row"><span class="mm-lbl">Mijoz:</span> ${esc(it.ism||'—')}${it.tel?' · <a href="tel:'+esc(it.tel.replace(/[^\d+]/g,''))+'" style="color:#1e7a4a;font-weight:700;text-decoration:none">📞 '+esc(it.tel)+'</a> <button onclick="copyToClipboard(\''+esc(it.tel).replace(/'/g,"\\'")+'\')" style="border:1px solid #ddd9cc;background:#f3f1ec;border-radius:6px;width:22px;height:22px;font-size:11px;cursor:pointer;vertical-align:middle">📋</button>':''}</div>`:''}
     <div><span class="mm-lbl">${isHamkor?"So'rov turi:":'Murojaat turi:'}</span> <span class="mm-turi">${esc(it.turi||'Boshqa')}</span></div>
-    ${!isHamkor&&it.sababchiIchki?`<div class="mm-row" style="margin-top:2px"><span class="mm-lbl">Sababchi:</span> ${esc(it.sababchiIchki)}</div>`:''}
-    ${isHamkor&&it.sababchiBolim?`<div class="mm-row" style="margin-top:2px"><span class="mm-lbl">Sababchi bo'lim:</span> ${esc(it.sababchiBolim)}</div>`:''}
+    ${!isHamkor&&it.sababchiIchki?`<div class="mm-row" style="margin-top:2px"><span class="mm-lbl">Masul:</span> ${esc(it.sababchiIchki)}</div>`:''}
+    ${isHamkor&&it.sababchiBolim?`<div class="mm-row" style="margin-top:2px"><span class="mm-lbl">Masul bo'lim:</span> ${esc(it.sababchiBolim)}</div>`:''}
     ${it.izoh?`<div class="mm-izoh">${esc(it.izoh)}</div>`:''}
 
     ${isHamkor&&it.sababchiBolim?`
@@ -2830,7 +2855,7 @@ function muammoliConfirmHal(id){
   muammoliSave(); orgCloseModal(); renderMuammoli(); notify('Hal qilindi ✓');
   sendGroupMessage(
     '✅ MUROJAAT HAL QILINDI\n'+
-    '🏪 Restoran/sababchi: '+(it.restoran||it.sababchiIchki||'—')+'\n'+
+    '🏪 Restoran/masul: '+(it.restoran||it.sababchiIchki||'—')+'\n'+
     '🙋 Mijoz: '+(it.ism||'—')+'\n'+
     '📝 Yechim: '+yechim+'\n'+
     '👤 Kim hal qildi: '+it.halQildiBy,
@@ -2921,7 +2946,7 @@ function muammoliRefreshForm(){
     bodyBlock=`${restoranBlock}
       ${turiBlock}
       <div class="frow">
-        <label class="flbl">Sababchi bo'lim (ixtiyoriy)</label>
+        <label class="flbl">Masul bo'lim (ixtiyoriy)</label>
         <select class="fi" id="mm-sababchi-bolim">${ichkiOptionsH}</select>
       </div>`;
   }else{
@@ -2934,7 +2959,7 @@ function muammoliRefreshForm(){
       <div class="frow"><label class="flbl">Mijoz raqami</label><input class="fi" id="mm-tel" value="${esc(d.tel||'+998')}" placeholder="+998..."></div>
       ${turiBlock}
       <div class="frow">
-        <label class="flbl">Muammo sababchisi</label>
+        <label class="flbl">Muammo uchun masul</label>
         <div style="display:flex;gap:6px;margin-top:5px">
           <button type="button" onclick="mmSetSababchiTuri('restoran')" style="flex:1;padding:9px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;background:${sababchiRestoran?'var(--lime)':'var(--white-06)'};color:${sababchiRestoran?'var(--green-dark)':'var(--white-50)'}">Restoran</button>
           <button type="button" onclick="mmSetSababchiTuri('ichki')" style="flex:1;padding:9px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;background:${!sababchiRestoran?'var(--lime)':'var(--white-06)'};color:${!sababchiRestoran?'var(--green-dark)':'var(--white-50)'}">Ichki bo'lim</button>
@@ -3098,7 +3123,7 @@ function saveMuammoliForm(){
     sendGroupMessage(
       '✏️ MUROJAAT TAHRIRLANDI\n'+
       '👤 Kim: '+kaitenCreatorNameNow()+'\n'+
-      (isHamkor?'🏪 Restoran: '+(muammoliDraft.restoran||'—'):'🏪 Sababchi: '+(muammoliDraft.restoran||muammoliDraft.sababchiIchki||'—')+'\n🙋 Mijoz: '+muammoliDraft.ism)
+      (isHamkor?'🏪 Restoran: '+(muammoliDraft.restoran||'—'):'🏪 Masul: '+(muammoliDraft.restoran||muammoliDraft.sababchiIchki||'—')+'\n🙋 Mijoz: '+muammoliDraft.ism)
     );
   }else{
     if(!muammoliDraft.createdAt)muammoliDraft.createdAt=new Date().toISOString();
@@ -3132,7 +3157,7 @@ function saveMuammoliForm(){
     }else{
       var mainMsg='⚠️ YANGI MUROJAAT\n'+
         '👤 Qabul qildi: '+muammoliDraft.createdByName+'\n'+
-        '🏪 Sababchi: '+(muammoliDraft.restoran||muammoliDraft.sababchiIchki||'—')+'\n'+
+        '🏪 Masul: '+(muammoliDraft.restoran||muammoliDraft.sababchiIchki||'—')+'\n'+
         '🙋 Mijoz: '+muammoliDraft.ism+(muammoliDraft.tel?' ('+muammoliDraft.tel+')':'')+'\n'+
         '📋 Turi: '+turi+'\n'+
         '📝 Izoh: '+(izoh||'—');
@@ -3772,6 +3797,8 @@ function sirlyRender(p){
   else if(p==='p-muammoli-dashboard')renderMuammoliDashboard();
   else if(p==='p-baza415')renderBaza415List();
   else if(p==='p-baza415-restoran')renderBaza415Restoran();
+  else if(p==='p-ish-grafigi')renderIshGrafigiList();
+  else if(p==='p-ish-grafigi-bolim')renderIshGrafigiBolim();
   updateBc();
 }
 function updateBc(){
@@ -4470,6 +4497,216 @@ function mmDDTouchEnd(e,kind,value){
     else if(kind==='restoran') mmRestoranPick(value);
   }
 }
+// =========================
+// ISH GRAFIGI (bo'lim standart + xodim alohida)
+// =========================
+var workDb={bolimlar:{},xodimlar:{}};
+var WORK_DAYS=[
+  {key:'dush',label:'Dushanba'},
+  {key:'sesh',label:'Seshanba'},
+  {key:'chor',label:'Chorshanba'},
+  {key:'pay',label:'Payshanba'},
+  {key:'jum',label:'Juma'},
+  {key:'shan',label:'Shanba'},
+  {key:'yak',label:'Yakshanba'}
+];
+var curIshGrafigiBolim=null;
+async function workLoad(){
+  try{
+    var r=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.ish_grafigi',{headers:SB_H});
+    var rows=await r.json();
+    if(rows&&rows.length&&rows[0].data){
+      workDb=rows[0].data;
+      if(!workDb.bolimlar)workDb.bolimlar={};
+      if(!workDb.xodimlar)workDb.xodimlar={};
+    }else{
+      workDb={bolimlar:{},xodimlar:{}};
+      try{await fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'ish_grafigi',data:workDb})});}catch(e2){}
+    }
+  }catch(e){ workDb={bolimlar:{},xodimlar:{}}; }
+}
+async function workSave(){
+  try{await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.ish_grafigi',{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({data:workDb})});}catch(e){}
+}
+function workGetOrgTopBolimNodes(){
+  if(typeof orgData==='undefined'||!orgData||!orgData.length)return [];
+  var root=orgData.find(n=>!n.parentId);
+  var direct=root?orgData.filter(function(n){ return n.parentId===root.id && n.cardType==='bolim'; }):[];
+  if(!direct.length) direct=orgData.filter(function(n){ return n.cardType==='bolim'; });
+  return direct.slice().sort((a,b)=>a.name.localeCompare(b.name,'uz'));
+}
+function workGetEmployeesUnder(bolimId){
+  var list=[];
+  function walk(pid){
+    orgData.filter(function(n){ return n.parentId===pid; }).forEach(function(n){
+      if(n.fio&&n.fio.trim()) list.push(n);
+      walk(n.id);
+    });
+  }
+  walk(bolimId);
+  return list;
+}
+function workFormatSchedule(sched){
+  if(!sched)return "Belgilanmagan";
+  var on=WORK_DAYS.filter(function(d){ return sched[d.key]&&sched[d.key].on; });
+  if(!on.length)return "Dam kunlari (hech qanday ish kuni yo'q)";
+  return on.map(function(d){
+    var s=sched[d.key];
+    return d.label.slice(0,3)+' '+(s.from||'--')+'–'+(s.to||'--');
+  }).join(', ');
+}
+function renderIshGrafigiList(){
+  var bolimlar=workGetOrgTopBolimNodes();
+  var h=bolimlar.map(function(b){
+    var sched=workDb.bolimlar[b.id];
+    return `<div style="margin-bottom:18px">
+      <div class="section-item" onclick="openIshGrafigiBolim('${b.id}')" style="margin-bottom:8px">
+        <div style="display:flex;align-items:center;flex:1;min-width:0">
+          <div style="min-width:0">
+            <div class="section-name">${esc(b.name)}</div>
+            <div style="font-size:11px;color:var(--white-50);margin-top:2px">${esc(workFormatSchedule(sched))}</div>
+          </div>
+        </div>
+        <span class="chevron">›</span>
+      </div>
+      <div style="overflow-x:auto">${workBuildHeadcountHtml(b.id)}</div>
+    </div>`;
+  }).join('');
+  if(!bolimlar.length)h='<div style="text-align:center;padding:24px;color:var(--white-50);font-size:13px">Org strukturada bo\'lim topilmadi</div>';
+  document.getElementById('ish-grafigi-list').innerHTML=h;
+}
+function openIshGrafigiBolim(id){ curIshGrafigiBolim=id; goTo('p-ish-grafigi-bolim'); }
+function renderIshGrafigiBolim(){
+  var bolimId=curIshGrafigiBolim;
+  var bolimNode=orgData.find(n=>n.id===bolimId);
+  if(!bolimNode)return;
+  document.getElementById('ish-grafigi-bolim-title').textContent=bolimNode.name;
+  var sched=workDb.bolimlar[bolimId];
+  document.getElementById('ish-grafigi-bolim-standart').innerHTML=`<div class="bz-buxgalter-box">
+    <div class="flbl" style="margin-bottom:6px">Bo'lim standart jadvali</div>
+    <div style="font-size:14px;font-weight:700;color:var(--white)">${esc(workFormatSchedule(sched))}</div>
+    ${isAdmin?`<button class="abtn" style="margin-top:8px" onclick="showWorkScheduleModal('bolim','${bolimId}','${esc(bolimNode.name).replace(/'/g,"\\'")}')">✏ Tahrirlash</button>`:''}
+  </div>`;
+  var xodimlar=workGetEmployeesUnder(bolimId);
+  var h=xodimlar.map(function(x){
+    var custom=workDb.xodimlar[x.id];
+    var effective=custom||sched;
+    return `<div class="bz-contact-card">
+      <div style="min-width:0">
+        <div class="bz-contact-name">${esc(x.fio)}</div>
+        <div class="bz-contact-tel" style="color:${custom?'var(--lime)':'var(--white-50)'}">${esc(workFormatSchedule(effective))}${custom?' (alohida)':' (standart)'}</div>
+      </div>
+      ${isAdmin?`<div class="action-btns">
+        <button class="abtn" onclick="showWorkScheduleModal('xodim','${x.id}','${esc(x.fio).replace(/'/g,"\\'")}')">✏</button>
+        ${custom?`<button class="abtn abtn-red" onclick="workResetXodim('${x.id}')">↩</button>`:''}
+      </div>`:''}
+    </div>`;
+  }).join('');
+  if(!xodimlar.length)h='<div style="text-align:center;padding:24px;color:var(--white-50);font-size:13px">Bu bo\'limda xodim yo\'q</div>';
+  document.getElementById('ish-grafigi-xodimlar-list').innerHTML=h;
+  renderIshGrafigiHeadcount(bolimId);
+}
+function workComputeHourlyHeadcount(bolimId){
+  var sched=workDb.bolimlar[bolimId];
+  var xodimlar=workGetEmployeesUnder(bolimId);
+  var hours=[]; for(var h=8;h<=21;h++) hours.push(h);
+  var result={};
+  WORK_DAYS.forEach(function(d){
+    result[d.key]=hours.map(function(){ return 0; });
+  });
+  xodimlar.forEach(function(x){
+    var effective=workDb.xodimlar[x.id]||sched;
+    if(!effective)return;
+    WORK_DAYS.forEach(function(d){
+      var s=effective[d.key];
+      if(!s||!s.on||!s.from||!s.to)return;
+      var fromH=parseInt(s.from.split(':')[0],10);
+      var toH=parseInt(s.to.split(':')[0],10);
+      hours.forEach(function(h,idx){
+        if(h>=fromH&&h<toH) result[d.key][idx]++;
+      });
+    });
+  });
+  return {hours:hours, byDay:result};
+}
+function workBuildHeadcountHtml(bolimId){
+  var data=workComputeHourlyHeadcount(bolimId);
+  var maxCount=1;
+  WORK_DAYS.forEach(function(d){ data.byDay[d.key].forEach(function(c){ if(c>maxCount)maxCount=c; }); });
+  var headerCells=data.hours.map(function(h){ return `<div style="width:30px;text-align:center;font-size:10px;color:var(--white-50);flex-shrink:0">${h}</div>`; }).join('');
+  var rows=WORK_DAYS.map(function(d){
+    var cells=data.byDay[d.key].map(function(c){
+      var bg=c===0?'var(--white-06)':('rgba(27,175,122,'+Math.min(1,0.15+0.7*c/maxCount)+')');
+      return `<div style="width:30px;height:26px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${c===0?'var(--white-30)':'var(--white)'};background:${bg};border-radius:5px;margin:1px">${c}</div>`;
+    }).join('');
+    return `<div style="display:flex;align-items:center;gap:0;margin-bottom:2px">
+      <div style="width:60px;flex-shrink:0;font-size:11px;color:var(--white-70)">${d.label.slice(0,3)}</div>
+      <div style="display:flex">${cells}</div>
+    </div>`;
+  }).join('');
+  return `<div style="min-width:max-content">
+    <div style="display:flex;align-items:center;margin-bottom:4px">
+      <div style="width:60px;flex-shrink:0"></div>
+      <div style="display:flex">${headerCells}</div>
+    </div>
+    ${rows}
+  </div>`;
+}
+function renderIshGrafigiHeadcount(bolimId){
+  var el=document.getElementById('ish-grafigi-headcount');
+  if(!el)return;
+  el.innerHTML=workBuildHeadcountHtml(bolimId);
+}
+function workResetXodim(xodimId){
+  askConfirm("Bu xodim uchun alohida jadvalni o'chirib, bo'lim standartiga qaytarilsinmi?",function(){
+    delete workDb.xodimlar[xodimId];
+    workSave(); renderIshGrafigiBolim(); notify("Standartga qaytarildi ✓");
+  });
+}
+function showWorkScheduleModal(target,id,name){
+  var current=(target==='bolim'?workDb.bolimlar[id]:workDb.xodimlar[id])||{};
+  var rowsHtml=WORK_DAYS.map(function(d){
+    var s=current[d.key]||{on:false,from:'09:00',to:'18:00'};
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--white-10)">
+      <label style="display:flex;align-items:center;gap:6px;width:110px;flex-shrink:0;cursor:pointer">
+        <input type="checkbox" id="wd-${d.key}-on" ${s.on?'checked':''} onchange="workDayToggle('${d.key}')" style="width:16px;height:16px">
+        <span style="font-size:13px;color:var(--white-80)">${d.label}</span>
+      </label>
+      <input type="time" id="wd-${d.key}-from" value="${s.from||'09:00'}" style="flex:1;background:var(--white-06);border:1px solid var(--white-10);border-radius:8px;color:var(--white);padding:6px;font-size:13px" ${s.on?'':'disabled'}>
+      <span style="color:var(--white-50)">—</span>
+      <input type="time" id="wd-${d.key}-to" value="${s.to||'18:00'}" style="flex:1;background:var(--white-06);border:1px solid var(--white-10);border-radius:8px;color:var(--white);padding:6px;font-size:13px" ${s.on?'':'disabled'}>
+    </div>`;
+  }).join('');
+  var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:4px">${esc(name)}</div>
+    <div style="font-size:12px;color:var(--white-50);margin-bottom:14px">Ish kunlari va soatlarini belgilang</div>
+    ${rowsHtml}
+    <div class="fbtns" style="margin-top:14px">
+      <button class="fsave" onclick="saveWorkSchedule('${target}','${id}')">Saqlash</button>
+      <button class="fcancel" onclick="orgCloseModal()">Bekor</button>
+    </div>`;
+  orgShowModal(html);
+}
+function workDayToggle(dayKey){
+  var chk=document.getElementById('wd-'+dayKey+'-on');
+  var fromEl=document.getElementById('wd-'+dayKey+'-from');
+  var toEl=document.getElementById('wd-'+dayKey+'-to');
+  if(fromEl)fromEl.disabled=!chk.checked;
+  if(toEl)toEl.disabled=!chk.checked;
+}
+function saveWorkSchedule(target,id){
+  var sched={};
+  WORK_DAYS.forEach(function(d){
+    var on=document.getElementById('wd-'+d.key+'-on').checked;
+    var from=document.getElementById('wd-'+d.key+'-from').value;
+    var to=document.getElementById('wd-'+d.key+'-to').value;
+    sched[d.key]={on:on,from:from,to:to};
+  });
+  if(target==='bolim') workDb.bolimlar[id]=sched;
+  else workDb.xodimlar[id]=sched;
+  workSave(); orgCloseModal(); notify('Saqlandi ✓');
+  if(target==='bolim') renderIshGrafigiBolim();
+  else renderIshGrafigiBolim();
+}
 function copyToClipboard(text){
   function fallback(){
     try{
@@ -4905,6 +5142,7 @@ function sirlyStart(role){
   sekretarLoad().catch(function(){});
   muammoliLoad().catch(function(){}).then(function(){ muammoliSetupRealtime(); });
   baza415Load().catch(function(){});
+  workLoad().catch(function(){});
   bolimTitlesLoad().catch(function(){}).then(function(){ if(document.getElementById('p-entry2').classList.contains('active')) renderBolimCards(); });
 }
 </script>
