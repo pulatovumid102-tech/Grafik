@@ -4746,7 +4746,6 @@ function sirlyStart(role){
     isAdmin = true;
   }
   updateLogoutBtn('p-entry1');
-  applyEntryCardPerms();
   entryTitlesLoad().catch(function(){ entryTitlesRender(); });
   load().then(function(){ updateBc(); });
   acadLoad().catch(function(){});
