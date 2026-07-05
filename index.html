@@ -3271,6 +3271,7 @@ function showBaza415RestForm(id){
   document.getElementById('baza415-form').innerHTML=`<div class="form-box fade">
     <div class="frow"><label class="flbl">Restoran nomi</label><input class="fi" id="bz-rest-nom" value="${esc(r?.nom||'')}" placeholder="Masalan: Mador"></div>
     ${isNew?`
+    <div class="frow"><label class="flbl">Call center raqami</label><input class="fi" id="bz-rest-callcenter-tel" value="+998" placeholder="+998..."></div>
     <div style="border:1px solid var(--white-10);border-radius:10px;padding:12px;margin-bottom:10px">
       <div style="font-size:12px;font-weight:700;color:var(--lime);margin-bottom:8px">Direktor</div>
       <input class="fi" id="bz-rest-direktor-ism" placeholder="Ismi" style="margin-top:0;margin-bottom:6px">
@@ -3315,6 +3316,7 @@ function saveBaza415Rest(id){
     var r=baza415Db.restoranlar.find(x=>x.id===id);
     if(r){ r.nom=nom; r.buxgalterTel=bux; }
   }else{
+    var callcenterTel=document.getElementById('bz-rest-callcenter-tel').value.trim();
     var direktorIsm=document.getElementById('bz-rest-direktor-ism').value.trim();
     var direktorTel=document.getElementById('bz-rest-direktor-tel').value.trim();
     var menejerIsm=document.getElementById('bz-rest-menejer-ism').value.trim();
@@ -3322,6 +3324,7 @@ function saveBaza415Rest(id){
     var kassirIsm=document.getElementById('bz-rest-kassir-ism').value.trim();
     var kassirTel=document.getElementById('bz-rest-kassir-tel').value.trim();
     var kontaktlar=[];
+    if(callcenterTel&&callcenterTel!=='+998')kontaktlar.push({id:'kt'+Date.now()+'_cc', rol:'Call center', ism:'', tel:callcenterTel});
     if(direktorIsm||direktorTel)kontaktlar.push({id:'kt'+Date.now()+'_0', rol:'Direktor', ism:direktorIsm, tel:direktorTel});
     if(menejerIsm||menejerTel)kontaktlar.push({id:'kt'+Date.now()+'_1', rol:'Menejer', ism:menejerIsm, tel:menejerTel});
     if(kassirIsm||kassirTel)kontaktlar.push({id:'kt'+Date.now()+'_2', rol:'Kassir 1', ism:kassirIsm, tel:kassirTel});
@@ -3337,6 +3340,7 @@ function saveBaza415Rest(id){
     var filiallar=kontaktlar.length?[{id:'fl'+Date.now(), nom:nom, kontaktlar:kontaktlar}]:[];
     baza415Db.restoranlar.push({id:'bz'+Date.now(), nom, buxgalterTel:bux, filiallar:filiallar});
     var lines=['🏪 YANGI RESTORAN QO\'SHILDI (415 baza)','Nomi: '+nom];
+    if(callcenterTel&&callcenterTel!=='+998')lines.push('📞 Call center: '+callcenterTel);
     if(direktorIsm||direktorTel)lines.push('👤 Direktor: '+(direktorIsm||'—')+' — '+(direktorTel||'—'));
     if(menejerIsm||menejerTel)lines.push('👤 Menejer: '+(menejerIsm||'—')+' — '+(menejerTel||'—'));
     if(kassirIsm||kassirTel)lines.push('👤 Kassir-1: '+(kassirIsm||'—')+' — '+(kassirTel||'—'));
