@@ -1273,6 +1273,33 @@ function kaitenSetupRealtime(){
     kaitenRealtimeStarted = true;
   }catch(e){ console.error('kaiten realtime setup xato', e); }
 }
+var muammoliRealtimeStarted=false;
+function muammoliSetupRealtime(){
+  if(muammoliRealtimeStarted) return;
+  try{
+    if(!window.supabase){ console.error('supabase-js yuklanmadi'); return; }
+    if(!sbClient) sbClient = window.supabase.createClient(SB_URL, SB_KEY);
+    sbClient
+      .channel('muammoli-live')
+      .on('postgres_changes', {event:'*', schema:'public', table:'biznes_data', filter:'id=eq.muammoli_mijozlar'}, function(payload){
+        try{
+          var row = payload.new;
+          if(row && row.data){
+            muammoliDb = row.data;
+            if(!muammoliDb.items) muammoliDb.items=[];
+            var p1 = document.getElementById('p-muammoli');
+            if(p1 && p1.classList.contains('active')) renderMuammoli();
+            var p2 = document.getElementById('p-muammoli-arxiv');
+            if(p2 && p2.classList.contains('active')) renderMuammoliArchive();
+            var p3 = document.getElementById('p-muammoli-dashboard');
+            if(p3 && p3.classList.contains('active')) renderMuammoliDashboard();
+          }
+        }catch(e){ console.error('muammoli realtime apply xato', e); }
+      })
+      .subscribe();
+    muammoliRealtimeStarted = true;
+  }catch(e){ console.error('muammoli realtime setup xato', e); }
+}
 
 async function umaApiLoad(uid){
   try{
@@ -2421,7 +2448,31 @@ function muammoliGetTurlarHamkor(){
   return (muammoliDb.turlarHamkor&&muammoliDb.turlarHamkor.length?muammoliDb.turlarHamkor:MUAMMOLI_TURLARI_HAMKOR).slice().sort((a,b)=>a.localeCompare(b,'uz'));
 }
 function muammoliGetSababchiIchki(){
-  return (muammoliDb.sababchiIchki&&muammoliDb.sababchiIchki.length?muammoliDb.sababchiIchki:MUAMMOLI_SABABCHI_ICHKI).slice().sort((a,b)=>a.localeCompare(b,'uz'));
+  var list=muammoliGetOrgTopBolimlar();
+  list.push('Boshqa');
+  return list;
+}
+function muammoliGetOrgTopBolimlar(){
+  if(typeof orgData==='undefined'||!orgData||!orgData.length)return [];
+  var root=orgData.find(n=>!n.parentId);
+  if(!root)return [];
+  return orgData.filter(function(n){ return n.parentId===root.id && !n.fio; })
+    .map(function(n){ return n.name; })
+    .sort((a,b)=>a.localeCompare(b,'uz'));
+}
+function muammoliGetOrgEmployeeUsernames(bolimNom){
+  if(typeof orgData==='undefined'||!orgData||!orgData.length||!bolimNom)return [];
+  var bolimNode=orgData.find(function(n){ return n.name===bolimNom && !n.fio; });
+  if(!bolimNode)return [];
+  var usernames=[];
+  function walk(pid){
+    orgData.filter(function(n){ return n.parentId===pid; }).forEach(function(n){
+      if(n.fio&&n.tg) usernames.push(n.tg.replace(/^@/,''));
+      walk(n.id);
+    });
+  }
+  walk(bolimNode.id);
+  return usernames;
 }
 function muammoliGetBuyurtmaHolatlari(){
   return (muammoliDb.buyurtmaHolatlari&&muammoliDb.buyurtmaHolatlari.length?muammoliDb.buyurtmaHolatlari:MUAMMOLI_BUYURTMA_HOLATLARI).slice().sort((a,b)=>a.localeCompare(b,'uz'));
@@ -2861,11 +2912,12 @@ function mmSetSababchiTuri(tip){
 function muammoliRefreshForm(){
   var d=muammoliDraft;
   var isHamkor=d.manba==='hamkor';
-  var turlar=isHamkor?muammoliGetTurlarHamkor():muammoliGetTurlarMijoz();
-  var isCustomTuri=d.turi&&!turlar.includes(d.turi);
-  var turiOptions=`<option value="" ${!d.turi?'selected':''}>— tanlang —</option>`
-    +turlar.map(t=>`<option value="${esc(t)}" ${d.turi===t?'selected':''}>${esc(t)}</option>`).join('')
-    +`<option value="__yangi__" ${isCustomTuri?'selected':''}>＋ Yangi tur qo'shish...</option>`;
+
+  var turiBlock=`<div class="frow" style="position:relative">
+      <label class="flbl">${isHamkor?"So'rov turi":'Murojaat turi'} <span style="color:#ff7070">*</span></label>
+      <input class="fi" id="mm-turi" autocomplete="off" value="${esc(d.turi||'')}" placeholder="Yozing va ro'yxatdan tanlang, yoki yangi tur kiriting" oninput="mmTuriSearch()" onfocus="mmTuriSearch()">
+      <div id="mm-turi-dropdown" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:20;background:var(--green-card);border:1px solid var(--white-10);border-radius:10px;margin-top:4px;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.3)"></div>
+    </div>`;
 
   var restoranBlock=`<div class="frow" style="position:relative">
       <label class="flbl">Restoran nomi</label>
@@ -2884,36 +2936,23 @@ function muammoliRefreshForm(){
   var bodyBlock='';
   if(isHamkor){
     var ichkiListH=muammoliGetSababchiIchki();
-    var isCustomIchkiH=d.sababchiBolim&&!ichkiListH.includes(d.sababchiBolim);
     var ichkiOptionsH=`<option value="" ${!d.sababchiBolim?'selected':''}>— tanlanmagan —</option>`
-      +ichkiListH.map(t=>`<option value="${esc(t)}" ${d.sababchiBolim===t?'selected':''}>${esc(t)}</option>`).join('')
-      +`<option value="__yangi__" ${isCustomIchkiH?'selected':''}>＋ Yangi qo'shish...</option>`;
+      +ichkiListH.map(t=>`<option value="${esc(t)}" ${d.sababchiBolim===t?'selected':''}>${esc(t)}</option>`).join('');
     bodyBlock=`${restoranBlock}
-      <div class="frow">
-        <label class="flbl">So'rov turi <span style="color:#ff7070">*</span></label>
-        <select class="fi" id="mm-turi" onchange="mmTuriChanged()">${turiOptions}</select>
-        <input class="fi" id="mm-turi-yangi" value="${isCustomTuri?esc(d.turi):''}" placeholder="Yangi tur nomi..." style="${isCustomTuri?'':'display:none'};margin-top:8px">
-      </div>
+      ${turiBlock}
       <div class="frow">
         <label class="flbl">Sababchi bo'lim (ixtiyoriy)</label>
-        <select class="fi" id="mm-sababchi-bolim" onchange="mmBolimChanged()">${ichkiOptionsH}</select>
-        <input class="fi" id="mm-bolim-yangi" value="${isCustomIchkiH?esc(d.sababchiBolim):''}" placeholder="Yangi bo'lim nomi..." style="${isCustomIchkiH?'':'display:none'};margin-top:8px">
+        <select class="fi" id="mm-sababchi-bolim">${ichkiOptionsH}</select>
       </div>`;
   }else{
     var sababchiRestoran=d.sababchiTuri!=='ichki';
     var ichkiList=muammoliGetSababchiIchki();
-    var isCustomIchki=d.sababchiIchki&&!ichkiList.includes(d.sababchiIchki);
     var ichkiOptions=`<option value="" ${!d.sababchiIchki?'selected':''}>— tanlang —</option>`
-      +ichkiList.map(t=>`<option value="${esc(t)}" ${d.sababchiIchki===t?'selected':''}>${esc(t)}</option>`).join('')
-      +`<option value="__yangi__" ${isCustomIchki?'selected':''}>＋ Yangi qo'shish...</option>`;
+      +ichkiList.map(t=>`<option value="${esc(t)}" ${d.sababchiIchki===t?'selected':''}>${esc(t)}</option>`).join('');
     bodyBlock=`
       <div class="frow"><label class="flbl">Mijoz ismi <span style="color:#ff7070">*</span></label><input class="fi" id="mm-ism" value="${esc(d.ism||'')}" placeholder="Mijozning ismi"></div>
       <div class="frow"><label class="flbl">Mijoz raqami</label><input class="fi" id="mm-tel" value="${esc(d.tel||'+998')}" placeholder="+998..."></div>
-      <div class="frow">
-        <label class="flbl">Murojaat turi <span style="color:#ff7070">*</span></label>
-        <select class="fi" id="mm-turi" onchange="mmTuriChanged()">${turiOptions}</select>
-        <input class="fi" id="mm-turi-yangi" value="${isCustomTuri?esc(d.turi):''}" placeholder="Yangi tur nomi..." style="${isCustomTuri?'':'display:none'};margin-top:8px">
-      </div>
+      ${turiBlock}
       <div class="frow">
         <label class="flbl">Muammo sababchisi</label>
         <div style="display:flex;gap:6px;margin-top:5px">
@@ -2923,8 +2962,7 @@ function muammoliRefreshForm(){
       </div>
       ${sababchiRestoran?restoranBlock:`
       <div class="frow">
-        <select class="fi" id="mm-sababchi-ichki" onchange="mmIchkiChanged()">${ichkiOptions}</select>
-        <input class="fi" id="mm-ichki-yangi" value="${isCustomIchki?esc(d.sababchiIchki):''}" placeholder="Yangi bo'lim nomi..." style="${isCustomIchki?'':'display:none'};margin-top:8px">
+        <select class="fi" id="mm-sababchi-ichki">${ichkiOptions}</select>
       </div>`}`;
   }
 
@@ -2936,6 +2974,38 @@ function muammoliRefreshForm(){
   </div>`;
   document.removeEventListener('click', mmRestoranOutsideClick);
   document.addEventListener('click', mmRestoranOutsideClick);
+  document.removeEventListener('click', mmTuriOutsideClick);
+  document.addEventListener('click', mmTuriOutsideClick);
+}
+function mmTuriOutsideClick(e){
+  var wrap=document.getElementById('mm-turi-dropdown');
+  var inp=document.getElementById('mm-turi');
+  if(!wrap||!inp)return;
+  if(e.target!==inp && !wrap.contains(e.target)) wrap.style.display='none';
+}
+function mmTuriSearch(){
+  var inp=document.getElementById('mm-turi');
+  var dd=document.getElementById('mm-turi-dropdown');
+  if(!inp||!dd||!muammoliDraft)return;
+  var isHamkorNow=muammoliDraft.manba==='hamkor';
+  var all=isHamkorNow?muammoliGetTurlarHamkor():muammoliGetTurlarMijoz();
+  var q=inp.value.trim().toLowerCase();
+  var matches=q?all.filter(n=>n.toLowerCase().includes(q)):all;
+  matches=matches.slice(0,50);
+  if(!matches.length){
+    dd.innerHTML='<div style="padding:10px 12px;color:var(--white-50);font-size:13px">Topilmadi — yangi tur sifatida saqlanadi</div>';
+  }else{
+    dd.innerHTML=matches.map(function(n){
+      return `<div style="padding:10px 12px;font-size:13px;color:var(--white);cursor:pointer;border-bottom:1px solid var(--white-10)" onmousedown="event.preventDefault();mmTuriPick('${n.replace(/'/g,"\\'")}')" ontouchstart="event.preventDefault();mmTuriPick('${n.replace(/'/g,"\\'")}')">${esc(n)}</div>`;
+    }).join('');
+  }
+  dd.style.display='block';
+}
+function mmTuriPick(nom){
+  var inp=document.getElementById('mm-turi');
+  var dd=document.getElementById('mm-turi-dropdown');
+  if(inp)inp.value=nom;
+  if(dd)dd.style.display='none';
 }
 function mmTuriChanged(){
   var sel=document.getElementById('mm-turi');
@@ -3002,18 +3072,13 @@ function mmRestoranPick(nom){
 function saveMuammoliForm(){
   if(!muammoliDraft)return;
   var isHamkor=muammoliDraft.manba==='hamkor';
-  var turiSel=document.getElementById('mm-turi').value;
-  var turi=turiSel;
-  if(!turiSel){notify(isHamkor?"So'rov turini tanlang!":'Murojaat turini tanlang!');return;}
-  if(turiSel==='__yangi__'){
-    turi=document.getElementById('mm-turi-yangi').value.trim();
-    if(!turi){notify('Yangi tur nomini kiriting!');return;}
-    var listKey=isHamkor?'turlarHamkor':'turlarMijoz';
-    var defList=isHamkor?MUAMMOLI_TURLARI_HAMKOR:MUAMMOLI_TURLARI_MIJOZ;
-    if(!muammoliDb[listKey])muammoliDb[listKey]=defList.slice();
-    if(!muammoliDb[listKey].some(t=>t.toLowerCase()===turi.toLowerCase())){
-      muammoliDb[listKey].push(turi);
-    }
+  var turi=document.getElementById('mm-turi').value.trim();
+  if(!turi){notify(isHamkor?"So'rov turini kiriting!":'Murojaat turini kiriting!');return;}
+  var listKey=isHamkor?'turlarHamkor':'turlarMijoz';
+  var defList=isHamkor?MUAMMOLI_TURLARI_HAMKOR:MUAMMOLI_TURLARI_MIJOZ;
+  if(!muammoliDb[listKey])muammoliDb[listKey]=defList.slice();
+  if(!muammoliDb[listKey].some(t=>t.toLowerCase()===turi.toLowerCase())){
+    muammoliDb[listKey].push(turi);
   }
   var izoh=document.getElementById('mm-izoh').value.trim();
 
@@ -3024,16 +3089,7 @@ function saveMuammoliForm(){
     muammoliDraft.restoran=restoran;
     delete muammoliDraft.ism; delete muammoliDraft.tel;
     delete muammoliDraft.sababchiTuri; delete muammoliDraft.sababchiIchki;
-    var bolimSel=document.getElementById('mm-sababchi-bolim').value;
-    var bolim=bolimSel;
-    if(bolimSel==='__yangi__'){
-      bolim=document.getElementById('mm-bolim-yangi').value.trim();
-      if(!bolim){notify("Yangi bo'lim nomini kiriting!");return;}
-      if(!muammoliDb.sababchiIchki)muammoliDb.sababchiIchki=MUAMMOLI_SABABCHI_ICHKI.slice();
-      if(!muammoliDb.sababchiIchki.some(t=>t.toLowerCase()===bolim.toLowerCase())){
-        muammoliDb.sababchiIchki.push(bolim);
-      }
-    }
+    var bolim=document.getElementById('mm-sababchi-bolim').value;
     if(bolim) muammoliDraft.sababchiBolim=bolim; else delete muammoliDraft.sababchiBolim;
   }else{
     var ism=document.getElementById('mm-ism').value.trim();
@@ -3046,16 +3102,7 @@ function saveMuammoliForm(){
       muammoliDraft.restoran=restoran2;
       delete muammoliDraft.sababchiIchki;
     }else{
-      var ichkiSel=document.getElementById('mm-sababchi-ichki').value;
-      var ichki=ichkiSel;
-      if(ichkiSel==='__yangi__'){
-        ichki=document.getElementById('mm-ichki-yangi').value.trim();
-        if(!ichki){notify("Yangi bo'lim nomini kiriting!");return;}
-        if(!muammoliDb.sababchiIchki)muammoliDb.sababchiIchki=MUAMMOLI_SABABCHI_ICHKI.slice();
-        if(!muammoliDb.sababchiIchki.some(t=>t.toLowerCase()===ichki.toLowerCase())){
-          muammoliDb.sababchiIchki.push(ichki);
-        }
-      }
+      var ichki=document.getElementById('mm-sababchi-ichki').value;
       muammoliDraft.sababchiIchki=ichki;
       delete muammoliDraft.restoran;
     }
@@ -3071,7 +3118,7 @@ function saveMuammoliForm(){
     sendGroupMessage(
       '✏️ MUROJAAT TAHRIRLANDI\n'+
       '👤 Kim: '+kaitenCreatorNameNow()+'\n'+
-      (isHamkor?'🏪 Restoran: '+(muammoliDraft.restoran||'—'):'🏪/🏢: '+(muammoliDraft.restoran||muammoliDraft.sababchiIchki||'—')+'\n🙋 Mijoz: '+muammoliDraft.ism)
+      (isHamkor?'🏪 Restoran: '+(muammoliDraft.restoran||'—'):'🏪 Sababchi: '+(muammoliDraft.restoran||muammoliDraft.sababchiIchki||'—')+'\n🙋 Mijoz: '+muammoliDraft.ism)
     );
   }else{
     if(!muammoliDraft.createdAt)muammoliDraft.createdAt=new Date().toISOString();
@@ -3087,9 +3134,9 @@ function saveMuammoliForm(){
         '📝 Izoh: '+(izoh||'—');
       sendGroupMessage(mainMsgH);
       if(muammoliDraft.sababchiBolim==='Texnik bo\'lim'){
-        sendGroupMessage(mainMsgH,MUAMMOLI_GROUP_TEXNIK);
+        sendGroupMessage(mainMsgH+muammoliBolimTagLine(muammoliDraft.sababchiBolim),MUAMMOLI_GROUP_TEXNIK);
       }else if(muammoliDraft.sababchiBolim==='Buxgalteriya'){
-        sendGroupMessage(mainMsgH,MUAMMOLI_GROUP_BUXGALTERIYA);
+        sendGroupMessage(mainMsgH+muammoliBolimTagLine(muammoliDraft.sababchiBolim),MUAMMOLI_GROUP_BUXGALTERIYA);
       }
     }else{
       var mainMsg='⚠️ YANGI MUROJAAT\n'+
@@ -3108,13 +3155,18 @@ function saveMuammoliForm(){
           MUAMMOLI_GROUP_RESTORAN
         );
       }else if(muammoliDraft.sababchiIchki==='Texnik bo\'lim'){
-        sendGroupMessage(mainMsg,MUAMMOLI_GROUP_TEXNIK);
+        sendGroupMessage(mainMsg+muammoliBolimTagLine(muammoliDraft.sababchiIchki),MUAMMOLI_GROUP_TEXNIK);
       }else if(muammoliDraft.sababchiIchki==='Buxgalteriya'){
-        sendGroupMessage(mainMsg,MUAMMOLI_GROUP_BUXGALTERIYA);
+        sendGroupMessage(mainMsg+muammoliBolimTagLine(muammoliDraft.sababchiIchki),MUAMMOLI_GROUP_BUXGALTERIYA);
       }
     }
   }
   muammoliSave(); notify('Saqlandi ✓'); renderMuammoli();
+}
+function muammoliBolimTagLine(bolimNom){
+  var usernames=muammoliGetOrgEmployeeUsernames(bolimNom);
+  if(!usernames.length)return '';
+  return '\n\n👥 '+usernames.map(function(u){ return '@'+u; }).join(' ');
 }
 
 var MM_BAR_COLORS=['#a8e063','#eda100','#2a78d6','#e34948','#8b6914','#5a4a8b'];
@@ -4876,7 +4928,7 @@ function sirlyStart(role){
   orgLoad().catch(function(){}).then(function(){ renderOrg(); });
   kaitenLoad().catch(function(){}).then(function(){ if(document.getElementById('p-kaiten').classList.contains('active')) renderKaiten(); kaitenSetupRealtime(); });
   sekretarLoad().catch(function(){});
-  muammoliLoad().catch(function(){});
+  muammoliLoad().catch(function(){}).then(function(){ muammoliSetupRealtime(); });
   baza415Load().catch(function(){});
   bolimTitlesLoad().catch(function(){}).then(function(){ if(document.getElementById('p-entry2').classList.contains('active')) renderBolimCards(); });
 }
