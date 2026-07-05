@@ -126,9 +126,10 @@ async def process_group_messages(app: Application) -> None:
             if not text.strip():
                 await sb_patch("bot_group_messages", row_id, {"status": "failed"})
                 continue
-            await app.bot.send_message(chat_id=GROUP_CHAT_ID, text=text)
+            target_chat_id = row.get("chat_id") or GROUP_CHAT_ID
+            await app.bot.send_message(chat_id=target_chat_id, text=text)
             await sb_patch("bot_group_messages", row_id, {"status": "sent"})
-            log.info("Guruhga yuborildi: %s", row_id)
+            log.info("Guruhga yuborildi: %s -> chat_id=%s", row_id, target_chat_id)
         except Exception as e:
             log.error("Guruhga yuborishda xato (%s): %s", row_id, e)
             try:
