@@ -32,7 +32,7 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 #  pastdagi os.environ.get(...) orqali Variables bilan ustidan
 #  yozib qo'yish ham mumkin — hozircha shart emas)
 # ============================================================
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "8693834890:AAFE_y-TEw5mJ-j9lVXAbhUn8-u5qPf-H3o")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "8693834890:AAFs3rg_ZTlu1hOc0rBm9zgjD1az-R2xr_c")
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://qtrniovpkrwimeohamkc.supabase.co").rstrip("/")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0cm5pb3Zwa3J3aW1lb2hhbWtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMTY4NjUsImV4cCI6MjA5NjU5Mjg2NX0.j4gUqZlqMHR0ltIMCDB-UfWPvuPVs9B9HF0If2fPxhU")
 GROUP_CHAT_ID = int(os.environ.get("GROUP_CHAT_ID", "-5531952742"))
