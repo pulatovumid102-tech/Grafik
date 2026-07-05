@@ -2939,7 +2939,7 @@ function muammoliRefreshForm(){
   document.getElementById('muammoli-form').innerHTML=`<div class="form-box fade">
     ${manbaBlock}
     ${bodyBlock}
-    <div class="frow"><label class="flbl">Izoh</label><textarea class="fi" id="mm-izoh" style="min-height:70px;resize:vertical">${esc(d.izoh||'')}</textarea></div>
+    <div class="frow"><label class="flbl">Sabab</label><textarea class="fi" id="mm-izoh" style="min-height:70px;resize:vertical">${esc(d.izoh||'')}</textarea></div>
     <div class="fbtns"><button class="fsave" onclick="saveMuammoliForm()">Saqlash</button><button class="fcancel" onclick="renderMuammoli()">Bekor</button></div>
   </div>`;
   document.removeEventListener('click', mmRestoranOutsideClick);
@@ -2966,7 +2966,7 @@ function mmTuriSearch(){
     dd.innerHTML='<div style="padding:10px 12px;color:var(--white-50);font-size:13px">Topilmadi — yangi tur sifatida saqlanadi</div>';
   }else{
     dd.innerHTML=matches.map(function(n){
-      return `<div style="padding:10px 12px;font-size:13px;color:var(--white);cursor:pointer;border-bottom:1px solid var(--white-10)" onmousedown="event.preventDefault();mmTuriPick('${n.replace(/'/g,"\\'")}')" ontouchstart="event.preventDefault();mmTuriPick('${n.replace(/'/g,"\\'")}')">${esc(n)}</div>`;
+      return `<div style="padding:10px 12px;font-size:13px;color:var(--white);cursor:pointer;border-bottom:1px solid var(--white-10)" onmousedown="event.preventDefault();mmTuriPick('${n.replace(/'/g,"\\'")}')" ontouchstart="mmDDTouchStart(event)" ontouchend="mmDDTouchEnd(event,'turi','${n.replace(/'/g,"\\'")}')">${esc(n)}</div>`;
     }).join('');
   }
   dd.style.display='block';
@@ -3028,7 +3028,7 @@ function mmRestoranSearch(){
     dd.innerHTML='<div style="padding:10px 12px;color:var(--white-50);font-size:13px">Topilmadi</div>';
   }else{
     dd.innerHTML=matches.map(function(n){
-      return `<div style="padding:10px 12px;font-size:13px;color:var(--white);cursor:pointer;border-bottom:1px solid var(--white-10)" onmousedown="event.preventDefault();mmRestoranPick('${n.replace(/'/g,"\\'")}')" ontouchstart="event.preventDefault();mmRestoranPick('${n.replace(/'/g,"\\'")}')">${esc(n)}</div>`;
+      return `<div style="padding:10px 12px;font-size:13px;color:var(--white);cursor:pointer;border-bottom:1px solid var(--white-10)" onmousedown="event.preventDefault();mmRestoranPick('${n.replace(/'/g,"\\'")}')" ontouchstart="mmDDTouchStart(event)" ontouchend="mmDDTouchEnd(event,'restoran','${n.replace(/'/g,"\\'")}')">${esc(n)}</div>`;
     }).join('');
   }
   dd.style.display='block';
@@ -3097,18 +3097,27 @@ function saveMuammoliForm(){
     muammoliDraft.toLov=MUAMMOLI_TOLOV_SOM;
     muammoliDb.items.push(muammoliDraft);
     if(isHamkor){
-      var mainMsgH='🤝 YANGI HAMKOR SO\'ROVI\n'+
-        '👤 Qabul qildi: '+muammoliDraft.createdByName+'\n'+
-        '🏪 Restoran: '+muammoliDraft.restoran+'\n'+
-        '📋 Turi: '+turi+'\n'+
-        '📝 Izoh: '+(izoh||'—');
+      var kontaktlarH=muammoliGetContactsForRestoran(muammoliDraft.restoran);
+      var hamkorLines=[
+        '🤝 HAMKORDAN MUROJAT',
+        '📋 Murojaat turi: '+turi,
+        '📝 Sabab: '+(izoh||'—'),
+        '👤 Murojatni qabul qildi: '+kaitenFallbackName(),
+        '',
+        '🏪 Restoran nomi: '+muammoliDraft.restoran
+      ];
+      kontaktlarH.forEach(function(k){
+        if(k.tel) hamkorLines.push((k.rol||'Kontakt')+' raqami: '+k.tel+(k.ism?' ('+k.ism+')':''));
+      });
+      var tagLineH=muammoliDraft.sababchiBolim?muammoliBolimTagLine(muammoliDraft.sababchiBolim):'';
+      var mainMsgH=hamkorLines.join('\n')+tagLineH;
       sendGroupMessage(mainMsgH);
       if(muammoliDraft.sababchiBolim==="IT bo'limi"){
-        sendGroupMessage(mainMsgH+muammoliBolimTagLine(muammoliDraft.sababchiBolim),MUAMMOLI_GROUP_TEXNIK);
+        sendGroupMessage(mainMsgH,MUAMMOLI_GROUP_TEXNIK);
       }else if(muammoliDraft.sababchiBolim==="Buxgalteriya bo'limi"){
-        sendGroupMessage(mainMsgH+muammoliBolimTagLine(muammoliDraft.sababchiBolim),MUAMMOLI_GROUP_BUXGALTERIYA);
+        sendGroupMessage(mainMsgH,MUAMMOLI_GROUP_BUXGALTERIYA);
       }else if(muammoliDraft.sababchiBolim==="Partnership bo'limi"){
-        sendGroupMessage(mainMsgH+muammoliBolimTagLine(muammoliDraft.sababchiBolim),MUAMMOLI_GROUP_RESTORAN);
+        sendGroupMessage(mainMsgH,MUAMMOLI_GROUP_RESTORAN);
       }
     }else{
       var mainMsg='⚠️ YANGI MUROJAAT\n'+
@@ -4437,6 +4446,19 @@ function kaitenFallbackName(){
   var tgUser = tgGetUser();
   if(tgUser && tgUser.username) return '@'+tgUser.username;
   return CURRENT_USER_TG ? ('@'+CURRENT_USER_TG.replace(/^@/,'')) : (USER_ID||'Foydalanuvchi');
+}
+var mmDDTouch={x:0,y:0};
+function mmDDTouchStart(e){
+  var t=e.touches[0];
+  mmDDTouch.x=t.clientX; mmDDTouch.y=t.clientY;
+}
+function mmDDTouchEnd(e,kind,value){
+  var t=e.changedTouches[0];
+  if(Math.abs(t.clientX-mmDDTouch.x)<10 && Math.abs(t.clientY-mmDDTouch.y)<10){
+    e.preventDefault();
+    if(kind==='turi') mmTuriPick(value);
+    else if(kind==='restoran') mmRestoranPick(value);
+  }
 }
 function copyToClipboard(text){
   function fallback(){
