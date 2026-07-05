@@ -2377,13 +2377,15 @@ function muammoliContactsHtml(it){
   return `<div style="display:flex;flex-direction:column;gap:6px;margin-top:2px;margin-bottom:4px">
     ${menejer.map(function(k){
       var telHref=(k.tel||'').replace(/[^\d+]/g,'');
-      return `<a href="tel:${esc(telHref)}" style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fff;border:1px solid #e2dfd6;border-radius:8px;padding:7px 10px;text-decoration:none">
+      var tag=telHref?'a':'div';
+      var hrefAttr=telHref?`href="tel:${esc(telHref)}"`:'';
+      return `<${tag} ${hrefAttr} style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fff;border:1px solid #e2dfd6;border-radius:8px;padding:7px 10px;text-decoration:none">
         <div style="min-width:0">
           <div style="font-size:11px;font-weight:700;color:#8a5c00;text-transform:uppercase">${esc(k.rol||'Kontakt')}</div>
           <div style="font-size:13px;color:#2e2c28">${esc(k.ism||'—')}</div>
         </div>
-        <div style="font-size:13px;font-weight:700;color:#1e7a4a;white-space:nowrap">📞 ${esc(k.tel||'—')}</div>
-      </a>`;
+        <div style="font-size:13px;font-weight:700;color:#1e7a4a;white-space:nowrap">${telHref?'📞 ':''}${esc(k.tel||"Raqam yo'q")}</div>
+      </${tag}>`;
     }).join('')}
   </div>`;
 }
@@ -2667,10 +2669,21 @@ function showBaza415RestForm(id){
   document.getElementById('baza415-form').innerHTML=`<div class="form-box fade">
     <div class="frow"><label class="flbl">Restoran nomi</label><input class="fi" id="bz-rest-nom" value="${esc(r?.nom||'')}" placeholder="Masalan: Mador"></div>
     ${isNew?`
-    <div class="frow"><label class="flbl">Menejer ismi</label><input class="fi" id="bz-rest-menejer-ism" placeholder="Menejer ismi"></div>
-    <div class="frow"><label class="flbl">Menejer raqami</label><input class="fi" id="bz-rest-menejer-tel" value="+998" placeholder="+998..."></div>
-    <div class="frow"><label class="flbl">Kassir-1 ismi</label><input class="fi" id="bz-rest-kassir-ism" placeholder="Kassir ismi"></div>
-    <div class="frow"><label class="flbl">Kassir-1 raqami</label><input class="fi" id="bz-rest-kassir-tel" value="+998" placeholder="+998..."></div>
+    <div style="border:1px solid var(--white-10);border-radius:10px;padding:12px;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:700;color:var(--lime);margin-bottom:8px">Direktor</div>
+      <input class="fi" id="bz-rest-direktor-ism" placeholder="Ismi" style="margin-top:0;margin-bottom:6px">
+      <input class="fi" id="bz-rest-direktor-tel" value="+998" placeholder="+998..." style="margin-top:0">
+    </div>
+    <div style="border:1px solid var(--white-10);border-radius:10px;padding:12px;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:700;color:var(--lime);margin-bottom:8px">Menejer</div>
+      <input class="fi" id="bz-rest-menejer-ism" placeholder="Ismi" style="margin-top:0;margin-bottom:6px">
+      <input class="fi" id="bz-rest-menejer-tel" value="+998" placeholder="+998..." style="margin-top:0">
+    </div>
+    <div style="border:1px solid var(--white-10);border-radius:10px;padding:12px;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:700;color:var(--lime);margin-bottom:8px">Kassir-1</div>
+      <input class="fi" id="bz-rest-kassir-ism" placeholder="Ismi" style="margin-top:0;margin-bottom:6px">
+      <input class="fi" id="bz-rest-kassir-tel" value="+998" placeholder="+998..." style="margin-top:0">
+    </div>
     <div id="bz-rest-extra-wrap"></div>
     <button type="button" class="abtn" style="margin-bottom:10px" onclick="baza415AddExtraContactRow()">＋ Kontakt qo'shish</button>
     `:''}
@@ -2700,11 +2713,14 @@ function saveBaza415Rest(id){
     var r=baza415Db.restoranlar.find(x=>x.id===id);
     if(r){ r.nom=nom; r.buxgalterTel=bux; }
   }else{
+    var direktorIsm=document.getElementById('bz-rest-direktor-ism').value.trim();
+    var direktorTel=document.getElementById('bz-rest-direktor-tel').value.trim();
     var menejerIsm=document.getElementById('bz-rest-menejer-ism').value.trim();
     var menejerTel=document.getElementById('bz-rest-menejer-tel').value.trim();
     var kassirIsm=document.getElementById('bz-rest-kassir-ism').value.trim();
     var kassirTel=document.getElementById('bz-rest-kassir-tel').value.trim();
     var kontaktlar=[];
+    if(direktorIsm||direktorTel)kontaktlar.push({id:'kt'+Date.now()+'_0', rol:'Direktor', ism:direktorIsm, tel:direktorTel});
     if(menejerIsm||menejerTel)kontaktlar.push({id:'kt'+Date.now()+'_1', rol:'Menejer', ism:menejerIsm, tel:menejerTel});
     if(kassirIsm||kassirTel)kontaktlar.push({id:'kt'+Date.now()+'_2', rol:'Kassir 1', ism:kassirIsm, tel:kassirTel});
     document.querySelectorAll('.bz-extra-contact-row').forEach(function(row, idx){
@@ -2719,6 +2735,7 @@ function saveBaza415Rest(id){
     var filiallar=kontaktlar.length?[{id:'fl'+Date.now(), nom:nom, kontaktlar:kontaktlar}]:[];
     baza415Db.restoranlar.push({id:'bz'+Date.now(), nom, buxgalterTel:bux, filiallar:filiallar});
     var lines=['🏪 YANGI RESTORAN QO\'SHILDI (415 baza)','Nomi: '+nom];
+    if(direktorIsm||direktorTel)lines.push('👤 Direktor: '+(direktorIsm||'—')+' — '+(direktorTel||'—'));
     if(menejerIsm||menejerTel)lines.push('👤 Menejer: '+(menejerIsm||'—')+' — '+(menejerTel||'—'));
     if(kassirIsm||kassirTel)lines.push('👤 Kassir-1: '+(kassirIsm||'—')+' — '+(kassirTel||'—'));
     sendGroupMessage(lines.join('\n'));
