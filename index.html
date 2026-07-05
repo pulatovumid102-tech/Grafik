@@ -2308,6 +2308,7 @@ var muammoliDraft=null;
 var muammoliEditId=null;
 var muammoliFilter='hammasi';
 var MUAMMOLI_TURLARI=['Sifatsiz ovqat','Restoran yopiq','Pul qaytarish','Boshqa'];
+var MUAMMOLI_BUYURTMA_HOLATLARI=['Buyurtma bekor qilindi, pul qaytarildi','Promokod berildi'];
 var MUAMMOLI_MUDDAT_SOAT=24;
 async function muammoliSave(){
   try{await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.muammoli_mijozlar',{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({data:muammoliDb})});}
@@ -2321,20 +2322,26 @@ async function muammoliLoad(){
       muammoliDb=rows[0].data;
       if(!muammoliDb.items)muammoliDb.items=[];
       if(!muammoliDb.turlar||!muammoliDb.turlar.length)muammoliDb.turlar=MUAMMOLI_TURLARI.slice();
+      if(!muammoliDb.buyurtmaHolatlari||!muammoliDb.buyurtmaHolatlari.length)muammoliDb.buyurtmaHolatlari=MUAMMOLI_BUYURTMA_HOLATLARI.slice();
     }else{
       var d=localStorage.getItem('muammoli_mijozlar');
-      muammoliDb=d?JSON.parse(d):{items:[],turlar:MUAMMOLI_TURLARI.slice()};
+      muammoliDb=d?JSON.parse(d):{items:[],turlar:MUAMMOLI_TURLARI.slice(),buyurtmaHolatlari:MUAMMOLI_BUYURTMA_HOLATLARI.slice()};
       if(!muammoliDb.turlar||!muammoliDb.turlar.length)muammoliDb.turlar=MUAMMOLI_TURLARI.slice();
+      if(!muammoliDb.buyurtmaHolatlari||!muammoliDb.buyurtmaHolatlari.length)muammoliDb.buyurtmaHolatlari=MUAMMOLI_BUYURTMA_HOLATLARI.slice();
       try{await fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'muammoli_mijozlar',data:muammoliDb})});}catch(e2){}
     }
   }catch(e){
     var d=localStorage.getItem('muammoli_mijozlar');
-    muammoliDb=d?JSON.parse(d):{items:[],turlar:MUAMMOLI_TURLARI.slice()};
+    muammoliDb=d?JSON.parse(d):{items:[],turlar:MUAMMOLI_TURLARI.slice(),buyurtmaHolatlari:MUAMMOLI_BUYURTMA_HOLATLARI.slice()};
     if(!muammoliDb.turlar||!muammoliDb.turlar.length)muammoliDb.turlar=MUAMMOLI_TURLARI.slice();
+    if(!muammoliDb.buyurtmaHolatlari||!muammoliDb.buyurtmaHolatlari.length)muammoliDb.buyurtmaHolatlari=MUAMMOLI_BUYURTMA_HOLATLARI.slice();
   }
 }
 function muammoliGetTurlar(){
   return (muammoliDb.turlar&&muammoliDb.turlar.length?muammoliDb.turlar:MUAMMOLI_TURLARI).slice().sort((a,b)=>a.localeCompare(b,'uz'));
+}
+function muammoliGetBuyurtmaHolatlari(){
+  return (muammoliDb.buyurtmaHolatlari&&muammoliDb.buyurtmaHolatlari.length?muammoliDb.buyurtmaHolatlari:MUAMMOLI_BUYURTMA_HOLATLARI).slice().sort((a,b)=>a.localeCompare(b,'uz'));
 }
 function muammoliSetFilter(f){ muammoliFilter=f; renderMuammoli(); }
 function renderMuammoliFilter(){
@@ -2471,6 +2478,7 @@ function muammoliCard(it){
     ${it.createdByName?`<div class="mm-row" style="font-size:11px;color:#9a9588">Yaratdi: ${esc(it.createdByName)}</div>`:''}
     <div class="mm-row"><span class="mm-lbl">Mijoz:</span> ${esc(it.ism||'—')}${it.tel?' · <a href="tel:'+esc(it.tel.replace(/[^\d+]/g,''))+'" style="color:#1e7a4a;font-weight:700;text-decoration:none">📞 '+esc(it.tel)+'</a> <button onclick="copyToClipboard(\''+esc(it.tel).replace(/'/g,"\\'")+'\')" style="border:1px solid #ddd9cc;background:#f3f1ec;border-radius:6px;width:22px;height:22px;font-size:11px;cursor:pointer;vertical-align:middle">📋</button>':''}</div>
     <div><span class="mm-turi">${esc(it.turi||'Boshqa')}</span></div>
+    ${it.buyurtmaHolati?`<div class="mm-row" style="margin-top:2px"><span class="mm-lbl">Buyurtma holati:</span> ${esc(it.buyurtmaHolati)}</div>`:''}
     ${it.izoh?`<div class="mm-izoh">${esc(it.izoh)}</div>`:''}
     <div style="display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer" onclick="muammoliToggleXabar('${it.id}')">
       <span style="width:18px;height:18px;border-radius:4px;border:1.5px solid #b8b3a3;display:flex;align-items:center;justify-content:center;background:${it.xabarBerildi?'#1e7a4a':'transparent'};color:#fff;font-size:11px;flex-shrink:0">${it.xabarBerildi?'✓':''}</span>
@@ -2575,6 +2583,11 @@ function muammoliRefreshForm(){
   var isCustomTuri=d.turi&&!turlar.includes(d.turi);
   var turiOptions=turlar.map(t=>`<option value="${esc(t)}" ${d.turi===t?'selected':''}>${esc(t)}</option>`).join('')
     +`<option value="__yangi__" ${isCustomTuri?'selected':''}>＋ Yangi tur qo'shish...</option>`;
+  var holatlar=muammoliGetBuyurtmaHolatlari();
+  var isCustomHolat=d.buyurtmaHolati&&!holatlar.includes(d.buyurtmaHolati);
+  var holatOptions=`<option value="" ${!d.buyurtmaHolati?'selected':''}>— tanlanmagan —</option>`
+    +holatlar.map(t=>`<option value="${esc(t)}" ${d.buyurtmaHolati===t?'selected':''}>${esc(t)}</option>`).join('')
+    +`<option value="__yangi__" ${isCustomHolat?'selected':''}>＋ Yangi qo'shish...</option>`;
   document.getElementById('muammoli-form').innerHTML=`<div class="form-box fade">
     <div class="frow" style="position:relative">
       <label class="flbl">Restoran nomi</label>
@@ -2588,6 +2601,11 @@ function muammoliRefreshForm(){
       <select class="fi" id="mm-turi" onchange="mmTuriChanged()">${turiOptions}</select>
       <input class="fi" id="mm-turi-yangi" value="${isCustomTuri?esc(d.turi):''}" placeholder="Yangi tur nomi..." style="${isCustomTuri?'':'display:none'};margin-top:8px">
     </div>
+    <div class="frow">
+      <label class="flbl">Mijozning buyurtma holati</label>
+      <select class="fi" id="mm-buyurtma-holati" onchange="mmHolatChanged()">${holatOptions}</select>
+      <input class="fi" id="mm-holat-yangi" value="${isCustomHolat?esc(d.buyurtmaHolati):''}" placeholder="Yangi holat nomi..." style="${isCustomHolat?'':'display:none'};margin-top:8px">
+    </div>
     <div class="frow"><label class="flbl">Izoh</label><textarea class="fi" id="mm-izoh" style="min-height:70px;resize:vertical">${esc(d.izoh||'')}</textarea></div>
     <div class="fbtns"><button class="fsave" onclick="saveMuammoliForm()">Saqlash</button><button class="fcancel" onclick="renderMuammoli()">Bekor</button></div>
   </div>`;
@@ -2598,6 +2616,17 @@ function muammoliRefreshForm(){
 function mmTuriChanged(){
   var sel=document.getElementById('mm-turi');
   var inp=document.getElementById('mm-turi-yangi');
+  if(!sel||!inp)return;
+  if(sel.value==='__yangi__'){
+    inp.style.display='';
+    inp.focus();
+  }else{
+    inp.style.display='none';
+  }
+}
+function mmHolatChanged(){
+  var sel=document.getElementById('mm-buyurtma-holati');
+  var inp=document.getElementById('mm-holat-yangi');
   if(!sel||!inp)return;
   if(sel.value==='__yangi__'){
     inp.style.display='';
@@ -2650,6 +2679,16 @@ function saveMuammoliForm(){
       muammoliDb.turlar.push(turi);
     }
   }
+  var holatSel=document.getElementById('mm-buyurtma-holati').value;
+  var buyurtmaHolati=holatSel;
+  if(holatSel==='__yangi__'){
+    buyurtmaHolati=document.getElementById('mm-holat-yangi').value.trim();
+    if(!buyurtmaHolati){notify('Yangi holat nomini kiriting!');return;}
+    if(!muammoliDb.buyurtmaHolatlari)muammoliDb.buyurtmaHolatlari=MUAMMOLI_BUYURTMA_HOLATLARI.slice();
+    if(!muammoliDb.buyurtmaHolatlari.some(t=>t.toLowerCase()===buyurtmaHolati.toLowerCase())){
+      muammoliDb.buyurtmaHolatlari.push(buyurtmaHolati);
+    }
+  }
   var izoh=document.getElementById('mm-izoh').value.trim();
   if(!restoran){notify('Restoran nomini kiriting!');return;}
   if(!baza415AllRestoranNomlari().includes(restoran)){notify("Restoran 415 baza ro'yxatidan tanlanishi kerak!");return;}
@@ -2658,6 +2697,7 @@ function saveMuammoliForm(){
   muammoliDraft.ism=ism;
   muammoliDraft.tel=tel;
   muammoliDraft.turi=turi;
+  muammoliDraft.buyurtmaHolati=buyurtmaHolati;
   muammoliDraft.izoh=izoh;
   if(muammoliEditId){
     var idx=muammoliDb.items.findIndex(x=>x.id===muammoliEditId);
