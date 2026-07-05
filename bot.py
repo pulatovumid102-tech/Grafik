@@ -19,7 +19,8 @@ Ishga tushirish:
 
 import os
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, time as dt_time
+from zoneinfo import ZoneInfo
 
 import httpx
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
@@ -38,6 +39,8 @@ GROUP_CHAT_ID = int(os.environ.get("GROUP_CHAT_ID", "-5531952742"))
 MINIAPP_URL = os.environ.get("MINIAPP_URL", "https://pulatovumid102-tech.github.io/Grafik/")
 POLL_SECONDS = int(os.environ.get("POLL_SECONDS", "15"))
 BATCH_LIMIT = int(os.environ.get("BATCH_LIMIT", "20"))
+MUAMMOLI_MUDDAT_SOAT = 24
+TASHKENT_TZ = ZoneInfo("Asia/Tashkent")
 
 logging.basicConfig(
     level=logging.INFO,
@@ -226,6 +229,130 @@ async def process_file_requests(app: Application) -> None:
 
 
 # ============================================================
+# MUAMMOLI MIJOZLAR — kunlik eslatma va muddat nazorati
+# ============================================================
+def collect_support_usernames(org_nodes: list) -> list:
+    """Org struktura ичida 'Support bo'limi' nomli tugunni topib,
+    uning barcha farzand tugunlaridan (bo'sh bo'lmagan tg maydoni bilan)
+    Telegram username'larini yig'ib qaytaradi."""
+    if not isinstance(org_nodes, list):
+        return []
+    support_ids = [
+        n.get("id") for n in org_nodes
+        if "support" in (n.get("name") or "").lower()
+    ]
+    if not support_ids:
+        return []
+    by_parent = {}
+    for n in org_nodes:
+        by_parent.setdefault(n.get("parentId"), []).append(n)
+
+    usernames = []
+    def walk(node_id):
+        for child in by_parent.get(node_id, []):
+            tg = (child.get("tg") or "").strip()
+            if tg:
+                usernames.append(tg.lstrip("@"))
+            walk(child.get("id"))
+
+    for sid in support_ids:
+        walk(sid)
+    return usernames
+
+
+async def daily_muammoli_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
+    app = context.application
+    try:
+        rows = await sb_get("biznes_data", params={"id": "eq.muammoli_mijozlar"})
+        muammoli_data = rows[0]["data"] if rows else {}
+        items = muammoli_data.get("items", []) if isinstance(muammoli_data, dict) else []
+        open_items = [
+            it for it in items
+            if not it.get("archived") and it.get("holati") != "hal_qilindi"
+        ]
+
+        org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
+        org_nodes = org_rows[0]["data"] if org_rows else []
+        usernames = collect_support_usernames(org_nodes)
+
+        time_label = datetime.now(TASHKENT_TZ).strftime("%H:%M")
+        lines = [f"🔔 KUNLIK ESLATMA — Support bo'limiga — {time_label}"]
+
+        if not open_items:
+            lines.append("✅ Muammoli mijozlar yo'q")
+        else:
+            lines.append(f"⚠️ Hozircha muammoli mijozlarda {len(open_items)} ta ochiq murojaat bor:")
+            lines.append("")
+            for i, it in enumerate(open_items, start=1):
+                restoran = it.get("restoran", "—")
+                ism = it.get("ism", "—")
+                tel = it.get("tel", "")
+                turi = it.get("turi", "Boshqa")
+                days = "?"
+                created_at = it.get("createdAt")
+                if created_at:
+                    try:
+                        created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                        days = max(0, (datetime.now(timezone.utc) - created_dt).days)
+                    except Exception:
+                        pass
+                header = f"{i}. {restoran} — {ism}" + (f" ({tel})" if tel else "")
+                lines.append(header)
+                lines.append(f"   {turi} — {days} kun kutmoqda")
+            if usernames:
+                tags = " ".join(f"@{u}" for u in usernames)
+                lines.append("")
+                lines.append(f"👥 Support bo'limi: {tags}")
+
+        await app.bot.send_message(chat_id=GROUP_CHAT_ID, text="\n".join(lines))
+        log.info("Kunlik muammoli eslatma yuborildi (%s)", time_label)
+    except Exception as e:
+        log.error("Kunlik muammoli eslatma xatosi: %s", e)
+
+
+async def check_overdue_muammoli(context: ContextTypes.DEFAULT_TYPE) -> None:
+    app = context.application
+    try:
+        rows = await sb_get("biznes_data", params={"id": "eq.muammoli_mijozlar"})
+        if not rows:
+            return
+        muammoli_data = rows[0]["data"]
+        if not isinstance(muammoli_data, dict):
+            return
+        items = muammoli_data.get("items", [])
+        changed = False
+        for it in items:
+            if it.get("archived") or it.get("holati") == "hal_qilindi":
+                continue
+            if it.get("overdueNotified"):
+                continue
+            created_at = it.get("createdAt")
+            if not created_at:
+                continue
+            try:
+                created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+            except Exception:
+                continue
+            hours = (datetime.now(timezone.utc) - created_dt).total_seconds() / 3600
+            if hours >= MUAMMOLI_MUDDAT_SOAT:
+                text = (
+                    "⏰ MUDDAT O'TDI (24 soat)!\n"
+                    f"🏪 Restoran: {it.get('restoran', '—')}\n"
+                    f"🙋 Mijoz: {it.get('ism', '—')}\n"
+                    f"📋 Turi: {it.get('turi', 'Boshqa')}\n"
+                    "Iltimos, tezroq hal qiling!"
+                )
+                await app.bot.send_message(chat_id=GROUP_CHAT_ID, text=text)
+                it["overdueNotified"] = True
+                changed = True
+        if changed:
+            await sb_patch("biznes_data", "muammoli_mijozlar", {"data": muammoli_data})
+            log.info("Muddati o'tgan murojaat(lar) uchun ogohlantirish yuborildi")
+    except Exception as e:
+        log.error("Muddat tekshirish xatosi: %s", e)
+
+
+# ============================================================
 # DAVRIY TEKSHIRUV (JobQueue)
 # ============================================================
 async def poll_job(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -274,6 +401,14 @@ def main() -> None:
     )
     app.add_handler(CommandHandler("start", start_cmd))
     app.job_queue.run_repeating(poll_job, interval=POLL_SECONDS, first=5)
+
+    # Muammoli mijozlar — kunlik eslatma, har kuni 10:30, 15:00, 19:00 (Toshkent vaqti)
+    app.job_queue.run_daily(daily_muammoli_reminder, time=dt_time(hour=10, minute=30, tzinfo=TASHKENT_TZ))
+    app.job_queue.run_daily(daily_muammoli_reminder, time=dt_time(hour=15, minute=0, tzinfo=TASHKENT_TZ))
+    app.job_queue.run_daily(daily_muammoli_reminder, time=dt_time(hour=19, minute=0, tzinfo=TASHKENT_TZ))
+
+    # Muammoli mijozlar — 24 soatlik muddat nazorati, har 30 daqiqada tekshiriladi
+    app.job_queue.run_repeating(check_overdue_muammoli, interval=1800, first=60)
 
     log.info("Bot polling boshlandi...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
