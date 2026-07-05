@@ -2455,14 +2455,15 @@ function muammoliGetSababchiIchki(){
 function muammoliGetOrgTopBolimlar(){
   if(typeof orgData==='undefined'||!orgData||!orgData.length)return [];
   var root=orgData.find(n=>!n.parentId);
-  if(!root)return [];
-  return orgData.filter(function(n){ return n.parentId===root.id && !n.fio; })
-    .map(function(n){ return n.name; })
-    .sort((a,b)=>a.localeCompare(b,'uz'));
+  var direct=root?orgData.filter(function(n){ return n.parentId===root.id && n.cardType==='bolim'; }):[];
+  if(!direct.length){
+    direct=orgData.filter(function(n){ return n.cardType==='bolim'; });
+  }
+  return direct.map(function(n){ return n.name; }).sort((a,b)=>a.localeCompare(b,'uz'));
 }
 function muammoliGetOrgEmployeeUsernames(bolimNom){
   if(typeof orgData==='undefined'||!orgData||!orgData.length||!bolimNom)return [];
-  var bolimNode=orgData.find(function(n){ return n.name===bolimNom && !n.fio; });
+  var bolimNode=orgData.find(function(n){ return n.name===bolimNom && n.cardType==='bolim'; });
   if(!bolimNode)return [];
   var usernames=[];
   function walk(pid){
