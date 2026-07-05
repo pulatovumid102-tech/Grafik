@@ -3103,10 +3103,12 @@ function saveMuammoliForm(){
         '📋 Turi: '+turi+'\n'+
         '📝 Izoh: '+(izoh||'—');
       sendGroupMessage(mainMsgH);
-      if(muammoliDraft.sababchiBolim==='Texnik bo\'lim'){
+      if(muammoliDraft.sababchiBolim==="IT bo'limi"){
         sendGroupMessage(mainMsgH+muammoliBolimTagLine(muammoliDraft.sababchiBolim),MUAMMOLI_GROUP_TEXNIK);
-      }else if(muammoliDraft.sababchiBolim==='Buxgalteriya'){
+      }else if(muammoliDraft.sababchiBolim==="Buxgalteriya bo'limi"){
         sendGroupMessage(mainMsgH+muammoliBolimTagLine(muammoliDraft.sababchiBolim),MUAMMOLI_GROUP_BUXGALTERIYA);
+      }else if(muammoliDraft.sababchiBolim==="Partnership bo'limi"){
+        sendGroupMessage(mainMsgH+muammoliBolimTagLine(muammoliDraft.sababchiBolim),MUAMMOLI_GROUP_RESTORAN);
       }
     }else{
       var mainMsg='⚠️ YANGI MUROJAAT\n'+
@@ -3117,17 +3119,32 @@ function saveMuammoliForm(){
         '📝 Izoh: '+(izoh||'—');
       sendGroupMessage(mainMsg);
       if(muammoliDraft.restoran){
-        sendGroupMessage(
-          '⚠️ QOIDABUZARLIK OGOHLANTIRISHI\n'+
-          '🏪 Restoran: '+muammoliDraft.restoran+'\n'+
-          '📋 Turi: '+turi+'\n'+
-          '📝 Tafsilot: '+(izoh||'—'),
-          MUAMMOLI_GROUP_RESTORAN
-        );
-      }else if(muammoliDraft.sababchiIchki==='Texnik bo\'lim'){
+        var shikoyatSoni=muammoliDb.items.filter(function(x){ return x.manba!=='hamkor' && x.restoran===muammoliDraft.restoran; }).length;
+        var kontaktlarRo=muammoliGetContactsForRestoran(muammoliDraft.restoran);
+        var ogohlantirishLines=[
+          '⚠️ Hamkor restoran ustidan ariza',
+          '📅 '+muammoliFormatDate(muammoliDraft.createdAt),
+          '',
+          '🔢 Ushbu restoran uchun '+shikoyatSoni+'-chi shikoyat',
+          '📋 Murojaat turi: '+turi,
+          '',
+          '🏪 Restoran nomi: '+muammoliDraft.restoran
+        ];
+        kontaktlarRo.forEach(function(k){
+          if(k.tel) ogohlantirishLines.push('📞 '+(k.rol||'Kontakt')+': '+k.tel+(k.ism?' ('+k.ism+')':''));
+        });
+        ogohlantirishLines.push('');
+        ogohlantirishLines.push('🙋 Mijoz: '+muammoliDraft.ism+(muammoliDraft.tel?' ('+muammoliDraft.tel+')':''));
+        ogohlantirishLines.push('');
+        ogohlantirishLines.push('📝 Tafsilot: '+(izoh||'—'));
+        ogohlantirishLines.push('👤 Qabul qildi: '+muammoliDraft.createdByName);
+        sendGroupMessage(ogohlantirishLines.join('\n'),MUAMMOLI_GROUP_RESTORAN);
+      }else if(muammoliDraft.sababchiIchki==="IT bo'limi"){
         sendGroupMessage(mainMsg+muammoliBolimTagLine(muammoliDraft.sababchiIchki),MUAMMOLI_GROUP_TEXNIK);
-      }else if(muammoliDraft.sababchiIchki==='Buxgalteriya'){
+      }else if(muammoliDraft.sababchiIchki==="Buxgalteriya bo'limi"){
         sendGroupMessage(mainMsg+muammoliBolimTagLine(muammoliDraft.sababchiIchki),MUAMMOLI_GROUP_BUXGALTERIYA);
+      }else if(muammoliDraft.sababchiIchki==="Partnership bo'limi"){
+        sendGroupMessage(mainMsg+muammoliBolimTagLine(muammoliDraft.sababchiIchki),MUAMMOLI_GROUP_RESTORAN);
       }
     }
   }
