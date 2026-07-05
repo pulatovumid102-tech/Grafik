@@ -2369,6 +2369,8 @@ var MUAMMOLI_TOLOV_SOM=5000;
 var MUAMMOLI_GROUP_RESTORAN=-5467968653;
 var MUAMMOLI_GROUP_TEXNIK=-5264364602;
 var MUAMMOLI_GROUP_BUXGALTERIYA=-1003267096591;
+var MUAMMOLI_GROUP_SUPPORT=-5417855498;
+var BAZA415_GROUP_ID=-5076135815;
 async function muammoliSave(){
   try{await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.muammoli_mijozlar',{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({data:muammoliDb})});}
   catch(e){localStorage.setItem('muammoli_mijozlar',JSON.stringify(muammoliDb));}
@@ -2831,7 +2833,8 @@ function muammoliConfirmHal(id){
     '🏪 Restoran/sababchi: '+(it.restoran||it.sababchiIchki||'—')+'\n'+
     '🙋 Mijoz: '+(it.ism||'—')+'\n'+
     '📝 Yechim: '+yechim+'\n'+
-    '👤 Kim hal qildi: '+it.halQildiBy
+    '👤 Kim hal qildi: '+it.halQildiBy,
+    MUAMMOLI_GROUP_SUPPORT
   );
 }
 function muammoliDelete(id){
@@ -3449,7 +3452,7 @@ function saveBaza415Rest(id){
     if(menejerIsm||menejerTel)lines.push('👤 Menejer: '+(menejerIsm||'—')+' — '+(menejerTel||'—'));
     if(kassirIsm||kassirTel)lines.push('👤 Kassir-1: '+(kassirIsm||'—')+' — '+(kassirTel||'—'));
     if(buxIsm||(buxTel&&buxTel!=='+998'))lines.push('🧾 Buxgalter: '+(buxIsm||'—')+' — '+(buxTel||'—'));
-    sendGroupMessage(lines.join('\n'));
+    sendGroupMessage(lines.join('\n'),BAZA415_GROUP_ID);
   }
   baza415Save(); notify('Saqlandi ✓'); renderBaza415List();
 }
