@@ -2478,7 +2478,10 @@ function muammoliCard(it){
     ${it.createdByName?`<div class="mm-row" style="font-size:11px;color:#9a9588">Yaratdi: ${esc(it.createdByName)}</div>`:''}
     <div class="mm-row"><span class="mm-lbl">Mijoz:</span> ${esc(it.ism||'—')}${it.tel?' · <a href="tel:'+esc(it.tel.replace(/[^\d+]/g,''))+'" style="color:#1e7a4a;font-weight:700;text-decoration:none">📞 '+esc(it.tel)+'</a> <button onclick="copyToClipboard(\''+esc(it.tel).replace(/'/g,"\\'")+'\')" style="border:1px solid #ddd9cc;background:#f3f1ec;border-radius:6px;width:22px;height:22px;font-size:11px;cursor:pointer;vertical-align:middle">📋</button>':''}</div>
     <div><span class="mm-turi">${esc(it.turi||'Boshqa')}</span></div>
-    ${it.buyurtmaHolati?`<div class="mm-row" style="margin-top:2px"><span class="mm-lbl">Buyurtma holati:</span> ${esc(it.buyurtmaHolati)}</div>`:''}
+    <div class="mm-row" style="margin-top:2px;cursor:pointer" onclick="muammoliOpenHolatModal('${it.id}')">
+      <span class="mm-lbl">Buyurtma holati:</span> ${it.buyurtmaHolati?esc(it.buyurtmaHolati):'<span style="color:#9a9588">tanlanmagan (bosing)</span>'} ✏
+    </div>
+    ${it.kvitansiyaRasm?`<div style="margin-top:4px"><a href="${esc(it.kvitansiyaRasm)}" target="_blank" style="font-size:12px;color:#1e7a4a;text-decoration:none">🧾 Kvitansiyani ko'rish</a></div>`:''}
     ${it.izoh?`<div class="mm-izoh">${esc(it.izoh)}</div>`:''}
     <div style="display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer" onclick="muammoliToggleXabar('${it.id}')">
       <span style="width:18px;height:18px;border-radius:4px;border:1.5px solid #b8b3a3;display:flex;align-items:center;justify-content:center;background:${it.xabarBerildi?'#1e7a4a':'transparent'};color:#fff;font-size:11px;flex-shrink:0">${it.xabarBerildi?'✓':''}</span>
@@ -2494,6 +2497,75 @@ function muammoliCard(it){
       <button class="sek-abtn sek-abtn-red" onclick="muammoliDelete('${it.id}')">Arxivga</button>
     </div>
   </div>`;
+}
+function muammoliOpenHolatModal(id){
+  var it=muammoliDb.items.find(x=>x.id===id);
+  if(!it)return;
+  var holatlar=muammoliGetBuyurtmaHolatlari();
+  var isCustom=it.buyurtmaHolati&&!holatlar.includes(it.buyurtmaHolati);
+  var options=`<option value="" ${!it.buyurtmaHolati?'selected':''}>— tanlanmagan —</option>`
+    +holatlar.map(t=>`<option value="${esc(t)}" ${it.buyurtmaHolati===t?'selected':''}>${esc(t)}</option>`).join('')
+    +`<option value="__yangi__" ${isCustom?'selected':''}>＋ Yangi qo'shish...</option>`;
+  var isPromo=it.buyurtmaHolati==='Promokod berildi';
+  var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">Buyurtma holati</div>
+    <div class="frow">
+      <select class="fi" id="mm-holat-modal-sel" onchange="mmHolatModalChanged('${id}')">${options}</select>
+      <input class="fi" id="mm-holat-modal-yangi" value="${isCustom?esc(it.buyurtmaHolati):''}" placeholder="Yangi holat nomi..." style="${isCustom?'':'display:none'};margin-top:8px">
+    </div>
+    <div id="mm-kvitansiya-wrap" style="${isPromo?'':'display:none'}">
+      <label class="flbl" style="display:block;margin-top:10px;margin-bottom:6px">To'lov kvitansiyasi (rasm)</label>
+      ${it.kvitansiyaRasm?`<div style="margin-bottom:8px"><a href="${esc(it.kvitansiyaRasm)}" target="_blank"><img src="${esc(it.kvitansiyaRasm)}" style="max-width:100%;border-radius:8px;border:1px solid var(--white-10)"></a></div>`:''}
+      <input type="file" id="mm-kvitansiya-inp" accept="image/*" style="font-size:12px;width:100%;color:var(--white-80)">
+      <div id="mm-kvitansiya-status" style="font-size:11px;color:var(--lime);margin-top:4px"></div>
+    </div>
+    <div class="fbtns" style="margin-top:12px">
+      <button class="fsave" onclick="muammoliSaveHolatModal('${id}')">Saqlash</button>
+      <button class="fcancel" onclick="orgCloseModal()">Bekor</button>
+    </div>`;
+  orgShowModal(html);
+}
+function mmHolatModalChanged(id){
+  var sel=document.getElementById('mm-holat-modal-sel');
+  var inp=document.getElementById('mm-holat-modal-yangi');
+  var kvWrap=document.getElementById('mm-kvitansiya-wrap');
+  if(!sel)return;
+  if(inp) inp.style.display=(sel.value==='__yangi__')?'':'none';
+  if(kvWrap) kvWrap.style.display=(sel.value==='Promokod berildi')?'':'none';
+}
+async function muammoliSaveHolatModal(id){
+  var it=muammoliDb.items.find(x=>x.id===id);
+  if(!it)return;
+  var sel=document.getElementById('mm-holat-modal-sel').value;
+  var holat=sel;
+  if(sel==='__yangi__'){
+    holat=document.getElementById('mm-holat-modal-yangi').value.trim();
+    if(!holat){notify('Yangi holat nomini kiriting!');return;}
+    if(!muammoliDb.buyurtmaHolatlari)muammoliDb.buyurtmaHolatlari=MUAMMOLI_BUYURTMA_HOLATLARI.slice();
+    if(!muammoliDb.buyurtmaHolatlari.some(t=>t.toLowerCase()===holat.toLowerCase())){
+      muammoliDb.buyurtmaHolatlari.push(holat);
+    }
+  }
+  var fileInp=document.getElementById('mm-kvitansiya-inp');
+  if(fileInp&&fileInp.files.length){
+    var status=document.getElementById('mm-kvitansiya-status');
+    if(status)status.textContent='Yuklanmoqda...';
+    try{
+      var f=fileInp.files[0];
+      var path='muammoli-kvitansiya/'+id+'_'+Date.now()+'_'+hujjatSafeFilename(f.name);
+      var r=await fetch(SB_URL+'/storage/v1/object/'+HUJJAT_BUCKET+'/'+path,{
+        method:'POST',
+        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':f.type||'application/octet-stream','x-upsert':'true'},
+        body:f
+      });
+      if(r.ok){
+        it.kvitansiyaRasm=SB_URL+'/storage/v1/object/public/'+HUJJAT_BUCKET+'/'+path;
+      }else{
+        notify('Rasm yuklashda xato!');
+      }
+    }catch(e){ notify('Rasm yuklashda xato!'); }
+  }
+  it.buyurtmaHolati=holat;
+  muammoliSave(); orgCloseModal(); renderMuammoli(); notify('Saqlandi ✓');
 }
 function muammoliToggleXabar(id){
   var it=muammoliDb.items.find(x=>x.id===id);
@@ -2530,7 +2602,7 @@ function muammoliToggleStatus(id){
     return;
   }
   var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">Qanday hal qilindi?</div>
-    <div class="frow"><textarea class="fi" id="mm-yechim-inp" style="min-height:70px;resize:vertical" placeholder="Yechim izohi (ixtiyoriy)..."></textarea></div>
+    <div class="frow"><textarea class="fi" id="mm-yechim-inp" style="min-height:70px;resize:vertical" placeholder="Yechim izohi (majburiy)..."></textarea></div>
     <div class="fbtns">
       <button class="fsave" onclick="muammoliConfirmHal('${id}')">Hal qilindi ✓</button>
       <button class="fcancel" onclick="orgCloseModal()">Bekor</button>
@@ -2542,6 +2614,7 @@ function muammoliConfirmHal(id){
   var it=muammoliDb.items.find(x=>x.id===id);
   if(!it)return;
   var yechim=document.getElementById('mm-yechim-inp').value.trim();
+  if(!yechim){notify('Yechim izohini yozing!');return;}
   it.holati='hal_qilindi';
   it.halQildiBy=kaitenCreatorNameNow();
   it.halQildiAt=new Date().toISOString();
@@ -2581,13 +2654,9 @@ function muammoliRefreshForm(){
   var d=muammoliDraft;
   var turlar=muammoliGetTurlar();
   var isCustomTuri=d.turi&&!turlar.includes(d.turi);
-  var turiOptions=turlar.map(t=>`<option value="${esc(t)}" ${d.turi===t?'selected':''}>${esc(t)}</option>`).join('')
+  var turiOptions=`<option value="" ${!d.turi?'selected':''}>— tanlang —</option>`
+    +turlar.map(t=>`<option value="${esc(t)}" ${d.turi===t?'selected':''}>${esc(t)}</option>`).join('')
     +`<option value="__yangi__" ${isCustomTuri?'selected':''}>＋ Yangi tur qo'shish...</option>`;
-  var holatlar=muammoliGetBuyurtmaHolatlari();
-  var isCustomHolat=d.buyurtmaHolati&&!holatlar.includes(d.buyurtmaHolati);
-  var holatOptions=`<option value="" ${!d.buyurtmaHolati?'selected':''}>— tanlanmagan —</option>`
-    +holatlar.map(t=>`<option value="${esc(t)}" ${d.buyurtmaHolati===t?'selected':''}>${esc(t)}</option>`).join('')
-    +`<option value="__yangi__" ${isCustomHolat?'selected':''}>＋ Yangi qo'shish...</option>`;
   document.getElementById('muammoli-form').innerHTML=`<div class="form-box fade">
     <div class="frow" style="position:relative">
       <label class="flbl">Restoran nomi</label>
@@ -2597,14 +2666,9 @@ function muammoliRefreshForm(){
     <div class="frow"><label class="flbl">Mijoz ismi</label><input class="fi" id="mm-ism" value="${esc(d.ism||'')}" placeholder="Mijozning ismi"></div>
     <div class="frow"><label class="flbl">Mijoz raqami</label><input class="fi" id="mm-tel" value="${esc(d.tel||'+998')}" placeholder="+998..."></div>
     <div class="frow">
-      <label class="flbl">Murojaat turi</label>
+      <label class="flbl">Murojaat turi <span style="color:#ff7070">*</span></label>
       <select class="fi" id="mm-turi" onchange="mmTuriChanged()">${turiOptions}</select>
       <input class="fi" id="mm-turi-yangi" value="${isCustomTuri?esc(d.turi):''}" placeholder="Yangi tur nomi..." style="${isCustomTuri?'':'display:none'};margin-top:8px">
-    </div>
-    <div class="frow">
-      <label class="flbl">Mijozning buyurtma holati</label>
-      <select class="fi" id="mm-buyurtma-holati" onchange="mmHolatChanged()">${holatOptions}</select>
-      <input class="fi" id="mm-holat-yangi" value="${isCustomHolat?esc(d.buyurtmaHolati):''}" placeholder="Yangi holat nomi..." style="${isCustomHolat?'':'display:none'};margin-top:8px">
     </div>
     <div class="frow"><label class="flbl">Izoh</label><textarea class="fi" id="mm-izoh" style="min-height:70px;resize:vertical">${esc(d.izoh||'')}</textarea></div>
     <div class="fbtns"><button class="fsave" onclick="saveMuammoliForm()">Saqlash</button><button class="fcancel" onclick="renderMuammoli()">Bekor</button></div>
@@ -2616,17 +2680,6 @@ function muammoliRefreshForm(){
 function mmTuriChanged(){
   var sel=document.getElementById('mm-turi');
   var inp=document.getElementById('mm-turi-yangi');
-  if(!sel||!inp)return;
-  if(sel.value==='__yangi__'){
-    inp.style.display='';
-    inp.focus();
-  }else{
-    inp.style.display='none';
-  }
-}
-function mmHolatChanged(){
-  var sel=document.getElementById('mm-buyurtma-holati');
-  var inp=document.getElementById('mm-holat-yangi');
   if(!sel||!inp)return;
   if(sel.value==='__yangi__'){
     inp.style.display='';
@@ -2671,22 +2724,13 @@ function saveMuammoliForm(){
   var tel=document.getElementById('mm-tel').value.trim();
   var turiSel=document.getElementById('mm-turi').value;
   var turi=turiSel;
+  if(!turiSel){notify('Murojaat turini tanlang!');return;}
   if(turiSel==='__yangi__'){
     turi=document.getElementById('mm-turi-yangi').value.trim();
     if(!turi){notify('Yangi tur nomini kiriting!');return;}
     if(!muammoliDb.turlar)muammoliDb.turlar=MUAMMOLI_TURLARI.slice();
     if(!muammoliDb.turlar.some(t=>t.toLowerCase()===turi.toLowerCase())){
       muammoliDb.turlar.push(turi);
-    }
-  }
-  var holatSel=document.getElementById('mm-buyurtma-holati').value;
-  var buyurtmaHolati=holatSel;
-  if(holatSel==='__yangi__'){
-    buyurtmaHolati=document.getElementById('mm-holat-yangi').value.trim();
-    if(!buyurtmaHolati){notify('Yangi holat nomini kiriting!');return;}
-    if(!muammoliDb.buyurtmaHolatlari)muammoliDb.buyurtmaHolatlari=MUAMMOLI_BUYURTMA_HOLATLARI.slice();
-    if(!muammoliDb.buyurtmaHolatlari.some(t=>t.toLowerCase()===buyurtmaHolati.toLowerCase())){
-      muammoliDb.buyurtmaHolatlari.push(buyurtmaHolati);
     }
   }
   var izoh=document.getElementById('mm-izoh').value.trim();
@@ -2697,7 +2741,6 @@ function saveMuammoliForm(){
   muammoliDraft.ism=ism;
   muammoliDraft.tel=tel;
   muammoliDraft.turi=turi;
-  muammoliDraft.buyurtmaHolati=buyurtmaHolati;
   muammoliDraft.izoh=izoh;
   if(muammoliEditId){
     var idx=muammoliDb.items.findIndex(x=>x.id===muammoliEditId);
