@@ -402,7 +402,7 @@ function renderPartnershipFrame(){
   <div id="muammoli-filter" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;-webkit-overflow-scrolling:touch;"></div>
   <div class="search-wrap"><input class="search-inp" id="search-muammoli" placeholder="🔍 Restoran yoki mijoz nomi..." oninput="renderMuammoli()"></div>
   <div id="muammoli-form"></div>
-  <button class="add-item-btn" onclick="showMuammoliForm()" style="margin-bottom:14px">＋ Murojaat qo'shish</button>
+  <button class="add-item-btn" id="muammoli-add-btn" onclick="showMuammoliForm()" style="margin-bottom:14px">＋ Murojaat qo'shish</button>
   <div id="muammoli-list" class="section-list"></div>
 </div>
 
@@ -2306,7 +2306,7 @@ function sekretarCancelReminder(it){
 var muammoliDb={items:[]};
 var muammoliDraft=null;
 var muammoliEditId=null;
-var muammoliFilter='hammasi';
+var muammoliFilter='ochiq';
 var MUAMMOLI_TURLARI=['Sifatsiz ovqat','Restoran yopiq','Pul qaytarish','Boshqa'];
 var MUAMMOLI_BUYURTMA_HOLATLARI=['Buyurtma bekor qilindi, pul qaytarildi','Promokod berildi'];
 var MUAMMOLI_MUDDAT_SOAT=24;
@@ -2348,8 +2348,8 @@ function renderMuammoliFilter(){
   var el=document.getElementById('muammoli-filter');
   if(!el)return;
   var active=muammoliDb.items.filter(x=>!x.archived);
-  var counts={hammasi:active.length,ochiq:active.filter(x=>x.holati!=='hal_qilindi').length,hal_qilindi:active.filter(x=>x.holati==='hal_qilindi').length};
-  var chips=[['hammasi','Hammasi'],['ochiq','Ochiq'],['hal_qilindi','Hal qilindi']];
+  var counts={ochiq:active.filter(x=>x.holati!=='hal_qilindi').length,hal_qilindi:active.filter(x=>x.holati==='hal_qilindi').length};
+  var chips=[['ochiq','Ochiq'],['hal_qilindi','Hal qilindi']];
   el.innerHTML=chips.map(function(c){return `<button class="mm-filter-chip${muammoliFilter===c[0]?' active':''}" onclick="muammoliSetFilter('${c[0]}')">${c[1]} (${counts[c[0]]})</button>`;}).join('');
 }
 function muammoliFormatDate(iso){
@@ -2378,6 +2378,8 @@ function muammoliIsOverdue(it){
 }
 function renderMuammoli(){
   renderMuammoliFilter();
+  var addBtn=document.getElementById('muammoli-add-btn');
+  if(addBtn) addBtn.style.display=(muammoliFilter==='hal_qilindi')?'none':'';
   var q=(document.getElementById('search-muammoli')?.value||'').trim().toLowerCase();
   var items=muammoliDb.items.filter(x=>!x.archived).slice().sort(function(a,b){ return new Date(b.createdAt||0)-new Date(a.createdAt||0); });
   if(muammoliFilter==='ochiq')items=items.filter(x=>x.holati!=='hal_qilindi');
