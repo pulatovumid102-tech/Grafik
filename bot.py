@@ -24,7 +24,7 @@ from zoneinfo import ZoneInfo
 
 import httpx
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # ============================================================
 # SOZLAMALAR — to'g'ridan-to'g'ri shu yerga yozilgan
@@ -229,6 +229,87 @@ async def process_file_requests(app: Application) -> None:
 
 
 # ============================================================
+# MUAMMOLI MIJOZLAR — davriy tekshiruv xabari (10:15 dan 23:30 gacha,
+# har 15 daqiqada), ikki mustaqil tasdiqlash tugmasi bilan
+# ============================================================
+def generate_check_times() -> list:
+    times = []
+    start_minutes = 10 * 60 + 15
+    end_minutes = 23 * 60 + 30
+    cur = start_minutes
+    while cur <= end_minutes:
+        h, m = divmod(cur, 60)
+        times.append(dt_time(hour=h, minute=m, tzinfo=TASHKENT_TZ))
+        cur += 15
+    return times
+
+
+def build_check_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("Admin panelda hammasi joyida", callback_data="muammoli_check:admin")],
+        [InlineKeyboardButton("Telegramda ham hammasi joyida", callback_data="muammoli_check:tg")],
+    ])
+
+
+async def muammoli_check_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    app = context.application
+    time_label = datetime.now(TASHKENT_TZ).strftime("%H:%M")
+    text = (
+        f"🔎 TEKSHIRUV — {time_label}\n"
+        "📋 Admin panelga qarang — murojaat qilgan muammoli mijoz yo'qmi?\n"
+        "👥 Hamkorlar bilan ochilgan telegram guruhlarga qarang — murojaat qilgan hamkor yo'qmi?"
+    )
+    try:
+        await app.bot.send_message(chat_id=GROUP_CHAT_ID, text=text, reply_markup=build_check_keyboard())
+        log.info("Tekshiruv xabari yuborildi (%s)", time_label)
+    except Exception as e:
+        log.error("Tekshiruv xabarini yuborishda xato: %s", e)
+
+
+async def muammoli_check_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+
+    parts = (query.data or "").split(":", 1)
+    btn_type = parts[1] if len(parts) == 2 else ""
+    if btn_type not in ("admin", "tg"):
+        return
+
+    current_markup = query.message.reply_markup
+    still_present = False
+    new_rows = []
+    if current_markup:
+        for row in current_markup.inline_keyboard:
+            new_row = [btn for btn in row if btn.callback_data != query.data]
+            if len(new_row) != len(row):
+                still_present = True
+            if new_row:
+                new_rows.append(new_row)
+
+    if not still_present:
+        return  # allaqachon boshqa kishi tomonidan tasdiqlangan
+
+    user = query.from_user
+    name = user.full_name
+    username = user.username or ""
+    who = f"{name} (@{username})" if username else name
+    time_label = datetime.now(TASHKENT_TZ).strftime("%H:%M")
+
+    if btn_type == "admin":
+        line = f"✅ {who} — {time_label} holatida admin panelda javob berilmagan murojaat yo'qligini tasdiqladi."
+    else:
+        line = f"✅ {who} — {time_label} holatida hamkorlar guruhlarida javob berilmagan murojaat yo'qligini tasdiqladi."
+
+    new_text = (query.message.text or "") + "\n\n" + line
+    new_markup = InlineKeyboardMarkup(new_rows) if new_rows else None
+
+    try:
+        await query.edit_message_text(text=new_text, reply_markup=new_markup)
+    except Exception as e:
+        log.error("Tekshiruv xabarini tahrirlashda xato: %s", e)
+
+
+# ============================================================
 # MUAMMOLI MIJOZLAR — kunlik eslatma va muddat nazorati
 # ============================================================
 def collect_support_usernames(org_nodes: list) -> list:
@@ -400,7 +481,12 @@ def main() -> None:
         .build()
     )
     app.add_handler(CommandHandler("start", start_cmd))
+    app.add_handler(CallbackQueryHandler(muammoli_check_callback, pattern="^muammoli_check:"))
     app.job_queue.run_repeating(poll_job, interval=POLL_SECONDS, first=5)
+
+    # Muammoli mijozlar — davriy tekshiruv xabari, 10:15 dan 23:30 gacha har 15 daqiqada
+    for check_time in generate_check_times():
+        app.job_queue.run_daily(muammoli_check_job, time=check_time)
 
     # Muammoli mijozlar — kunlik eslatma, har kuni 10:30, 15:00, 19:00 (Toshkent vaqti)
     app.job_queue.run_daily(daily_muammoli_reminder, time=dt_time(hour=10, minute=30, tzinfo=TASHKENT_TZ))
