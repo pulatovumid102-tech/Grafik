@@ -400,9 +400,9 @@ function renderPartnershipFrame(){
   </div>
   <div id="muammoli-filter" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;-webkit-overflow-scrolling:touch;"></div>
   <div class="search-wrap"><input class="search-inp" id="search-muammoli" placeholder="🔍 Restoran yoki mijoz nomi..." oninput="renderMuammoli()"></div>
-  <div id="muammoli-list" class="section-list"></div>
   <div id="muammoli-form"></div>
-  <button class="add-item-btn" onclick="showMuammoliForm()">＋ Murojaat qo'shish</button>
+  <button class="add-item-btn" onclick="showMuammoliForm()" style="margin-bottom:14px">＋ Murojaat qo'shish</button>
+  <div id="muammoli-list" class="section-list"></div>
 </div>
 
 <div class="page" id="p-muammoli-dashboard">
@@ -423,9 +423,9 @@ function renderPartnershipFrame(){
     </div>
   </div>
   <div class="search-wrap"><input class="search-inp" id="search-baza415" placeholder="🔍 Restoran nomi..." oninput="renderBaza415List()"></div>
-  <div id="baza415-list" class="section-list"></div>
   <div id="baza415-form"></div>
-  <button class="add-item-btn" onclick="showBaza415RestForm()">＋ Restoran qo'shish</button>
+  <button class="add-item-btn" onclick="showBaza415RestForm()" style="margin-bottom:14px">＋ Restoran qo'shish</button>
+  <div id="baza415-list" class="section-list"></div>
 </div>
 
 <div class="page" id="p-baza415-restoran">
@@ -435,11 +435,11 @@ function renderPartnershipFrame(){
       <span class="page-title" id="baza415-rest-title">Restoran</span>
     </div>
   </div>
-  <div id="baza415-buxgalter-box" style="margin-bottom:14px"></div>
   <div class="flbl" style="margin-bottom:8px">Filiallar</div>
   <div id="baza415-filial-list" class="section-list"></div>
   <div id="baza415-filial-form"></div>
   <button class="add-item-btn" onclick="showBaza415FilialForm()">＋ Filial qo'shish</button>
+  <div id="baza415-buxgalter-box" style="margin-top:18px"></div>
 </div>
 
 <div class="page" id="p-baza415-filial">
@@ -1193,6 +1193,17 @@ function renderPartnershipFrame(){
 
 <script>
 if(window.Telegram && window.Telegram.WebApp){ Telegram.WebApp.ready(); Telegram.WebApp.expand(); }
+
+// +998 bilan boshlanadigan tel maydonlarida fokus qilinganda kursor oxiriga tushadi,
+// shunda mobil klaviaturada matn tasodifan o'chib ketmaydi, davom ettirib yozish mumkin.
+document.addEventListener('focusin', function(e){
+  var el = e.target;
+  if(el && el.tagName === 'INPUT' && typeof el.value === 'string' && el.value.indexOf('+998') === 0){
+    setTimeout(function(){
+      try{ el.setSelectionRange(el.value.length, el.value.length); }catch(err){}
+    }, 0);
+  }
+});
 
 var CURRENT_APP = null;
 var USER_ID = 'guest';
@@ -2391,9 +2402,12 @@ function showMuammoliForm(id){
 function muammoliRefreshForm(){
   var d=muammoliDraft;
   var turiOptions=MUAMMOLI_TURLARI.map(t=>`<option value="${esc(t)}" ${d.turi===t?'selected':''}>${esc(t)}</option>`).join('');
-  var restoranOptions=baza415AllRestoranNomlari().map(n=>`<option value="${esc(n)}">`).join('');
   document.getElementById('muammoli-form').innerHTML=`<div class="form-box fade">
-    <div class="frow"><label class="flbl">Restoran nomi</label><input class="fi" id="mm-restoran" list="mm-restoran-list" value="${esc(d.restoran||'')}" placeholder="Restoran nomini yozing va ro'yxatdan tanlang"><datalist id="mm-restoran-list">${restoranOptions}</datalist></div>
+    <div class="frow" style="position:relative">
+      <label class="flbl">Restoran nomi</label>
+      <input class="fi" id="mm-restoran" autocomplete="off" value="${esc(d.restoran||'')}" placeholder="Restoran nomini yozing va ro'yxatdan tanlang" oninput="mmRestoranSearch()" onfocus="mmRestoranSearch()">
+      <div id="mm-restoran-dropdown" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:20;background:var(--green-card);border:1px solid var(--white-10);border-radius:10px;margin-top:4px;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.3)"></div>
+    </div>
     <div class="frow"><label class="flbl">Mijoz ismi</label><input class="fi" id="mm-ism" value="${esc(d.ism||'')}" placeholder="Mijozning ismi"></div>
     <div class="frow"><label class="flbl">Mijoz raqami</label><input class="fi" id="mm-tel" value="${esc(d.tel||'+998')}" placeholder="+998..."></div>
     <div class="frow"><label class="flbl">Murojaat turi</label><select class="fi" id="mm-turi">${turiOptions}</select></div>
@@ -2401,6 +2415,37 @@ function muammoliRefreshForm(){
     <div class="fbtns"><button class="fsave" onclick="saveMuammoliForm()">Saqlash</button><button class="fcancel" onclick="renderMuammoli()">Bekor</button></div>
   </div>`;
   document.getElementById('mm-restoran').focus();
+  document.removeEventListener('click', mmRestoranOutsideClick);
+  document.addEventListener('click', mmRestoranOutsideClick);
+}
+function mmRestoranOutsideClick(e){
+  var wrap=document.getElementById('mm-restoran-dropdown');
+  var inp=document.getElementById('mm-restoran');
+  if(!wrap||!inp)return;
+  if(e.target!==inp && !wrap.contains(e.target)) wrap.style.display='none';
+}
+function mmRestoranSearch(){
+  var inp=document.getElementById('mm-restoran');
+  var dd=document.getElementById('mm-restoran-dropdown');
+  if(!inp||!dd)return;
+  var q=inp.value.trim().toLowerCase();
+  var all=baza415AllRestoranNomlari();
+  var matches=q?all.filter(n=>n.toLowerCase().includes(q)):all;
+  matches=matches.slice(0,50);
+  if(!matches.length){
+    dd.innerHTML='<div style="padding:10px 12px;color:var(--white-50);font-size:13px">Topilmadi</div>';
+  }else{
+    dd.innerHTML=matches.map(function(n){
+      return `<div style="padding:10px 12px;font-size:13px;color:var(--white);cursor:pointer;border-bottom:1px solid var(--white-10)" onmousedown="event.preventDefault();mmRestoranPick('${n.replace(/'/g,"\\'")}')" ontouchstart="event.preventDefault();mmRestoranPick('${n.replace(/'/g,"\\'")}')">${esc(n)}</div>`;
+    }).join('');
+  }
+  dd.style.display='block';
+}
+function mmRestoranPick(nom){
+  var inp=document.getElementById('mm-restoran');
+  var dd=document.getElementById('mm-restoran-dropdown');
+  if(inp)inp.value=nom;
+  if(dd)dd.style.display='none';
 }
 function saveMuammoliForm(){
   if(!muammoliDraft)return;
@@ -2552,16 +2597,17 @@ async function baza415Load(){
 // ---- Restoranlar ro'yxati ----
 function renderBaza415List(){
   var q=(document.getElementById('search-baza415')?.value||'').trim().toLowerCase();
-  var list=baza415Db.restoranlar||[];
+  var list=(baza415Db.restoranlar||[]).slice().sort((a,b)=>a.nom.localeCompare(b.nom,'uz'));
   var filtered=q?list.filter(r=>r.nom.toLowerCase().includes(q)):list;
   var h=filtered.map(function(r,i){
     var filialSoni=(r.filiallar||[]).length;
+    var hint=filialSoni===1?'':(filialSoni+' ta filial');
     return `<div class="section-item" onclick="openBaza415Rest('${r.id}')">
       <div style="display:flex;align-items:center;flex:1;min-width:0">
         <div class="section-num">${String(i+1).padStart(2,'0')}</div>
         <div style="min-width:0">
           <div class="section-name">${esc(r.nom)}</div>
-          <div style="font-size:11px;color:var(--white-50);margin-top:2px">${filialSoni} ta filial${r.buxgalterTel?' · Buxgalter: '+esc(r.buxgalterTel):''}</div>
+          ${hint?`<div style="font-size:11px;color:var(--white-50);margin-top:2px">${hint}</div>`:''}
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
@@ -2769,7 +2815,16 @@ function baza415DelContact(id){
 
 // ---- Barcha restoran nomlari ro'yxati (Muammoli mijozlar formasi uchun) ----
 function baza415AllRestoranNomlari(){
-  return (baza415Db.restoranlar||[]).map(r=>r.nom).sort();
+  var names=[];
+  (baza415Db.restoranlar||[]).forEach(function(r){
+    var filiallar=r.filiallar||[];
+    if(filiallar.length>=2){
+      filiallar.forEach(function(f){ names.push(r.nom+' — '+f.nom); });
+    } else {
+      names.push(r.nom);
+    }
+  });
+  return names.sort((a,b)=>a.localeCompare(b,'uz'));
 }
 
 document.getElementById('logout-btn').addEventListener('click', function(){
