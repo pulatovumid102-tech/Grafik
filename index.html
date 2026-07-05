@@ -2826,6 +2826,13 @@ function muammoliConfirmHal(id){
   }
   mmYordamChecked=false;
   muammoliSave(); orgCloseModal(); renderMuammoli(); notify('Hal qilindi ✓');
+  sendGroupMessage(
+    '✅ MUROJAAT HAL QILINDI\n'+
+    '🏪 Restoran/sababchi: '+(it.restoran||it.sababchiIchki||'—')+'\n'+
+    '🙋 Mijoz: '+(it.ism||'—')+'\n'+
+    '📝 Yechim: '+yechim+'\n'+
+    '👤 Kim hal qildi: '+it.halQildiBy
+  );
 }
 function muammoliDelete(id){
   var check=muammoliDb.items.find(x=>x.id===id);
