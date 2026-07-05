@@ -2489,7 +2489,7 @@ function muammoliCard(it){
     <div class="mm-row" style="margin-top:8px;cursor:pointer" onclick="muammoliOpenHolatModal('${it.id}')">
       <span class="mm-lbl">Buyurtma holati:</span> ${it.buyurtmaHolati?esc(it.buyurtmaHolati):'<span style="color:#9a9588">tanlanmagan (bosing)</span>'} ✏
     </div>
-    ${it.kvitansiyaRasm?`<div style="margin-top:4px"><a href="${esc(it.kvitansiyaRasm)}" target="_blank" style="font-size:12px;color:#1e7a4a;text-decoration:none">🧾 Kvitansiyani ko'rish</a></div>`:''}
+    ${it.kvitansiyaRasm?`<div style="margin-top:6px"><a href="${esc(it.kvitansiyaRasm)}" target="_blank"><img src="${esc(it.kvitansiyaRasm)}" style="max-width:160px;max-height:160px;border-radius:8px;border:1px solid #e2dfd6;display:block"></a><div style="font-size:11px;color:#1e7a4a;margin-top:2px">🧾 Kvitansiya (bosib kattalashtiring)</div></div>`:''}
     ${isHal?`<div class="mm-row" style="font-size:11px;color:#1e7a4a;font-weight:600;margin-top:8px">Hal qildi: ${esc(it.halQildiBy||'—')} · ${muammoliFormatDateTime(it.halQildiAt)}</div>`:''}
     ${isHal&&it.yechimIzohi?`<div class="mm-izoh" style="background:rgba(30,122,74,0.08)"><b>Yechim:</b> ${esc(it.yechimIzohi)}</div>`:''}
     <div class="mm-btns" style="margin-top:8px">
@@ -2546,6 +2546,7 @@ async function muammoliSaveHolatModal(id){
       muammoliDb.buyurtmaHolatlari.push(holat);
     }
   }
+  var uploadFailed=false;
   var fileInp=document.getElementById('mm-kvitansiya-inp');
   if(fileInp&&fileInp.files.length){
     var status=document.getElementById('mm-kvitansiya-status');
@@ -2560,10 +2561,21 @@ async function muammoliSaveHolatModal(id){
       });
       if(r.ok){
         it.kvitansiyaRasm=SB_URL+'/storage/v1/object/public/'+HUJJAT_BUCKET+'/'+path;
+        if(status)status.textContent='Yuklandi ✓';
       }else{
-        notify('Rasm yuklashda xato!');
+        var errBody=await r.text();
+        uploadFailed=true;
+        if(status)status.textContent='Xatolik ('+r.status+'): '+errBody;
       }
-    }catch(e){ notify('Rasm yuklashda xato!'); }
+    }catch(e){
+      uploadFailed=true;
+      var status2=document.getElementById('mm-kvitansiya-status');
+      if(status2)status2.textContent='Xatolik: '+e.message;
+    }
+  }
+  if(uploadFailed){
+    notify("Rasm yuklanmadi, xato matnini o'qing");
+    return;
   }
   it.buyurtmaHolati=holat;
   muammoliSave(); orgCloseModal(); renderMuammoli(); notify('Saqlandi ✓');
