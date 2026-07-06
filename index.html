@@ -3209,7 +3209,7 @@ function muammoliDaysSince(iso){
 function renderMuammoliDashboard(){
   var body=document.getElementById('muammoli-dash-body');
   if(!body)return;
-  var items=(muammoliDb.items||[]).filter(x=>!x.archived);
+  var items=(muammoliDb.items||[]);
   var jami=items.length;
   var ochiqList=items.filter(x=>x.holati!=='hal_qilindi');
   var halList=items.filter(x=>x.holati==='hal_qilindi');
@@ -3289,10 +3289,6 @@ function renderMuammoliDashboard(){
       <div class="mm-dash-kpi"><div class="mm-dash-kpi-lbl" style="color:var(--lime)">Hal qilindi</div><div class="mm-dash-kpi-val" style="color:var(--lime)">${halList.length}</div></div>
     </div>
     <div class="mm-dash-section">
-      <div class="mm-dash-title">💰 Xodimlar haqi</div>
-      ${xodimlarHtml}
-    </div>
-    <div class="mm-dash-section">
       <div class="mm-dash-title">📌 Eng ko'p uchraydigan muammo turi</div>
       ${turiSorted.length?barsHtml(turiSorted,turiMax):'<div style="color:var(--white-50);font-size:13px">Ma\'lumot yo\'q</div>'}
     </div>
@@ -3303,6 +3299,10 @@ function renderMuammoliDashboard(){
     <div class="mm-dash-section">
       <div class="mm-dash-title">⏳ Hal qilinmagan murojaatlar (kutish vaqti bo'yicha)</div>
       ${pendingHtml}
+    </div>
+    <div class="mm-dash-section">
+      <div class="mm-dash-title">💰 Xodimlar haqi</div>
+      ${xodimlarHtml}
     </div>
   `;
 }
