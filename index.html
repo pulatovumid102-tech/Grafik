@@ -215,6 +215,13 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .mm-action-row{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:10px;background:#fff;border:1px solid #e2dfd6;cursor:pointer;transition:border-color .15s}
 .mm-action-row:active{border-color:#c9c4b5}
 .mm-meta{font-size:11px;color:#a8a396}
+.mm-avatar{width:44px;height:44px;border-radius:50%;background:rgba(237,161,0,0.15);color:#8a5c00;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
+.mm-avatar-hamkor{background:rgba(83,74,183,0.15);color:#534ab7}
+.mm-seclbl{font-size:12px;color:#a8a396;margin-bottom:4px}
+.mm-contact-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:2px 0}
+.mm-contact-role{font-size:13px;color:#5a574f}
+.mm-contact-link{font-size:13px;font-weight:700;color:#1e7a4a;text-decoration:none;white-space:nowrap}
+.mm-badge-bolim{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:8px;background:rgba(83,74,183,0.12);color:#534ab7}
 .mm-filter-chip{flex-shrink:0;padding:8px 16px;border-radius:20px;border:1px solid var(--white-10);background:var(--white-06);color:var(--white-80);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s,color .15s}
 .mm-filter-chip.active{background:var(--lime);color:var(--green-dark);border-color:var(--lime)}
 .mm-dash-section{background:var(--green-card);border:1px solid var(--white-10);border-radius:14px;padding:16px;margin-bottom:14px}
@@ -1139,7 +1146,7 @@ function renderPartnershipFrame(){
       <span class="page-title">Ish grafigi</span>
     </div>
   </div>
-  <div id="ish-grafigi-list" class="section-list"></div>
+  <div id="ish-grafigi-dash"></div>
 </div>
 
 <div class="page" id="p-ish-grafigi-bolim">
@@ -1150,7 +1157,7 @@ function renderPartnershipFrame(){
     </div>
   </div>
   <div id="ish-grafigi-bolim-standart"></div>
-  <div class="flbl" style="margin:14px 0 8px">Haftalik xodimlar soni (soat bo'yicha)</div>
+  <div class="flbl" style="margin:14px 0 8px">Bo'sh vaqtlar (hodim yo'q)</div>
   <div id="ish-grafigi-headcount" style="overflow-x:auto"></div>
   <div class="flbl" style="margin:14px 0 8px">Xodimlar</div>
   <div id="ish-grafigi-xodimlar-list" class="section-list"></div>
@@ -2577,85 +2584,107 @@ function muammoliGetContactsForRestoran(restoranStr){
   var r=(baza415Db.restoranlar||[]).find(x=>x.nom===restoranStr);
   return r?(r.kontaktlar||[]):[];
 }
-function muammoliContactsHtml(it){
-  var contacts=muammoliGetContactsForRestoran(it.restoran);
-  var menejer=contacts.filter(function(k){ return (k.rol||'').toLowerCase().indexOf('menejer')!==-1; });
-  if(!menejer.length)return '';
-  return `<div style="display:flex;flex-direction:column;gap:6px;margin-top:2px;margin-bottom:4px">
-    ${menejer.map(function(k){
-      var telHref=(k.tel||'').replace(/[^\d+]/g,'');
-      return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fff;border:1px solid #e2dfd6;border-radius:8px;padding:7px 10px">
-        <div style="min-width:0">
-          <div style="font-size:11px;font-weight:700;color:#8a5c00;text-transform:uppercase">${esc(k.rol||'Kontakt')}</div>
-          <div style="font-size:13px;color:#2e2c28">${esc(k.ism||'—')}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-          ${telHref?`<a href="tel:${esc(telHref)}" style="font-size:13px;font-weight:700;color:#1e7a4a;text-decoration:none;white-space:nowrap">📞 ${esc(k.tel)}</a>
-          <button onclick="copyToClipboard('${esc(k.tel).replace(/'/g,"\\'")}')" style="border:1px solid #ddd9cc;background:#f3f1ec;border-radius:6px;width:26px;height:26px;font-size:12px;cursor:pointer">📋</button>`
-          :`<span style="font-size:13px;color:#8b877c">Raqam yo'q</span>`}
-        </div>
-      </div>`;
-    }).join('')}
-  </div>`;
+function muammoliMenejerKassirContacts(restoranNom){
+  var contacts=muammoliGetContactsForRestoran(restoranNom);
+  return contacts.filter(function(k){
+    var r=(k.rol||'').toLowerCase();
+    return r.indexOf('menejer')!==-1||r.indexOf('kassir')!==-1;
+  });
+}
+function muammoliContactsRowsHtml(contacts){
+  if(!contacts.length)return '<div style="font-size:13px;color:#9a9588">Kontakt topilmadi</div>';
+  return contacts.map(function(k){
+    var telHref=(k.tel||'').replace(/[^\d+]/g,'');
+    return `<div class="mm-contact-row">
+      <span class="mm-contact-role">${esc(k.rol||'Kontakt')}</span>
+      ${telHref?`<a href="tel:${esc(telHref)}" class="mm-contact-link">${esc(k.ism?k.ism+' · ':'')}${esc(k.tel)}</a>
+      <button onclick="copyToClipboard('${esc(k.tel).replace(/'/g,"\\'")}')" style="border:1px solid #ddd9cc;background:#f3f1ec;border-radius:6px;width:22px;height:22px;font-size:11px;cursor:pointer;flex-shrink:0">📋</button>`
+      :`<span style="font-size:13px;color:#9a9588">Raqam yo'q</span>`}
+    </div>`;
+  }).join('');
 }
 function muammoliCard(it){
   var isHal=it.holati==='hal_qilindi';
   var overdue=muammoliIsOverdue(it);
   var isHamkor=it.manba==='hamkor';
   var cardStyle=overdue?'border:2px solid #e34948;background:#fdecea':'';
-  var headerNom=isHamkor?(it.restoran||'—'):(it.restoran||it.sababchiIchki||'—');
-  return `<div class="mm-card" style="${cardStyle}">
-    <div class="mm-top">
-      <div class="mm-restoran">${esc(headerNom)}${overdue?' ⚠️':''}</div>
-      <span class="mm-badge ${isHal?'mm-badge-hal':'mm-badge-ochiq'}">${isHal?'Hal qilindi':'Ochiq'}</span>
+  var murojaatchiName=isHamkor?(it.restoran||'—'):(it.ism||'—');
+  var initial=(murojaatchiName||'?').trim().charAt(0).toUpperCase();
+  var restoranContacts=it.restoran?muammoliMenejerKassirContacts(it.restoran):[];
+
+  var headerHtml=`<div class="mm-top" style="align-items:flex-start">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="mm-avatar${isHamkor?' mm-avatar-hamkor':''}">${isHamkor?'🏪':esc(initial)}</div>
+      <div>
+        <div class="mm-restoran" style="margin-bottom:1px">${esc(murojaatchiName)}${overdue?' ⚠️':''}</div>
+        ${!isHamkor&&it.tel?`<a href="tel:${esc(it.tel.replace(/[^\d+]/g,''))}" class="mm-contact-link">${esc(it.tel)}</a>`:''}
+        ${isHamkor?`<div class="mm-meta" style="margin-top:1px">Hamkor so'rovi</div>`:''}
+      </div>
     </div>
-    <div class="mm-meta">${isHamkor?'🤝 Hamkor so\'rovi':'🙋 Mijoz murojaati'}${it.createdByName?' · Qabul qildi: '+esc(it.createdByName):''} · ${muammoliFormatDateTime(it.createdAt)}</div>
+    <span class="mm-badge ${isHal?'mm-badge-hal':'mm-badge-ochiq'}">${isHal?'Hal qilindi':'Ochiq'}</span>
+  </div>`;
 
-    ${muammoliContactsHtml(it)}
+  var hamkorContactsHtml=isHamkor&&it.restoran?`<div style="margin-top:10px">${muammoliContactsRowsHtml(muammoliMenejerKassirContacts(it.restoran))}</div>`:'';
 
-    <div class="mm-divider"></div>
+  var muammoBlock=`<div class="mm-divider"></div>
+    <div class="mm-seclbl">${isHamkor?"So'rov":'Muammo'}</div>
+    <div style="font-size:15px;font-weight:700;color:#1a1815;margin-bottom:2px">${esc(it.turi||'Boshqa')}</div>
+    ${it.izoh?`<div style="font-size:14px;color:#5a574f">${esc(it.izoh)}</div>`:''}`;
 
-    ${!isHamkor?`<div class="mm-row"><span class="mm-lbl">Mijoz:</span> ${esc(it.ism||'—')}${it.tel?' · <a href="tel:'+esc(it.tel.replace(/[^\d+]/g,''))+'" style="color:#1e7a4a;font-weight:700;text-decoration:none">📞 '+esc(it.tel)+'</a> <button onclick="copyToClipboard(\''+esc(it.tel).replace(/'/g,"\\'")+'\')" style="border:1px solid #ddd9cc;background:#f3f1ec;border-radius:6px;width:22px;height:22px;font-size:11px;cursor:pointer;vertical-align:middle">📋</button>':''}</div>`:''}
-    <div><span class="mm-lbl">${isHamkor?"So'rov turi:":'Murojaat turi:'}</span> <span class="mm-turi">${esc(it.turi||'Boshqa')}</span></div>
-    ${!isHamkor&&it.sababchiIchki?`<div class="mm-row" style="margin-top:2px"><span class="mm-lbl">Masul:</span> ${esc(it.sababchiIchki)}</div>`:''}
-    ${isHamkor&&it.sababchiBolim?`<div class="mm-row" style="margin-top:2px"><span class="mm-lbl">Masul bo'lim:</span> ${esc(it.sababchiBolim)}</div>`:''}
-    ${it.izoh?`<div class="mm-izoh">${esc(it.izoh)}</div>`:''}
+  var restoranBlock=(!isHamkor&&it.restoran)?`<div class="mm-divider"></div>
+    <div class="mm-seclbl">Restoran — ${esc(it.restoran)}</div>
+    ${muammoliContactsRowsHtml(restoranContacts)}`:'';
 
-    ${isHamkor&&it.sababchiBolim?`
-    <div class="mm-divider"></div>
-    <div class="mm-action-row" onclick="muammoliToggleBolimXabar('${it.id}')">
-      <span style="width:18px;height:18px;border-radius:4px;border:1.5px solid #b8b3a3;display:flex;align-items:center;justify-content:center;background:${it.bolimXabarBerildi?'#1e7a4a':'transparent'};color:#fff;font-size:11px;flex-shrink:0">${it.bolimXabarBerildi?'✓':''}</span>
-      <span style="font-size:12px;color:#5a574f;font-weight:600">${esc(it.sababchiBolim)}ga xabar berildi</span>
-    </div>
-    ${it.bolimXabarBerildi&&it.bolimJavobi?`<div class="mm-izoh" style="background:rgba(30,122,74,0.08);border-left:3px solid #1e7a4a;padding:8px 10px;border-radius:0 8px 8px 0"><b>${esc(it.sababchiBolim)} javobi:</b> ${esc(it.bolimJavobi)}</div>`:''}
-    `:''}
+  var masulBlock=it.masulBolim?`<div class="mm-divider"></div>
+    <div class="mm-seclbl">Masul bo'lim</div>
+    <span class="mm-badge-bolim">${esc(it.masulBolim)}</span>`:'';
 
-    ${!isHamkor&&it.restoran?`
-    <div class="mm-divider"></div>
-
+  var xabarBlock=(!isHamkor&&it.restoran)?`<div class="mm-divider"></div>
     <div class="mm-action-row" onclick="muammoliToggleXabar('${it.id}')">
       <span style="width:18px;height:18px;border-radius:4px;border:1.5px solid #b8b3a3;display:flex;align-items:center;justify-content:center;background:${it.xabarBerildi?'#1e7a4a':'transparent'};color:#fff;font-size:11px;flex-shrink:0">${it.xabarBerildi?'✓':''}</span>
       <span style="font-size:12px;color:#5a574f;font-weight:600">Restoranga xabar berildi</span>
     </div>
-    ${it.xabarBerildi&&it.restoranJavobi?`<div class="mm-izoh" style="background:rgba(30,122,74,0.08);border-left:3px solid #1e7a4a;padding:8px 10px;border-radius:0 8px 8px 0"><b>Restoran javobi:</b> ${esc(it.restoranJavobi)}</div>`:''}
+    ${it.xabarBerildi&&it.restoranJavobi?`<div class="mm-izoh" style="background:rgba(30,122,74,0.08);border-left:3px solid #1e7a4a;padding:8px 10px;border-radius:0 8px 8px 0"><b>Restoran javobi:</b> ${esc(it.restoranJavobi)}</div>`:''}`:'';
 
-    <div class="mm-action-row" onclick="muammoliOpenHolatModal('${it.id}')">
-      <span style="font-size:14px">🧾</span>
-      <span style="font-size:12px;color:#5a574f"><span class="mm-lbl" style="color:#5a574f;font-weight:600">Buyurtma holati:</span> ${it.buyurtmaHolati?esc(it.buyurtmaHolati):'<span style="color:#9a9588">tanlanmagan, bosing</span>'}</span>
+  var bolimXabarBlock=it.masulBolim?`<div class="mm-divider"></div>
+    <div class="mm-action-row" onclick="muammoliToggleBolimXabar('${it.id}')">
+      <span style="width:18px;height:18px;border-radius:4px;border:1.5px solid #b8b3a3;display:flex;align-items:center;justify-content:center;background:${it.bolimXabarBerildi?'#1e7a4a':'transparent'};color:#fff;font-size:11px;flex-shrink:0">${it.bolimXabarBerildi?'✓':''}</span>
+      <span style="font-size:12px;color:#5a574f;font-weight:600">${esc(it.masulBolim)}ga xabar berildi</span>
     </div>
-    ${it.kvitansiyaRasm?`<div><a href="${esc(it.kvitansiyaRasm)}" target="_blank"><img src="${esc(it.kvitansiyaRasm)}" style="max-width:160px;max-height:160px;border-radius:8px;border:1px solid #e2dfd6;display:block"></a><div style="font-size:11px;color:#1e7a4a;margin-top:2px">Kvitansiya (bosib kattalashtiring)</div></div>`:''}
-    `:''}
+    ${it.bolimXabarBerildi&&it.bolimJavobi?`<div class="mm-izoh" style="background:rgba(30,122,74,0.08);border-left:3px solid #1e7a4a;padding:8px 10px;border-radius:0 8px 8px 0"><b>${esc(it.masulBolim)} javobi:</b> ${esc(it.bolimJavobi)}</div>`:''}`:'';
 
-    ${isHal?`<div class="mm-divider"></div>
+  var holatiBlock=(!isHamkor&&it.restoran)?`<div class="mm-action-row" onclick="muammoliOpenHolatModal('${it.id}')" style="margin-top:6px">
+    <span style="font-size:14px">🧾</span>
+    <span style="font-size:12px;color:#5a574f"><span class="mm-lbl" style="color:#5a574f;font-weight:600">Buyurtma holati:</span> ${it.buyurtmaHolati?esc(it.buyurtmaHolati):'<span style="color:#9a9588">tanlanmagan, bosing</span>'}</span>
+  </div>
+  ${it.kvitansiyaRasm?`<div style="margin-top:6px"><a href="${esc(it.kvitansiyaRasm)}" target="_blank"><img src="${esc(it.kvitansiyaRasm)}" style="max-width:160px;max-height:160px;border-radius:8px;border:1px solid #e2dfd6;display:block"></a></div>`:''}`:'';
+
+  var resolutionBlock=isHal?`<div class="mm-divider"></div>
     <div class="mm-row" style="font-size:12px;color:#1e7a4a;font-weight:600">✓ Hal qildi: ${esc(it.halQildiBy||'—')} · ${muammoliFormatDateTime(it.halQildiAt)}${it.yordamchi?' · Yordamchi: '+esc(it.yordamchi):''}</div>
     <div class="mm-row" style="font-size:12px;color:#8a5c00">💰 To'lov: ${it.yordamchi?(it.toLovResolver||0)+' so\'m (+ '+esc(it.yordamchi)+"ga "+(it.toLovYordamchi||0)+" so'm)":(it.toLovResolver||MUAMMOLI_TOLOV_SOM)+" so'm"}</div>
-    ${it.yechimIzohi?`<div class="mm-izoh" style="background:rgba(30,122,74,0.08);padding:8px 10px;border-radius:8px"><b>Yechim:</b> ${esc(it.yechimIzohi)}</div>`:''}`:''}
+    ${it.yechimIzohi?`<div class="mm-izoh" style="background:rgba(30,122,74,0.08);padding:8px 10px;border-radius:8px"><b>Yechim:</b> ${esc(it.yechimIzohi)}</div>`:''}`:'';
 
-    <div class="mm-btns" style="margin-top:4px">
+  var footerHtml=`<div class="mm-divider"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span class="mm-meta">${it.createdByName?'Qabul qildi: '+esc(it.createdByName)+' · ':''}${muammoliFormatDateTime(it.createdAt)}</span>
+    </div>
+    <div class="mm-btns" style="margin-top:6px">
       <button class="sek-abtn" onclick="muammoliToggleStatus('${it.id}')">${isHal?'↩ Qayta ochish':'✓ Hal qilindi'}</button>
       <button class="sek-abtn" onclick="showMuammoliForm('${it.id}')">Tahrirlash</button>
       ${isHal?`<button class="sek-abtn sek-abtn-red" onclick="muammoliDelete('${it.id}')">Arxivga</button>`:''}
-    </div>
+    </div>`;
+
+  return `<div class="mm-card" style="${cardStyle}">
+    ${headerHtml}
+    ${hamkorContactsHtml}
+    ${muammoBlock}
+    ${restoranBlock}
+    ${masulBlock}
+    ${xabarBlock}
+    ${bolimXabarBlock}
+    ${holatiBlock}
+    ${resolutionBlock}
+    ${footerHtml}
   </div>`;
 }
 function muammoliOpenHolatModal(id){
@@ -2772,7 +2801,7 @@ function muammoliToggleBolimXabar(id){
     muammoliSave(); renderMuammoli();
     return;
   }
-  var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">${esc(it.sababchiBolim||"Bo'lim")} nima dedi?</div>
+  var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">${esc(it.masulBolim||"Bo'lim")} nima dedi?</div>
     <div class="frow"><textarea class="fi" id="mm-bolim-javobi-inp" style="min-height:70px;resize:vertical" placeholder="Bo'lim javobi (ixtiyoriy)..."></textarea></div>
     <div class="fbtns">
       <button class="fsave" onclick="muammoliSaveBolimXabar('${id}')">Saqlash</button>
@@ -2855,7 +2884,7 @@ function muammoliConfirmHal(id){
   muammoliSave(); orgCloseModal(); renderMuammoli(); notify('Hal qilindi ✓');
   sendGroupMessage(
     '✅ MUROJAAT HAL QILINDI\n'+
-    '🏪 Restoran/masul: '+(it.restoran||it.sababchiIchki||'—')+'\n'+
+    '🏪 Restoran/masul: '+(it.restoran||it.masulBolim||'—')+'\n'+
     '🙋 Mijoz: '+(it.ism||'—')+'\n'+
     '📝 Yechim: '+yechim+'\n'+
     '👤 Kim hal qildi: '+it.halQildiBy,
@@ -2888,11 +2917,10 @@ function showMuammoliForm(id){
     muammoliDraft=JSON.parse(JSON.stringify(it));
     muammoliEditId=id;
   }else{
-    muammoliDraft={id:'mm'+Date.now(), manba:'mijoz', sababchiTuri:'restoran', holati:'ochiq'};
+    muammoliDraft={id:'mm'+Date.now(), manba:'mijoz', holati:'ochiq'};
     muammoliEditId=null;
   }
   if(!muammoliDraft.manba) muammoliDraft.manba='mijoz';
-  if(!muammoliDraft.sababchiTuri) muammoliDraft.sababchiTuri=muammoliDraft.sababchiIchki?'ichki':'restoran';
   muammoliRefreshForm();
   document.getElementById('muammoli-form').scrollIntoView({behavior:'smooth', block:'center'});
 }
@@ -2903,15 +2931,11 @@ function muammoliSyncCommon(){
   if(g('mm-ism')!==undefined) d.ism=g('mm-ism');
   if(g('mm-tel')!==undefined) d.tel=g('mm-tel');
   if(g('mm-restoran')!==undefined) d.restoran=g('mm-restoran');
+  if(g('mm-masul-bolim')!==undefined) d.masulBolim=g('mm-masul-bolim');
 }
 function mmSetManba(manba){
   muammoliSyncCommon();
   muammoliDraft.manba=manba;
-  muammoliRefreshForm();
-}
-function mmSetSababchiTuri(tip){
-  muammoliSyncCommon();
-  muammoliDraft.sababchiTuri=tip;
   muammoliRefreshForm();
 }
 function muammoliRefreshForm(){
@@ -2925,10 +2949,18 @@ function muammoliRefreshForm(){
     </div>`;
 
   var restoranBlock=`<div class="frow" style="position:relative">
-      <label class="flbl">Restoran nomi</label>
+      <label class="flbl">Restoran nomi${isHamkor?' <span style="color:#ff7070">*</span>':' (ixtiyoriy)'}</label>
       <input class="fi" id="mm-restoran" autocomplete="off" value="${esc(d.restoran||'')}" placeholder="Restoran nomini yozing va ro'yxatdan tanlang" oninput="mmRestoranSearch()" onfocus="mmRestoranSearch()">
       <div id="mm-restoran-dropdown" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:20;background:var(--green-card);border:1px solid var(--white-10);border-radius:10px;margin-top:4px;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.3)"></div>
     </div>`;
+
+  var masulList=muammoliGetSababchiIchki();
+  var masulOptions=`<option value="" ${!d.masulBolim?'selected':''}>— tanlang —</option>`
+    +masulList.map(t=>`<option value="${esc(t)}" ${d.masulBolim===t?'selected':''}>${esc(t)}</option>`).join('');
+  var masulBlock=`<div class="frow">
+    <label class="flbl">Masul bo'lim <span style="color:#ff7070">*</span></label>
+    <select class="fi" id="mm-masul-bolim">${masulOptions}</select>
+  </div>`;
 
   var manbaBlock=`<div class="frow">
     <label class="flbl">Murojaat manbai</label>
@@ -2938,38 +2970,13 @@ function muammoliRefreshForm(){
     </div>
   </div>`;
 
-  var bodyBlock='';
-  if(isHamkor){
-    var ichkiListH=muammoliGetSababchiIchki();
-    var ichkiOptionsH=`<option value="" ${!d.sababchiBolim?'selected':''}>— tanlanmagan —</option>`
-      +ichkiListH.map(t=>`<option value="${esc(t)}" ${d.sababchiBolim===t?'selected':''}>${esc(t)}</option>`).join('');
-    bodyBlock=`${restoranBlock}
-      ${turiBlock}
-      <div class="frow">
-        <label class="flbl">Masul bo'lim (ixtiyoriy)</label>
-        <select class="fi" id="mm-sababchi-bolim">${ichkiOptionsH}</select>
-      </div>`;
-  }else{
-    var sababchiRestoran=d.sababchiTuri!=='ichki';
-    var ichkiList=muammoliGetSababchiIchki();
-    var ichkiOptions=`<option value="" ${!d.sababchiIchki?'selected':''}>— tanlang —</option>`
-      +ichkiList.map(t=>`<option value="${esc(t)}" ${d.sababchiIchki===t?'selected':''}>${esc(t)}</option>`).join('');
-    bodyBlock=`
-      <div class="frow"><label class="flbl">Mijoz ismi <span style="color:#ff7070">*</span></label><input class="fi" id="mm-ism" value="${esc(d.ism||'')}" placeholder="Mijozning ismi"></div>
-      <div class="frow"><label class="flbl">Mijoz raqami</label><input class="fi" id="mm-tel" value="${esc(d.tel||'+998')}" placeholder="+998..."></div>
-      ${turiBlock}
-      <div class="frow">
-        <label class="flbl">Muammo uchun masul</label>
-        <div style="display:flex;gap:6px;margin-top:5px">
-          <button type="button" onclick="mmSetSababchiTuri('restoran')" style="flex:1;padding:9px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;background:${sababchiRestoran?'var(--lime)':'var(--white-06)'};color:${sababchiRestoran?'var(--green-dark)':'var(--white-50)'}">Restoran</button>
-          <button type="button" onclick="mmSetSababchiTuri('ichki')" style="flex:1;padding:9px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;background:${!sababchiRestoran?'var(--lime)':'var(--white-06)'};color:${!sababchiRestoran?'var(--green-dark)':'var(--white-50)'}">Ichki bo'lim</button>
-        </div>
-      </div>
-      ${sababchiRestoran?restoranBlock:`
-      <div class="frow">
-        <select class="fi" id="mm-sababchi-ichki">${ichkiOptions}</select>
-      </div>`}`;
-  }
+  var bodyBlock=isHamkor
+    ? `${restoranBlock}${turiBlock}${masulBlock}`
+    : `<div class="frow"><label class="flbl">Mijoz ismi <span style="color:#ff7070">*</span></label><input class="fi" id="mm-ism" value="${esc(d.ism||'')}" placeholder="Mijozning ismi"></div>
+       <div class="frow"><label class="flbl">Mijoz raqami</label><input class="fi" id="mm-tel" value="${esc(d.tel||'+998')}" placeholder="+998..."></div>
+       ${turiBlock}
+       ${restoranBlock}
+       ${masulBlock}`;
 
   document.getElementById('muammoli-form').innerHTML=`<div class="form-box fade">
     ${manbaBlock}
@@ -3086,6 +3093,8 @@ function saveMuammoliForm(){
     muammoliDb[listKey].push(turi);
   }
   var izoh=document.getElementById('mm-izoh').value.trim();
+  var masulBolim=document.getElementById('mm-masul-bolim').value;
+  if(!masulBolim){notify("Masul bo'limni tanlang!");return;}
 
   if(isHamkor){
     var restoran=document.getElementById('mm-restoran').value.trim();
@@ -3093,27 +3102,17 @@ function saveMuammoliForm(){
     if(!baza415AllRestoranNomlari().includes(restoran)){notify("Restoran 415 baza ro'yxatidan tanlanishi kerak!");return;}
     muammoliDraft.restoran=restoran;
     delete muammoliDraft.ism; delete muammoliDraft.tel;
-    delete muammoliDraft.sababchiTuri; delete muammoliDraft.sababchiIchki;
-    var bolim=document.getElementById('mm-sababchi-bolim').value;
-    if(bolim) muammoliDraft.sababchiBolim=bolim; else delete muammoliDraft.sababchiBolim;
   }else{
     var ism=document.getElementById('mm-ism').value.trim();
     if(!ism){notify('Mijoz ismini kiriting!');return;}
     var tel=document.getElementById('mm-tel').value.trim();
-    var sababchiTuri=muammoliDraft.sababchiTuri||'restoran';
-    if(sababchiTuri==='restoran'){
-      var restoran2=document.getElementById('mm-restoran').value.trim();
-      if(restoran2&&!baza415AllRestoranNomlari().includes(restoran2)){notify("Restoran 415 baza ro'yxatidan tanlanishi kerak!");return;}
-      muammoliDraft.restoran=restoran2;
-      delete muammoliDraft.sababchiIchki;
-    }else{
-      var ichki=document.getElementById('mm-sababchi-ichki').value;
-      muammoliDraft.sababchiIchki=ichki;
-      delete muammoliDraft.restoran;
-    }
+    var restoran3=document.getElementById('mm-restoran').value.trim();
+    if(restoran3&&!baza415AllRestoranNomlari().includes(restoran3)){notify("Restoran 415 baza ro'yxatidan tanlanishi kerak!");return;}
+    muammoliDraft.restoran=restoran3;
     muammoliDraft.ism=ism;
     muammoliDraft.tel=tel;
   }
+  muammoliDraft.masulBolim=masulBolim;
   muammoliDraft.turi=turi;
   muammoliDraft.izoh=izoh;
 
@@ -3123,7 +3122,7 @@ function saveMuammoliForm(){
     sendGroupMessage(
       '✏️ MUROJAAT TAHRIRLANDI\n'+
       '👤 Kim: '+kaitenCreatorNameNow()+'\n'+
-      (isHamkor?'🏪 Restoran: '+(muammoliDraft.restoran||'—'):'🏪 Masul: '+(muammoliDraft.restoran||muammoliDraft.sababchiIchki||'—')+'\n🙋 Mijoz: '+muammoliDraft.ism)
+      (isHamkor?'🏪 Restoran: '+(muammoliDraft.restoran||'—'):'🙋 Mijoz: '+muammoliDraft.ism+'\n🏢 Masul: '+masulBolim)
     );
   }else{
     if(!muammoliDraft.createdAt)muammoliDraft.createdAt=new Date().toISOString();
@@ -3131,8 +3130,10 @@ function saveMuammoliForm(){
     muammoliDraft.createdByName=kaitenCreatorNameNow();
     muammoliDraft.toLov=MUAMMOLI_TOLOV_SOM;
     muammoliDb.items.push(muammoliDraft);
+    var groupIdForBolim=muammoliGroupForBolim(masulBolim);
+
     if(isHamkor){
-      var kontaktlarH=muammoliGetContactsForRestoran(muammoliDraft.restoran);
+      var kontaktlarH=muammoliMenejerKassirContacts(muammoliDraft.restoran);
       var hamkorLines=[
         '🤝 HAMKORDAN MUROJAT',
         '📋 Murojaat turi: '+turi,
@@ -3144,27 +3145,22 @@ function saveMuammoliForm(){
       kontaktlarH.forEach(function(k){
         if(k.tel) hamkorLines.push((k.rol||'Kontakt')+' raqami: '+k.tel+(k.ism?' ('+k.ism+')':''));
       });
-      var tagLineH=muammoliDraft.sababchiBolim?muammoliBolimTagLine(muammoliDraft.sababchiBolim):'';
-      var mainMsgH=hamkorLines.join('\n')+tagLineH;
+      hamkorLines.push('');
+      hamkorLines.push('🏢 Masul bo\'lim: '+masulBolim);
+      var mainMsgH=hamkorLines.join('\n')+muammoliBolimTagLine(masulBolim);
       sendGroupMessage(mainMsgH);
-      if(muammoliDraft.sababchiBolim==="IT bo'limi"){
-        sendGroupMessage(mainMsgH,MUAMMOLI_GROUP_TEXNIK);
-      }else if(muammoliDraft.sababchiBolim==="Buxgalteriya bo'limi"){
-        sendGroupMessage(mainMsgH,MUAMMOLI_GROUP_BUXGALTERIYA);
-      }else if(muammoliDraft.sababchiBolim==="Partnership bo'limi"){
-        sendGroupMessage(mainMsgH,MUAMMOLI_GROUP_RESTORAN);
-      }
+      if(groupIdForBolim) sendGroupMessage(mainMsgH,groupIdForBolim);
     }else{
       var mainMsg='⚠️ YANGI MUROJAAT\n'+
         '👤 Qabul qildi: '+muammoliDraft.createdByName+'\n'+
-        '🏪 Masul: '+(muammoliDraft.restoran||muammoliDraft.sababchiIchki||'—')+'\n'+
         '🙋 Mijoz: '+muammoliDraft.ism+(muammoliDraft.tel?' ('+muammoliDraft.tel+')':'')+'\n'+
         '📋 Turi: '+turi+'\n'+
-        '📝 Izoh: '+(izoh||'—');
+        '📝 Izoh: '+(izoh||'—')+'\n'+
+        '🏢 Masul bo\'lim: '+masulBolim;
       sendGroupMessage(mainMsg);
       if(muammoliDraft.restoran){
         var shikoyatSoni=muammoliDb.items.filter(function(x){ return x.manba!=='hamkor' && x.restoran===muammoliDraft.restoran; }).length;
-        var kontaktlarRo=muammoliGetContactsForRestoran(muammoliDraft.restoran);
+        var kontaktlarRo=muammoliMenejerKassirContacts(muammoliDraft.restoran);
         var ogohlantirishLines=[
           '⚠️ Hamkor restoran ustidan ariza',
           '📅 '+muammoliFormatDate(muammoliDraft.createdAt),
@@ -3182,17 +3178,20 @@ function saveMuammoliForm(){
         ogohlantirishLines.push('');
         ogohlantirishLines.push('📝 Tafsilot: '+(izoh||'—'));
         ogohlantirishLines.push('👤 Qabul qildi: '+muammoliDraft.createdByName);
+        ogohlantirishLines.push('🏢 Masul bo\'lim: '+masulBolim);
         sendGroupMessage(ogohlantirishLines.join('\n'),MUAMMOLI_GROUP_RESTORAN);
-      }else if(muammoliDraft.sababchiIchki==="IT bo'limi"){
-        sendGroupMessage(mainMsg+muammoliBolimTagLine(muammoliDraft.sababchiIchki),MUAMMOLI_GROUP_TEXNIK);
-      }else if(muammoliDraft.sababchiIchki==="Buxgalteriya bo'limi"){
-        sendGroupMessage(mainMsg+muammoliBolimTagLine(muammoliDraft.sababchiIchki),MUAMMOLI_GROUP_BUXGALTERIYA);
-      }else if(muammoliDraft.sababchiIchki==="Partnership bo'limi"){
-        sendGroupMessage(mainMsg+muammoliBolimTagLine(muammoliDraft.sababchiIchki),MUAMMOLI_GROUP_RESTORAN);
+      }else if(groupIdForBolim){
+        sendGroupMessage(mainMsg+muammoliBolimTagLine(masulBolim),groupIdForBolim);
       }
     }
   }
   muammoliSave(); notify('Saqlandi ✓'); renderMuammoli();
+}
+function muammoliGroupForBolim(bolimNom){
+  if(bolimNom==="IT bo'limi") return MUAMMOLI_GROUP_TEXNIK;
+  if(bolimNom==="Buxgalteriya bo'limi") return MUAMMOLI_GROUP_BUXGALTERIYA;
+  if(bolimNom==="Partnership bo'limi") return MUAMMOLI_GROUP_RESTORAN;
+  return null;
 }
 function muammoliBolimTagLine(bolimNom){
   var usernames=muammoliGetOrgEmployeeUsernames(bolimNom);
@@ -3262,7 +3261,7 @@ function renderMuammoliDashboard(){
     var days=muammoliDaysSince(it.createdAt);
     var color=days>=5?'#e34948':(days>=2?'#eda100':'#1baf7a');
     var bg=days>=5?'rgba(227,73,72,0.15)':(days>=2?'rgba(237,161,0,0.15)':'rgba(27,175,122,0.15)');
-    var nom=it.restoran||it.sababchiIchki||'—';
+    var nom=it.restoran||it.masulBolim||'—';
     return `<div class="mm-pending-item">
       <div style="min-width:0">
         <div style="font-size:13px;font-weight:600;color:var(--white)">${esc(nom)}${it.manba!=='hamkor'?' — '+esc(it.ism||'—'):''}</div>
@@ -4555,25 +4554,76 @@ function workFormatSchedule(sched){
     return d.label.slice(0,3)+' '+(s.from||'--')+'–'+(s.to||'--');
   }).join(', ');
 }
+function workFindGaps(bolimId){
+  var data=workComputeHourlyHeadcount(bolimId);
+  var gaps=[];
+  WORK_DAYS.forEach(function(d){
+    var counts=data.byDay[d.key];
+    var i=0;
+    while(i<counts.length){
+      if(counts[i]===0){
+        var startH=data.hours[i];
+        var j=i;
+        while(j<counts.length&&counts[j]===0) j++;
+        var endH=data.hours[j-1]+1;
+        gaps.push({day:d.label, from:startH, to:endH});
+        i=j;
+      }else{
+        i++;
+      }
+    }
+  });
+  return gaps;
+}
 function renderIshGrafigiList(){
   var bolimlar=workGetOrgTopBolimNodes();
-  var h=bolimlar.map(function(b){
+  var jamiXodim=0;
+  bolimlar.forEach(function(b){ jamiXodim+=workGetEmployeesUnder(b.id).length; });
+
+  var bolimRows=bolimlar.map(function(b){
     var sched=workDb.bolimlar[b.id];
-    return `<div style="margin-bottom:18px">
-      <div class="section-item" onclick="openIshGrafigiBolim('${b.id}')" style="margin-bottom:8px">
-        <div style="display:flex;align-items:center;flex:1;min-width:0">
-          <div style="min-width:0">
-            <div class="section-name">${esc(b.name)}</div>
-            <div style="font-size:11px;color:var(--white-50);margin-top:2px">${esc(workFormatSchedule(sched))}</div>
-          </div>
-        </div>
-        <span class="chevron">›</span>
+    var xodimSoni=workGetEmployeesUnder(b.id).length;
+    return `<div class="mm-pending-item" style="cursor:pointer" onclick="openIshGrafigiBolim('${b.id}')">
+      <div style="min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--white)">${esc(b.name)}</div>
+        <div style="font-size:11px;color:var(--white-50)">${xodimSoni} ta xodim</div>
       </div>
-      <div style="overflow-x:auto">${workBuildHeadcountHtml(b.id)}</div>
+      <span style="font-size:12px;color:var(--lime);white-space:nowrap">${esc(workFormatSchedule(sched))}</span>
     </div>`;
   }).join('');
-  if(!bolimlar.length)h='<div style="text-align:center;padding:24px;color:var(--white-50);font-size:13px">Org strukturada bo\'lim topilmadi</div>';
-  document.getElementById('ish-grafigi-list').innerHTML=h;
+  if(!bolimlar.length) bolimRows='<div style="text-align:center;padding:20px;color:var(--white-50);font-size:13px">Org strukturada bo\'lim topilmadi</div>';
+
+  var gapRows=[];
+  bolimlar.forEach(function(b){
+    var gaps=workFindGaps(b.id);
+    gaps.forEach(function(g){
+      gapRows.push({bolim:b.name, day:g.day, from:g.from, to:g.to});
+    });
+  });
+  var gapHtml=gapRows.length?gapRows.map(function(g){
+    return `<div class="mm-pending-item">
+      <div style="min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--white)">${esc(g.bolim)}</div>
+        <div style="font-size:11px;color:var(--white-50)">${esc(g.day)}</div>
+      </div>
+      <span class="mm-pending-days" style="background:rgba(227,73,72,0.15);color:#e34948">${g.from}:00–${g.to}:00 bo'sh</span>
+    </div>`;
+  }).join(''):'<div style="text-align:center;padding:20px;color:var(--white-50);font-size:13px">Bo\'sh vaqt topilmadi 🎉</div>';
+
+  document.getElementById('ish-grafigi-dash').innerHTML=`
+    <div class="mm-dash-kpis" style="grid-template-columns:1fr 1fr">
+      <div class="mm-dash-kpi"><div class="mm-dash-kpi-lbl">Jami bo'lim</div><div class="mm-dash-kpi-val">${bolimlar.length}</div></div>
+      <div class="mm-dash-kpi"><div class="mm-dash-kpi-lbl" style="color:var(--lime)">Jami xodim</div><div class="mm-dash-kpi-val" style="color:var(--lime)">${jamiXodim}</div></div>
+    </div>
+    <div class="mm-dash-section">
+      <div class="mm-dash-title">🏢 Bo'limlar ish vaqti</div>
+      ${bolimRows}
+    </div>
+    <div class="mm-dash-section">
+      <div class="mm-dash-title">⏳ Bo'sh vaqtlar (hodim yo'q)</div>
+      ${gapHtml}
+    </div>
+  `;
 }
 function openIshGrafigiBolim(id){ curIshGrafigiBolim=id; goTo('p-ish-grafigi-bolim'); }
 function renderIshGrafigiBolim(){
@@ -4655,7 +4705,13 @@ function workBuildHeadcountHtml(bolimId){
 function renderIshGrafigiHeadcount(bolimId){
   var el=document.getElementById('ish-grafigi-headcount');
   if(!el)return;
-  el.innerHTML=workBuildHeadcountHtml(bolimId);
+  var gaps=workFindGaps(bolimId);
+  el.innerHTML=gaps.length?gaps.map(function(g){
+    return `<div class="mm-pending-item">
+      <div style="font-size:13px;color:var(--white)">${esc(g.day)}</div>
+      <span class="mm-pending-days" style="background:rgba(227,73,72,0.15);color:#e34948">${g.from}:00–${g.to}:00 bo'sh</span>
+    </div>`;
+  }).join(''):'<div style="text-align:center;padding:16px;color:var(--white-50);font-size:13px">Bo\'sh vaqt topilmadi 🎉</div>';
 }
 function workResetXodim(xodimId){
   askConfirm("Bu xodim uchun alohida jadvalni o'chirib, bo'lim standartiga qaytarilsinmi?",function(){
