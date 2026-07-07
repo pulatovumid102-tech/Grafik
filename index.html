@@ -1202,6 +1202,7 @@ function renderPartnershipFrame(){
       <span class="page-title">Restoranlarga qo'ng'iroq</span>
     </div>
   </div>
+  <div class="search-wrap"><input class="search-inp" id="search-partnership-calls" placeholder="🔍 Restoran nomi..." oninput="renderPartnershipCalls()"></div>
   <div id="partnership-calls-list" class="section-list"></div>
 </div>
 
@@ -3617,7 +3618,24 @@ function partnershipToggleExpand(id){
 }
 function renderPartnershipCalls(){
   var today=partnershipTodayStr();
-  var list=(baza415Db.restoranlar||[]).slice().sort((a,b)=>a.nom.localeCompare(b.nom,'uz'));
+  var q2=(document.getElementById('search-partnership-calls')?.value||'').trim().toLowerCase();
+  var nowMinutes=(function(){ var d=new Date(); return d.getHours()*60+d.getMinutes(); })();
+  function servingDiff(r){
+    if(!r.berishVaqtiDan) return Infinity;
+    var parts=r.berishVaqtiDan.split(':');
+    var mins=parseInt(parts[0],10)*60+parseInt(parts[1],10);
+    var diff=mins-nowMinutes;
+    if(diff<0) diff+=1440; // o'tib ketgan bo'lsa, ertangi shu vaqtgacha hisoblanadi (eng oxiriga tushmasin uchun ham katta son emas)
+    return diff;
+  }
+  var list=(baza415Db.restoranlar||[]).slice().sort(function(a,b){
+    var aCalled=(a.qongiroq&&a.qongiroq.lastCalledDate===today);
+    var bCalled=(b.qongiroq&&b.qongiroq.lastCalledDate===today);
+    if(aCalled!==bCalled) return aCalled?1:-1;
+    if(!aCalled) return servingDiff(a)-servingDiff(b);
+    return a.nom.localeCompare(b.nom,'uz');
+  });
+  if(q2) list=list.filter(function(r){ return r.nom.toLowerCase().includes(q2); });
   var h=list.map(function(r,i){
     var q=r.qongiroq||{};
     var calledToday=q.lastCalledDate===today;
@@ -3654,7 +3672,7 @@ function renderPartnershipCalls(){
     </div>`;
     return compactRow+detail;
   }).join('');
-  if(!list.length)h='<div style="text-align:center;padding:24px;color:var(--white-50);font-size:13px">415 bazada restoran yo\'q</div>';
+  if(!list.length)h=`<div style="text-align:center;padding:24px;color:var(--white-50);font-size:13px">${q2?'Topilmadi':"415 bazada restoran yo'q"}</div>`;
   document.getElementById('partnership-calls-list').innerHTML=h;
 }
 function partnershipMarkCalled(restoranId){
@@ -3677,6 +3695,13 @@ function partnershipSaveCalled(restoranId){
   r.qongiroq.lastCalledAt=new Date().toISOString();
   if(izohInp) r.qongiroq.izoh=izohInp;
   baza415Save(); orgCloseModal(); renderPartnershipCalls(); notify('Saqlandi ✓');
+  sendGroupMessage(
+    '☎ RESTORANGA QO\'NG\'IROQ QILINDI\n'+
+    '🏪 Restoran: '+r.nom+'\n'+
+    '👤 Qo\'ng\'iroq qildi: '+r.qongiroq.lastCalledBy+'\n'+
+    '📝 Izoh: '+(izohInp||'—'),
+    MUAMMOLI_GROUP_RESTORAN
+  );
 }
 function partnershipUnmarkCalled(restoranId){
   askConfirm("Bugungi qo'ng'iroq belgisini bekor qilasizmi?",function(){
