@@ -305,6 +305,13 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
       </div>
       <span class="chevron">›</span>
     </div>
+    <div class="section-item" onclick="goTo('p-partnership-calls')">
+      <div style="display:flex;align-items:center;flex:1;min-width:0">
+        <div class="section-num">02</div>
+        <div class="section-name">📞 Restoranlarga qo'ng'iroq</div>
+      </div>
+      <span class="chevron">›</span>
+    </div>
   </div>
 </div>
 
@@ -1187,6 +1194,17 @@ function renderPartnershipFrame(){
   <div id="sections-grid" class="cards-grid"></div>
   <div id="section-form"></div>
 </div>
+
+<div class="page" id="p-partnership-calls">
+  <div class="page-topbar">
+    <div class="page-header">
+      <button class="back-btn" onclick="goBack('p-dashboard')">← Orqaga</button>
+      <span class="page-title">Restoranlarga qo'ng'iroq</span>
+    </div>
+  </div>
+  <div id="partnership-calls-list" class="section-list"></div>
+</div>
+
 <div class="page" id="p-section">
   <div class="page-topbar"><div class="breadcrumb" id="bc-section"></div><div class="page-header"><button class="back-btn" onclick="goBack('p-home')">← Orqaga</button><span class="page-title" id="section-title"></span></div></div>
   <div class="search-wrap"><input class="search-inp" id="search-cats" placeholder="🔍 Qidirish..." oninput="renderCats()"></div>
@@ -3229,6 +3247,20 @@ function renderMuammoliDashboard(){
   // Hal qilinmagan muammolar, kutish vaqti bo'yicha (eng uzoq kutgani birinchi)
   var pendingSorted=ochiqList.slice().sort(function(a,b){ return muammoliDaysSince(b.createdAt)-muammoliDaysSince(a.createdAt); });
 
+  // Kunlik murojaatlar soni
+  function muammoliDateKey(d){
+    var y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+    return y+'-'+m+'-'+day;
+  }
+  var kunlikCounts={};
+  items.forEach(function(it){
+    if(!it.createdAt)return;
+    var d=muammoliDateKey(new Date(it.createdAt));
+    kunlikCounts[d]=(kunlikCounts[d]||0)+1;
+  });
+  var kunlikKeys=Object.keys(kunlikCounts).sort();
+  var kunlikOrtacha=kunlikKeys.length?(items.length/kunlikKeys.length):0;
+
   // Xodimlar haqi — har bir xodim uchun jami to'lov va son
   var xodimlarHaqi={};
   (muammoliDb.items||[]).forEach(function(it){
@@ -3282,11 +3314,24 @@ function renderMuammoliDashboard(){
     </div>`;
   }).join(''):'<div style="text-align:center;padding:20px;color:var(--white-50);font-size:13px">Hali hal qilingan murojaat yo\'q</div>';
 
+  var kunlikHtml=kunlikKeys.length?kunlikKeys.map(function(k){
+    var parts=k.split('-');
+    var label=parts[2]+'.'+parts[1]+'.'+parts[0];
+    return `<div class="mm-pending-item">
+      <div style="font-size:13px;color:var(--white)">${label}</div>
+      <span style="font-weight:700;color:var(--lime)">${kunlikCounts[k]}</span>
+    </div>`;
+  }).join(''):'<div style="text-align:center;padding:20px;color:var(--white-50);font-size:13px">Ma\'lumot yo\'q</div>';
+
   body.innerHTML=`
     <div class="mm-dash-kpis">
       <div class="mm-dash-kpi"><div class="mm-dash-kpi-lbl">Jami murojaat</div><div class="mm-dash-kpi-val">${jami}</div></div>
       <div class="mm-dash-kpi"><div class="mm-dash-kpi-lbl" style="color:#ff9090">Ochiq</div><div class="mm-dash-kpi-val" style="color:#ff9090">${ochiqList.length}</div></div>
       <div class="mm-dash-kpi"><div class="mm-dash-kpi-lbl" style="color:var(--lime)">Hal qilindi</div><div class="mm-dash-kpi-val" style="color:var(--lime)">${halList.length}</div></div>
+    </div>
+    <div class="mm-dash-section">
+      <div class="mm-dash-title">📅 Kunlik murojaatlar soni <span style="font-weight:400;color:var(--white-50);font-size:12px">(o'rtacha ${kunlikOrtacha.toFixed(1)}/kun)</span></div>
+      ${kunlikHtml}
     </div>
     <div class="mm-dash-section">
       <div class="mm-dash-title">📌 Eng ko'p uchraydigan muammo turi</div>
@@ -3372,7 +3417,10 @@ function renderBaza415List(){
   var filtered=q?list.filter(r=>r.nom.toLowerCase().includes(q)):list;
   var h=filtered.map(function(r,i){
     var kontaktSoni=(r.kontaktlar||[]).length;
-    var hint=kontaktSoni?(kontaktSoni+' ta kontakt'):'';
+    var hintParts=[];
+    if(kontaktSoni) hintParts.push(kontaktSoni+' ta kontakt');
+    if(r.berishVaqtiDan&&r.berishVaqtiGacha) hintParts.push('🍽 '+r.berishVaqtiDan+'–'+r.berishVaqtiGacha);
+    var hint=hintParts.join(' · ');
     return `<div class="section-item" onclick="openBaza415Rest('${r.id}')">
       <div style="display:flex;align-items:center;flex:1;min-width:0">
         <div class="section-num">${String(i+1).padStart(2,'0')}</div>
@@ -3396,6 +3444,14 @@ function showBaza415RestForm(id){
   var isNew=!id;
   document.getElementById('baza415-form').innerHTML=`<div class="form-box fade">
     <div class="frow"><label class="flbl">Restoran nomi</label><input class="fi" id="bz-rest-nom" value="${esc(r?.nom||'')}" placeholder="Masalan: Mador"></div>
+    <div class="frow">
+      <label class="flbl">Ovqat berish vaqti oralig'i</label>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+        <input type="time" class="fi" id="bz-rest-berish-dan" value="${esc(r?.berishVaqtiDan||'')}" style="margin-top:0">
+        <span style="color:var(--white-50)">—</span>
+        <input type="time" class="fi" id="bz-rest-berish-gacha" value="${esc(r?.berishVaqtiGacha||'')}" style="margin-top:0">
+      </div>
+    </div>
     ${isNew?`
     <div class="frow"><label class="flbl">Call center raqami</label><input class="fi" id="bz-rest-callcenter-tel" value="+998" placeholder="+998..."></div>
     <div style="border:1px solid var(--white-10);border-radius:10px;padding:12px;margin-bottom:10px">
@@ -3441,9 +3497,11 @@ function baza415AddExtraContactRow(){
 function saveBaza415Rest(id){
   var nom=document.getElementById('bz-rest-nom').value.trim();
   if(!nom){notify('Restoran nomini kiriting!');return;}
+  var berishDan=document.getElementById('bz-rest-berish-dan').value;
+  var berishGacha=document.getElementById('bz-rest-berish-gacha').value;
   if(id){
     var r=baza415Db.restoranlar.find(x=>x.id===id);
-    if(r){ r.nom=nom; }
+    if(r){ r.nom=nom; r.berishVaqtiDan=berishDan; r.berishVaqtiGacha=berishGacha; }
   }else{
     var callcenterTel=document.getElementById('bz-rest-callcenter-tel').value.trim();
     var direktorIsm=document.getElementById('bz-rest-direktor-ism').value.trim();
@@ -3469,7 +3527,7 @@ function saveBaza415Rest(id){
       if(rol||ism||tel)kontaktlar.push({id:'kt'+Date.now()+'_x'+idx, rol:rol||'Boshqa', ism:ism, tel:tel});
     });
     if(buxIsm||(buxTel&&buxTel!=='+998'))kontaktlar.push({id:'kt'+Date.now()+'_bux', rol:'Buxgalter', ism:buxIsm, tel:buxTel});
-    baza415Db.restoranlar.push({id:'bz'+Date.now(), nom, kontaktlar:kontaktlar});
+    baza415Db.restoranlar.push({id:'bz'+Date.now(), nom, berishVaqtiDan:berishDan, berishVaqtiGacha:berishGacha, kontaktlar:kontaktlar});
     var lines=['🏪 YANGI RESTORAN QO\'SHILDI (415 baza)','Nomi: '+nom];
     if(callcenterTel&&callcenterTel!=='+998')lines.push('📞 Call center: '+callcenterTel);
     if(direktorIsm||direktorTel)lines.push('👤 Direktor: '+(direktorIsm||'—')+' — '+(direktorTel||'—'));
@@ -3545,6 +3603,112 @@ function baza415DelContact(id){
 }
 
 // ---- Barcha restoran nomlari ro'yxati (Muammoli mijozlar formasi uchun) ----
+// =========================
+// PARTNERSHIP — Restoranlarga qo'ng'iroq (kunlik checklist)
+// =========================
+function partnershipTodayStr(){
+  var d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+var partnershipExpandedId=null;
+function partnershipToggleExpand(id){
+  partnershipExpandedId=(partnershipExpandedId===id)?null:id;
+  renderPartnershipCalls();
+}
+function renderPartnershipCalls(){
+  var today=partnershipTodayStr();
+  var list=(baza415Db.restoranlar||[]).slice().sort((a,b)=>a.nom.localeCompare(b.nom,'uz'));
+  var h=list.map(function(r,i){
+    var q=r.qongiroq||{};
+    var calledToday=q.lastCalledDate===today;
+    var vaqt=(r.berishVaqtiDan&&r.berishVaqtiGacha)?(r.berishVaqtiDan+'–'+r.berishVaqtiGacha):'';
+    var isOpen=partnershipExpandedId===r.id;
+    var compactRow=`<div class="section-item" onclick="partnershipToggleExpand('${r.id}')">
+      <div style="display:flex;align-items:center;flex:1;min-width:0">
+        <div class="section-num">${String(i+1).padStart(2,'0')}</div>
+        <div style="min-width:0">
+          <div class="section-name">${esc(r.nom)}</div>
+          ${vaqt?`<div style="font-size:11px;color:var(--white-50);margin-top:2px">🍽 ${esc(vaqt)}</div>`:''}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        ${calledToday?`<span class="mm-badge mm-badge-hal">✓</span>`:`<span class="mm-badge mm-badge-ochiq">—</span>`}
+        <span class="chevron">${isOpen?'⌄':'›'}</span>
+      </div>
+    </div>`;
+    if(!isOpen)return compactRow;
+    var contacts=muammoliMenejerKassirContacts(r.nom);
+    var detail=`<div class="mm-card" style="margin-top:-6px;margin-bottom:10px;border-top-left-radius:0;border-top-right-radius:0">
+      ${muammoliContactsRowsHtml(contacts)}
+      ${calledToday?`<div class="mm-meta" style="color:#1e7a4a">Bugun qildi: ${esc(q.lastCalledBy||'—')} · ${muammoliFormatDateTime(q.lastCalledAt)}</div>`:''}
+      <div style="margin-top:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="mm-seclbl" style="margin-bottom:0">Izoh</span>
+          <button class="sek-abtn" onclick="partnershipEditIzoh('${r.id}')" style="padding:3px 10px;font-size:11px">✏ Tahrirlash</button>
+        </div>
+        <div style="font-size:13px;color:#2e2c28;margin-top:4px">${q.izoh?esc(q.izoh):'<span style="color:#9a9588">Izoh yo\'q</span>'}</div>
+      </div>
+      <div class="mm-btns" style="margin-top:8px">
+        ${calledToday?`<button class="sek-abtn" onclick="partnershipUnmarkCalled('${r.id}')">↩ Bekor qilish</button>`:`<button class="sek-abtn" onclick="partnershipMarkCalled('${r.id}')">☎ Tel qildim</button>`}
+      </div>
+    </div>`;
+    return compactRow+detail;
+  }).join('');
+  if(!list.length)h='<div style="text-align:center;padding:24px;color:var(--white-50);font-size:13px">415 bazada restoran yo\'q</div>';
+  document.getElementById('partnership-calls-list').innerHTML=h;
+}
+function partnershipMarkCalled(restoranId){
+  var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">Qo'ng'iroq izohi (ixtiyoriy)</div>
+    <div class="frow"><textarea class="fi" id="pc-izoh-inp" style="min-height:70px;resize:vertical" placeholder="Nima deyishdi..."></textarea></div>
+    <div class="fbtns">
+      <button class="fsave" onclick="partnershipSaveCalled('${restoranId}')">Saqlash</button>
+      <button class="fcancel" onclick="orgCloseModal()">Bekor</button>
+    </div>`;
+  orgShowModal(html);
+  setTimeout(function(){ var inp=document.getElementById('pc-izoh-inp'); if(inp) inp.focus(); }, 50);
+}
+function partnershipSaveCalled(restoranId){
+  var r=baza415Db.restoranlar.find(x=>x.id===restoranId);
+  if(!r)return;
+  var izohInp=document.getElementById('pc-izoh-inp').value.trim();
+  if(!r.qongiroq)r.qongiroq={};
+  r.qongiroq.lastCalledDate=partnershipTodayStr();
+  r.qongiroq.lastCalledBy=kaitenCreatorNameNow();
+  r.qongiroq.lastCalledAt=new Date().toISOString();
+  if(izohInp) r.qongiroq.izoh=izohInp;
+  baza415Save(); orgCloseModal(); renderPartnershipCalls(); notify('Saqlandi ✓');
+}
+function partnershipUnmarkCalled(restoranId){
+  askConfirm("Bugungi qo'ng'iroq belgisini bekor qilasizmi?",function(){
+    var r=baza415Db.restoranlar.find(x=>x.id===restoranId);
+    if(!r||!r.qongiroq)return;
+    delete r.qongiroq.lastCalledDate;
+    delete r.qongiroq.lastCalledBy;
+    delete r.qongiroq.lastCalledAt;
+    baza415Save(); renderPartnershipCalls(); notify('Bekor qilindi');
+  });
+}
+function partnershipEditIzoh(restoranId){
+  var r=baza415Db.restoranlar.find(x=>x.id===restoranId);
+  if(!r)return;
+  var current=(r.qongiroq&&r.qongiroq.izoh)||'';
+  var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">Izohni tahrirlash</div>
+    <div class="frow"><textarea class="fi" id="pc-izoh-edit" style="min-height:90px;resize:vertical">${esc(current)}</textarea></div>
+    <div class="fbtns">
+      <button class="fsave" onclick="partnershipSaveIzoh('${restoranId}')">Saqlash</button>
+      <button class="fcancel" onclick="document.getElementById('pc-izoh-edit').value=''">Tozalash</button>
+    </div>
+    <button class="fcancel" style="width:100%;margin-top:8px" onclick="orgCloseModal()">Yopish</button>`;
+  orgShowModal(html);
+}
+function partnershipSaveIzoh(restoranId){
+  var r=baza415Db.restoranlar.find(x=>x.id===restoranId);
+  if(!r)return;
+  var val=document.getElementById('pc-izoh-edit').value.trim();
+  if(!r.qongiroq)r.qongiroq={};
+  r.qongiroq.izoh=val;
+  baza415Save(); orgCloseModal(); renderPartnershipCalls(); notify('Saqlandi ✓');
+}
 function baza415AllRestoranNomlari(){
   return (baza415Db.restoranlar||[]).map(function(r){ return r.nom; }).sort((a,b)=>a.localeCompare(b,'uz'));
 }
@@ -3796,6 +3960,7 @@ function sirlyRender(p){
   else if(p==='p-muammoli-dashboard')renderMuammoliDashboard();
   else if(p==='p-baza415')renderBaza415List();
   else if(p==='p-baza415-restoran')renderBaza415Restoran();
+  else if(p==='p-partnership-calls')renderPartnershipCalls();
   else if(p==='p-ish-grafigi')renderIshGrafigiList();
   else if(p==='p-ish-grafigi-bolim')renderIshGrafigiBolim();
   updateBc();
