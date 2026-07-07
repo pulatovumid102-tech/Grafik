@@ -32,11 +32,12 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 #  pastdagi os.environ.get(...) orqali Variables bilan ustidan
 #  yozib qo'yish ham mumkin — hozircha shart emas)
 # ============================================================
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "8693834890:AAFs3rg_ZTlu1hOc0rBm9zgjD1az-R2xr_c")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "8693834890:AAHgdy4LkMH6zVgnky2rFVoeoxCpmzsRdMM")
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://qtrniovpkrwimeohamkc.supabase.co").rstrip("/")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0cm5pb3Zwa3J3aW1lb2hhbWtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMTY4NjUsImV4cCI6MjA5NjU5Mjg2NX0.j4gUqZlqMHR0ltIMCDB-UfWPvuPVs9B9HF0If2fPxhU")
 GROUP_CHAT_ID = int(os.environ.get("GROUP_CHAT_ID", "-5417855498"))
 SUPPORT_GROUP_ID = -5417855498
+PARTNERSHIP_GROUP_ID = -5467968653
 MINIAPP_URL = os.environ.get("MINIAPP_URL", "https://pulatovumid102-tech.github.io/Grafik/")
 POLL_SECONDS = int(os.environ.get("POLL_SECONDS", "15"))
 BATCH_LIMIT = int(os.environ.get("BATCH_LIMIT", "20"))
@@ -435,6 +436,49 @@ async def check_overdue_muammoli(context: ContextTypes.DEFAULT_TYPE) -> None:
         log.error("Muddat tekshirish xatosi: %s", e)
 
 
+async def check_serving_time_reminders(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """415 baza'dagi restoranlarning 'ovqat berish vaqti'gacha 1 soat qolganda
+    Partnership guruhiga bir martalik eslatma yuboradi (kunlik, restoran uchun)."""
+    app = context.application
+    try:
+        rows = await sb_get("biznes_data", params={"id": "eq.baza415"})
+        if not rows:
+            return
+        baza_data = rows[0]["data"]
+        if not isinstance(baza_data, dict):
+            return
+        restoranlar = baza_data.get("restoranlar", [])
+        now = datetime.now(TASHKENT_TZ)
+        today_str = now.strftime("%Y-%m-%d")
+        matched = []
+        changed = False
+        for r in restoranlar:
+            dan = r.get("berishVaqtiDan")
+            if not dan:
+                continue
+            try:
+                h, m = map(int, dan.split(":"))
+            except Exception:
+                continue
+            serving_dt = now.replace(hour=h, minute=m, second=0, microsecond=0)
+            diff_minutes = (serving_dt - now).total_seconds() / 60
+            if 45 <= diff_minutes <= 60 and r.get("oxirgiEslatmaSanasi") != today_str:
+                matched.append(r)
+                r["oxirgiEslatmaSanasi"] = today_str
+                changed = True
+        if matched:
+            lines = [
+                f"⏰ Berish vaqti boshlanishiga 1 soat qolgan {len(matched)} ta restoran bor",
+                "Ularni Partnership bo'limidan kirib ko'ring",
+            ]
+            await app.bot.send_message(chat_id=PARTNERSHIP_GROUP_ID, text="\n".join(lines))
+            log.info("Berish vaqti eslatmasi yuborildi: %d ta restoran", len(matched))
+        if changed:
+            await sb_patch("biznes_data", "baza415", {"data": baza_data})
+    except Exception as e:
+        log.error("Berish vaqti eslatmasi xatosi: %s", e)
+
+
 # ============================================================
 # DAVRIY TEKSHIRUV (JobQueue)
 # ============================================================
@@ -497,6 +541,9 @@ def main() -> None:
 
     # Muammoli mijozlar — 24 soatlik muddat nazorati, har 30 daqiqada tekshiriladi
     app.job_queue.run_repeating(check_overdue_muammoli, interval=1800, first=60)
+
+    # 415 baza — ovqat berish vaqtiga 1 soat qolganda Partnership guruhiga eslatma
+    app.job_queue.run_repeating(check_serving_time_reminders, interval=900, first=90)
 
     log.info("Bot polling boshlandi...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
