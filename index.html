@@ -3562,6 +3562,7 @@ function saveBaza415Rest(id){
     if(buxIsm||(buxTel&&buxTel!=='+998'))kontaktlar.push({id:'kt'+Date.now()+'_bux', rol:'Buxgalter', ism:buxIsm, tel:buxTel});
     baza415Db.restoranlar.push({id:'bz'+Date.now(), nom, berishVaqtiDan:berishDan, berishVaqtiGacha:berishGacha, kontaktlar:kontaktlar});
     var lines=['🏪 YANGI RESTORAN QO\'SHILDI (415 baza)','Nomi: '+nom,'👤 Kim qo\'shdi: '+kaitenCreatorNameNow()];
+    if(berishDan) lines.push('🍽 Ishlash vaqti: '+berishDan+(berishGacha?'–'+berishGacha:''));
     if(callcenterTel&&callcenterTel!=='+998')lines.push('📞 Call center: '+callcenterTel);
     if(direktorIsm||direktorTel)lines.push('👤 Direktor: '+(direktorIsm||'—')+' — '+(direktorTel||'—'));
     if(menejerIsm||menejerTel)lines.push('👤 Menejer: '+(menejerIsm||'—')+' — '+(menejerTel||'—'));
@@ -3573,8 +3574,15 @@ function saveBaza415Rest(id){
 }
 function baza415DelRest(id){
   askConfirm("Restoranni butunlay o'chirasizmi? (Barcha filial va kontaktlar bilan)",function(){
+    var r=baza415Db.restoranlar.find(x=>x.id===id);
     baza415Db.restoranlar=baza415Db.restoranlar.filter(x=>x.id!==id);
     baza415Save(); renderBaza415List(); notify("O'chirildi ✓");
+    sendGroupMessage(
+      '🗑 RESTORAN O\'CHIRILDI (415 baza)\n'+
+      'Nomi: '+(r?r.nom:'—')+'\n'+
+      '👤 Kim o\'chirdi: '+kaitenCreatorNameNow(),
+      BAZA415_GROUP_ID
+    );
   });
 }
 
