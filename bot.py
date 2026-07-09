@@ -396,28 +396,12 @@ async def daily_muammoli_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
         if not open_items:
             lines.append("✅ Muammoli mijozlar yo'q")
         else:
-            lines.append(f"⚠️ Hozircha muammoli mijozlarda {len(open_items)} ta ochiq murojaat bor:")
+            lines.append(f"⚠️ Hozircha muammoli mijozlarda {len(open_items)} ta ochiq murojaat bor")
+
+        if usernames:
+            tags = " ".join(f"@{u}" for u in usernames)
             lines.append("")
-            for i, it in enumerate(open_items, start=1):
-                restoran = it.get("restoran") or it.get("sababchiIchki") or "—"
-                ism = it.get("ism", "—")
-                tel = it.get("tel", "")
-                turi = it.get("turi", "Boshqa")
-                days = "?"
-                created_at = it.get("createdAt")
-                if created_at:
-                    try:
-                        created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
-                        days = max(0, (datetime.now(timezone.utc) - created_dt).days)
-                    except Exception:
-                        pass
-                header = f"{i}. {restoran} — {ism}" + (f" ({tel})" if tel else "")
-                lines.append(header)
-                lines.append(f"   {turi} — {days} kun kutmoqda")
-            if usernames:
-                tags = " ".join(f"@{u}" for u in usernames)
-                lines.append("")
-                lines.append(f"👥 Support bo'limi: {tags}")
+            lines.append(f"👥 Support bo'limi: {tags}")
 
         await app.bot.send_message(chat_id=SUPPORT_GROUP_ID, text="\n".join(lines))
         log.info("Kunlik muammoli eslatma yuborildi (%s)", time_label)
