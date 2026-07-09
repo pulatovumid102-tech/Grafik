@@ -483,7 +483,7 @@ async def check_serving_time_reminders(context: ContextTypes.DEFAULT_TYPE) -> No
                 continue
             serving_dt = now.replace(hour=h, minute=m, second=0, microsecond=0)
             diff_minutes = (serving_dt - now).total_seconds() / 60
-            if 45 <= diff_minutes <= 60 and r.get("oxirgiEslatmaSanasi") != today_str:
+            if 59 <= diff_minutes <= 60 and r.get("oxirgiEslatmaSanasi") != today_str:
                 matched.append(r)
                 r["oxirgiEslatmaSanasi"] = today_str
                 changed = True
@@ -491,7 +491,12 @@ async def check_serving_time_reminders(context: ContextTypes.DEFAULT_TYPE) -> No
             lines = [
                 f"⏰ Berish vaqti boshlanishiga 1 soat qolgan {len(matched)} ta restoran bor",
                 "Ularni Partnership bo'limidan kirib ko'ring",
+                "",
             ]
+            for r in matched:
+                gacha = r.get("berishVaqtiGacha") or ""
+                vaqt = r.get("berishVaqtiDan", "") + (("–" + gacha) if gacha else "")
+                lines.append(f"🏪 {r.get('nom','—')} — {vaqt}")
             try:
                 org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
                 org_nodes = org_rows[0]["data"] if org_rows else []
@@ -573,7 +578,7 @@ def main() -> None:
     app.job_queue.run_repeating(check_overdue_muammoli, interval=1800, first=60)
 
     # 415 baza — ovqat berish vaqtiga 1 soat qolganda Partnership guruhiga eslatma
-    app.job_queue.run_repeating(check_serving_time_reminders, interval=900, first=90)
+    app.job_queue.run_repeating(check_serving_time_reminders, interval=60, first=30)
 
     log.info("Bot polling boshlandi...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
