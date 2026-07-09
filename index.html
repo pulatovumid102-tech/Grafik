@@ -3619,20 +3619,16 @@ function partnershipToggleExpand(id){
 function renderPartnershipCalls(){
   var today=partnershipTodayStr();
   var q2=(document.getElementById('search-partnership-calls')?.value||'').trim().toLowerCase();
-  var nowMinutes=(function(){ var d=new Date(); return d.getHours()*60+d.getMinutes(); })();
-  function servingDiff(r){
+  function servingMinutes(r){
     if(!r.berishVaqtiDan) return Infinity;
     var parts=r.berishVaqtiDan.split(':');
-    var mins=parseInt(parts[0],10)*60+parseInt(parts[1],10);
-    var diff=mins-nowMinutes;
-    if(diff<0) diff+=1440; // o'tib ketgan bo'lsa, ertangi shu vaqtgacha hisoblanadi (eng oxiriga tushmasin uchun ham katta son emas)
-    return diff;
+    return parseInt(parts[0],10)*60+parseInt(parts[1],10);
   }
   var list=(baza415Db.restoranlar||[]).slice().sort(function(a,b){
     var aCalled=(a.qongiroq&&a.qongiroq.lastCalledDate===today);
     var bCalled=(b.qongiroq&&b.qongiroq.lastCalledDate===today);
     if(aCalled!==bCalled) return aCalled?1:-1;
-    if(!aCalled) return servingDiff(a)-servingDiff(b);
+    if(!aCalled) return servingMinutes(a)-servingMinutes(b);
     return a.nom.localeCompare(b.nom,'uz');
   });
   if(q2) list=list.filter(function(r){ return r.nom.toLowerCase().includes(q2); });
