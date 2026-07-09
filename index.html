@@ -2501,6 +2501,10 @@ function muammoliGetOrgTopBolimlar(){
   }
   return direct.map(function(n){ return n.name; }).sort((a,b)=>a.localeCompare(b,'uz'));
 }
+function muammoliParseTgField(tgRaw){
+  if(!tgRaw)return [];
+  return tgRaw.trim().split(/[\s,]+/).map(function(p){ return p.replace(/^@/,''); }).filter(Boolean);
+}
 function muammoliGetOrgEmployeeUsernames(bolimNom){
   if(typeof orgData==='undefined'||!orgData||!orgData.length||!bolimNom)return [];
   var bolimNode=orgData.find(function(n){ return n.name===bolimNom && n.cardType==='bolim'; });
@@ -2508,7 +2512,7 @@ function muammoliGetOrgEmployeeUsernames(bolimNom){
   var usernames=[];
   function walk(pid){
     orgData.filter(function(n){ return n.parentId===pid; }).forEach(function(n){
-      if(n.fio&&n.tg) usernames.push(n.tg.replace(/^@/,''));
+      if(n.fio&&n.tg) usernames=usernames.concat(muammoliParseTgField(n.tg));
       walk(n.id);
     });
   }
