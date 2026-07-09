@@ -323,17 +323,17 @@ async def muammoli_check_callback(update: Update, context: ContextTypes.DEFAULT_
 # ============================================================
 # MUAMMOLI MIJOZLAR — kunlik eslatma va muddat nazorati
 # ============================================================
-def collect_support_usernames(org_nodes: list) -> list:
-    """Org struktura ичida 'Support bo'limi' nomli tugunni topib,
+def collect_dept_usernames(org_nodes: list, keyword: str) -> list:
+    """Org struktura ичida nomi 'keyword' so'zini o'z ichiga olgan tugunni topib,
     uning barcha farzand tugunlaridan (bo'sh bo'lmagan tg maydoni bilan)
     Telegram username'larini yig'ib qaytaradi."""
     if not isinstance(org_nodes, list):
         return []
-    support_ids = [
+    dept_ids = [
         n.get("id") for n in org_nodes
-        if "support" in (n.get("name") or "").lower()
+        if keyword.lower() in (n.get("name") or "").lower()
     ]
-    if not support_ids:
+    if not dept_ids:
         return []
     by_parent = {}
     for n in org_nodes:
@@ -347,9 +347,13 @@ def collect_support_usernames(org_nodes: list) -> list:
                 usernames.append(tg.lstrip("@"))
             walk(child.get("id"))
 
-    for sid in support_ids:
-        walk(sid)
+    for did in dept_ids:
+        walk(did)
     return list(dict.fromkeys(usernames))
+
+
+def collect_support_usernames(org_nodes: list) -> list:
+    return collect_dept_usernames(org_nodes, "support")
 
 
 def collect_all_usernames(org_nodes: list) -> list:
@@ -500,7 +504,7 @@ async def check_serving_time_reminders(context: ContextTypes.DEFAULT_TYPE) -> No
             try:
                 org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
                 org_nodes = org_rows[0]["data"] if org_rows else []
-                usernames = collect_all_usernames(org_nodes)
+                usernames = collect_dept_usernames(org_nodes, "partnership")
                 if usernames:
                     lines.append("")
                     lines.append(" ".join(f"@{u}" for u in usernames))
