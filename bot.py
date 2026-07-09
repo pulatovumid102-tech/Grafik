@@ -263,6 +263,14 @@ async def muammoli_check_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         "👥 Hamkorlar bilan ochilgan telegram guruhlarga qarang — murojaat qilgan hamkor yo'qmi?"
     )
     try:
+        org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
+        org_nodes = org_rows[0]["data"] if org_rows else []
+        usernames = collect_support_usernames(org_nodes)
+        if usernames:
+            text += "\n\n" + " ".join(f"@{u}" for u in usernames)
+    except Exception as e:
+        log.error("Support tag xatosi: %s", e)
+    try:
         await app.bot.send_message(chat_id=SUPPORT_GROUP_ID, text=text, reply_markup=build_check_keyboard())
         log.info("Tekshiruv xabari yuborildi (%s)", time_label)
     except Exception as e:
@@ -341,6 +349,19 @@ def collect_support_usernames(org_nodes: list) -> list:
 
     for sid in support_ids:
         walk(sid)
+    return list(dict.fromkeys(usernames))
+
+
+def collect_all_usernames(org_nodes: list) -> list:
+    """Org strukturadagi barcha xodimlardan (bo'sh bo'lmagan tg maydoni bilan)
+    Telegram username'larini yig'ib qaytaradi."""
+    if not isinstance(org_nodes, list):
+        return []
+    usernames = []
+    for n in org_nodes:
+        tg = (n.get("tg") or "").strip()
+        if tg:
+            usernames.append(tg.lstrip("@"))
     return list(dict.fromkeys(usernames))
 
 
@@ -471,6 +492,15 @@ async def check_serving_time_reminders(context: ContextTypes.DEFAULT_TYPE) -> No
                 f"⏰ Berish vaqti boshlanishiga 1 soat qolgan {len(matched)} ta restoran bor",
                 "Ularni Partnership bo'limidan kirib ko'ring",
             ]
+            try:
+                org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
+                org_nodes = org_rows[0]["data"] if org_rows else []
+                usernames = collect_all_usernames(org_nodes)
+                if usernames:
+                    lines.append("")
+                    lines.append(" ".join(f"@{u}" for u in usernames))
+            except Exception as e:
+                log.error("Org struktura tag xatosi: %s", e)
             await app.bot.send_message(chat_id=PARTNERSHIP_GROUP_ID, text="\n".join(lines))
             log.info("Berish vaqti eslatmasi yuborildi: %d ta restoran", len(matched))
         if changed:
