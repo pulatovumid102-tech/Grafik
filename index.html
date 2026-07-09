@@ -1338,6 +1338,33 @@ function muammoliSetupRealtime(){
     muammoliRealtimeStarted = true;
   }catch(e){ console.error('muammoli realtime setup xato', e); }
 }
+var baza415RealtimeStarted=false;
+function baza415SetupRealtime(){
+  if(baza415RealtimeStarted) return;
+  try{
+    if(!window.supabase){ console.error('supabase-js yuklanmadi'); return; }
+    if(!sbClient) sbClient = window.supabase.createClient(SB_URL, SB_KEY);
+    sbClient
+      .channel('baza415-live')
+      .on('postgres_changes', {event:'*', schema:'public', table:'biznes_data', filter:'id=eq.baza415'}, function(payload){
+        try{
+          var row = payload.new;
+          if(row && row.data){
+            baza415Db = row.data;
+            if(!baza415Db.restoranlar) baza415Db.restoranlar=[];
+            var p1 = document.getElementById('p-baza415');
+            if(p1 && p1.classList.contains('active')) renderBaza415List();
+            var p2 = document.getElementById('p-baza415-restoran');
+            if(p2 && p2.classList.contains('active')) renderBaza415Restoran();
+            var p3 = document.getElementById('p-partnership-calls');
+            if(p3 && p3.classList.contains('active')) renderPartnershipCalls();
+          }
+        }catch(e){ console.error('baza415 realtime apply xato', e); }
+      })
+      .subscribe();
+    baza415RealtimeStarted = true;
+  }catch(e){ console.error('baza415 realtime setup xato', e); }
+}
 
 async function umaApiLoad(uid){
   try{
@@ -5384,7 +5411,7 @@ function sirlyStart(role){
   kaitenLoad().catch(function(){}).then(function(){ if(document.getElementById('p-kaiten').classList.contains('active')) renderKaiten(); kaitenSetupRealtime(); });
   sekretarLoad().catch(function(){});
   muammoliLoad().catch(function(){}).then(function(){ muammoliSetupRealtime(); });
-  baza415Load().catch(function(){});
+  baza415Load().catch(function(){}).then(function(){ baza415SetupRealtime(); });
   workLoad().catch(function(){});
   bolimTitlesLoad().catch(function(){}).then(function(){ if(document.getElementById('p-entry2').classList.contains('active')) renderBolimCards(); });
 }
