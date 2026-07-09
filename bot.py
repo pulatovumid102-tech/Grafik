@@ -19,7 +19,6 @@ Ishga tushirish:
 
 import os
 import logging
-import re
 from datetime import datetime, timezone, time as dt_time
 from zoneinfo import ZoneInfo
 
@@ -324,13 +323,14 @@ async def muammoli_check_callback(update: Update, context: ContextTypes.DEFAULT_
 # ============================================================
 # MUAMMOLI MIJOZLAR — kunlik eslatma va muddat nazorati
 # ============================================================
-def parse_tg_field(tg_raw: str) -> list:
-    """Bitta xodimning 'tg' maydonida bir nechta username bo'lishi mumkin
-    (bo'sh joy yoki vergul bilan ajratilgan). Har birini alohida qaytaradi."""
-    if not tg_raw:
-        return []
-    parts = re.split(r"[\s,]+", tg_raw.strip())
-    return [p.lstrip("@") for p in parts if p.lstrip("@")]
+def parse_tg_field(node: dict) -> list:
+    """Xodim tugunida bir nechta username 'tgs' massivida saqlanadi;
+    eski yozuvlarda faqat bitta 'tg' maydoni bo'lishi mumkin."""
+    tgs = node.get("tgs")
+    if isinstance(tgs, list) and tgs:
+        return [str(t).strip().lstrip("@") for t in tgs if str(t).strip().lstrip("@")]
+    tg = (node.get("tg") or "").strip()
+    return [tg.lstrip("@")] if tg else []
 
 
 def collect_dept_usernames(org_nodes: list, keyword: str) -> list:
@@ -352,7 +352,7 @@ def collect_dept_usernames(org_nodes: list, keyword: str) -> list:
     usernames = []
     def walk(node_id):
         for child in by_parent.get(node_id, []):
-            usernames.extend(parse_tg_field(child.get("tg") or ""))
+            usernames.extend(parse_tg_field(child))
             walk(child.get("id"))
 
     for did in dept_ids:
@@ -371,7 +371,7 @@ def collect_all_usernames(org_nodes: list) -> list:
         return []
     usernames = []
     for n in org_nodes:
-        usernames.extend(parse_tg_field(n.get("tg") or ""))
+        usernames.extend(parse_tg_field(n))
     return list(dict.fromkeys(usernames))
 
 
