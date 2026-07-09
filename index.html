@@ -456,6 +456,7 @@ function renderPartnershipFrame(){
       <span class="page-title">Arxiv</span>
     </div>
   </div>
+  <div class="search-wrap"><input class="search-inp" id="search-muammoli-arxiv" placeholder="🔍 Mijoz yoki restoran nomi..." oninput="renderMuammoliArchive()"></div>
   <div id="muammoli-archive-list" class="section-list"></div>
 </div>
 
@@ -2619,7 +2620,11 @@ function renderMuammoli(){
   muammoliDraft=null; muammoliEditId=null;
 }
 function renderMuammoliArchive(){
+  var q=(document.getElementById('search-muammoli-arxiv')?.value||'').trim().toLowerCase();
   var items=muammoliDb.items.filter(x=>x.archived).slice().sort(function(a,b){ return new Date(b.archivedAt||0)-new Date(a.archivedAt||0); });
+  if(q) items=items.filter(function(it){
+    return (it.ism||'').toLowerCase().includes(q) || (it.restoran||'').toLowerCase().includes(q);
+  });
   var h=items.map(function(it){
     return `<div class="mm-card" style="opacity:.8">
       <div class="mm-top">
@@ -2635,7 +2640,7 @@ function renderMuammoliArchive(){
       </div>
     </div>`;
   }).join('');
-  if(!h)h='<div style="text-align:center;padding:32px;color:var(--white-50);font-size:13px">Arxiv bo\'sh</div>';
+  if(!h)h=`<div style="text-align:center;padding:32px;color:var(--white-50);font-size:13px">${q?'Topilmadi':"Arxiv bo'sh"}</div>`;
   document.getElementById('muammoli-archive-list').innerHTML=h;
 }
 function muammoliRestore(id){
