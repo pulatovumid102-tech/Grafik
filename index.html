@@ -3630,11 +3630,7 @@ function renderPartnershipCalls(){
     return parseInt(parts[0],10)*60+parseInt(parts[1],10);
   }
   var list=(baza415Db.restoranlar||[]).slice().sort(function(a,b){
-    var aCalled=(a.qongiroq&&a.qongiroq.lastCalledDate===today);
-    var bCalled=(b.qongiroq&&b.qongiroq.lastCalledDate===today);
-    if(aCalled!==bCalled) return aCalled?1:-1;
-    if(!aCalled) return servingMinutes(a)-servingMinutes(b);
-    return a.nom.localeCompare(b.nom,'uz');
+    return servingMinutes(a)-servingMinutes(b);
   });
   if(q2) list=list.filter(function(r){ return r.nom.toLowerCase().includes(q2); });
   var h=list.map(function(r,i){
