@@ -3416,20 +3416,10 @@ function muammoliShowFilteredList(filterType,value){
     if(filterType==='restoran') return it.restoran===value;
     return false;
   });
-  var rows=items.map(function(it){
-    var isHal=it.holati==='hal_qilindi';
-    var nom=it.manba==='hamkor'?(it.restoran||'—'):(it.ism||'—');
-    return `<div class="mm-pending-item">
-      <div style="min-width:0">
-        <div style="font-size:13px;font-weight:600;color:var(--white)">${esc(nom)}</div>
-        <div style="font-size:11px;color:var(--white-50)">${esc(it.turi||'Boshqa')} · ${muammoliFormatDate(it.createdAt)}</div>
-      </div>
-      <span class="mm-badge ${isHal?'mm-badge-hal':'mm-badge-ochiq'}">${isHal?'Hal qilindi':'Ochiq'}</span>
-    </div>`;
-  }).join('');
+  var rows=items.map(function(it){ return muammoliCard(it); }).join('');
   if(!rows) rows='<div style="text-align:center;padding:16px;color:var(--white-50);font-size:13px">Topilmadi</div>';
   var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:12px">${esc(value)}</div>
-    <div style="max-height:340px;overflow-y:auto">${rows}</div>
+    <div style="max-height:70vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px">${rows}</div>
     <button class="fcancel" style="width:100%;margin-top:12px" onclick="orgCloseModal()">Yopish</button>`;
   orgShowModal(html);
 }
