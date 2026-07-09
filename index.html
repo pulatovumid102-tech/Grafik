@@ -289,6 +289,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
   </div>
   <div class="cards-grid" id="entry-cards-grid"></div>
 
+  <svg id="ai-web-layer" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:14;pointer-events:none"></svg>
   <div id="ai-agent-char" onclick="aiChatOpenPanel()" style="position:fixed;left:20px;bottom:20px;width:44px;height:66px;transition:left 2.5s ease-in-out, bottom 2.5s ease-in-out;cursor:pointer;z-index:15">
     <div style="width:30px;height:24px;background:#c0392b;border:3px solid #7a1f16;margin:0 auto;position:relative;border-radius:3px">
       <div style="position:absolute;top:8px;left:4px;width:9px;height:6px;background:#fff;border:2px solid #1a1a1a;border-radius:50% 50% 40% 40%"></div>
@@ -5039,7 +5040,36 @@ function saveWorkSchedule(target,id){
   else renderIshGrafigiBolim();
 }
 var aiAgentInterval=null;
+function aiWebDraw(x1,y1,x2,y2){
+  var svg=document.getElementById('ai-web-layer');
+  if(!svg)return;
+  var line=document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',x1); line.setAttribute('y1',y1);
+  line.setAttribute('x2',x1); line.setAttribute('y2',y1);
+  line.setAttribute('stroke','#f3f1ec'); line.setAttribute('stroke-width','1.5'); line.setAttribute('stroke-opacity','0.75');
+  line.style.transition='x2 0.6s ease-out, y2 0.6s ease-out';
+  svg.appendChild(line);
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+    });
+  });
+}
+function aiWebClearAll(){
+  var svg=document.getElementById('ai-web-layer');
+  if(svg) svg.innerHTML='';
+}
+var aiWebTapHooked=false;
+function aiWebHookTapClear(){
+  if(aiWebTapHooked) return;
+  aiWebTapHooked=true;
+  document.addEventListener('click', function(e){
+    if(e.target && e.target.id==='ai-agent-char') return;
+    aiWebClearAll();
+  });
+}
 function aiAgentStart(){
+  aiWebHookTapClear();
   if(aiAgentInterval) return;
   function step(){
     if(aiChatPanelOpen) return;
@@ -5047,10 +5077,14 @@ function aiAgentStart(){
     var page=document.getElementById('p-entry1');
     if(!el||!page||!page.classList.contains('active'))return;
     var w=window.innerWidth, h=window.innerHeight;
+    var oldLeft=parseFloat(el.style.left)||20;
+    var oldBottom=parseFloat(el.style.bottom)||20;
+    var oldCx=oldLeft+22, oldCy=h-oldBottom-33;
     var newLeft=20+Math.random()*(Math.max(w-90,40));
     var newBottom=20+Math.random()*(Math.max(h-220,60));
-    var curLeft=parseFloat(el.style.left)||20;
-    el.style.transform=(newLeft<curLeft)?'scaleX(-1)':'scaleX(1)';
+    var newCx=newLeft+22, newCy=h-newBottom-33;
+    aiWebDraw(oldCx,oldCy,newCx,newCy);
+    el.style.transform=(newLeft<oldLeft)?'scaleX(-1)':'scaleX(1)';
     el.style.left=newLeft+'px';
     el.style.bottom=newBottom+'px';
   }
