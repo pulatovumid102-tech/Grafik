@@ -282,12 +282,37 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 <div id="sirly-app">
 <button class="logout-btn" id="logout-btn" style="display:none">← Chiqish</button>
 
-<div class="page active" id="p-entry1">
+<div class="page active" id="p-entry1" style="position:relative">
   <div class="home-header">
     <div class="home-title">Tizimga<br><span>xush kelibsiz</span></div>
     <div class="home-sub">Bo'limni tanlang</div>
   </div>
   <div class="cards-grid" id="entry-cards-grid"></div>
+
+  <div id="ai-agent-char" onclick="aiChatOpenPanel()" style="position:fixed;left:20px;bottom:20px;width:44px;height:66px;transition:left 2.5s ease-in-out, bottom 2.5s ease-in-out;cursor:pointer;z-index:15">
+    <div style="width:30px;height:24px;background:#c0392b;border:3px solid #7a1f16;margin:0 auto;position:relative;border-radius:3px">
+      <div style="position:absolute;top:8px;left:4px;width:9px;height:6px;background:#fff;border:2px solid #1a1a1a;border-radius:50% 50% 40% 40%"></div>
+      <div style="position:absolute;top:8px;right:4px;width:9px;height:6px;background:#fff;border:2px solid #1a1a1a;border-radius:50% 50% 40% 40%"></div>
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:#1a1a1a;opacity:.3"></div>
+    </div>
+    <div style="width:36px;height:26px;background:#c0392b;border:3px solid #7a1f16;margin:0 auto;position:relative">
+      <div style="position:absolute;top:2px;left:2px;width:8px;height:8px;border-right:2px solid #1a3f8a;border-bottom:2px solid #1a3f8a"></div>
+      <div style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-left:2px solid #1a3f8a;border-bottom:2px solid #1a3f8a"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;width:36px;margin:0 auto">
+      <div style="width:15px;height:16px;background:#1a3f8a;border:3px solid #0f2654"></div>
+      <div style="width:15px;height:16px;background:#1a3f8a;border:3px solid #0f2654"></div>
+    </div>
+  </div>
+
+  <div id="ai-chat-panel" style="display:none;position:fixed;z-index:20;width:260px;max-width:80vw;background:#f3f1ec;border:1px solid #e2dfd6;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,0.35);padding:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:12px;font-weight:700;color:#5a574f">🤖 AI Agent</span>
+      <button onclick="aiChatClosePanel()" style="border:none;background:none;font-size:16px;color:#9a9588;cursor:pointer;line-height:1">✕</button>
+    </div>
+    <div id="ai-chat-msgs" style="display:flex;flex-direction:column;gap:8px;max-height:240px;overflow-y:auto;margin-bottom:8px"></div>
+    <div id="ai-chat-options" style="display:flex;flex-direction:column;gap:6px"></div>
+  </div>
 </div>
 
 <div class="page" id="p-dashboard">
@@ -1221,13 +1246,8 @@ function renderPartnershipFrame(){
   <div id="flow-name-form" style="display:none;margin-bottom:14px"></div>
   <div class="tree-wrap" id="tree-wrap"></div><div id="root-form"></div>
 </div>
-<div class="page" id="p-acad-cats">
-  <div class="page-topbar"><div class="breadcrumb" id="bc-acad-cats"></div><div class="page-header"><button class="back-btn" onclick="goBack('p-home')">← Orqaga</button><span class="page-title" id="acad-sec-title"></span></div></div>
-  <div class="search-wrap"><input class="search-inp" id="search-acad-cats" placeholder="🔍 Qidirish..." oninput="renderAcadCats()"></div>
-  <div id="acad-cats-list" class="section-list"></div><div id="acad-cats-form"></div>
-</div>
 <div class="page" id="p-acad-items">
-  <div class="page-topbar"><div class="breadcrumb" id="bc-acad-items"></div><div class="page-header"><button class="back-btn" onclick="goBack('p-acad-cats')">← Orqaga</button><span class="page-title" id="acad-cat-title"></span></div></div>
+  <div class="page-topbar"><div class="breadcrumb" id="bc-acad-items"></div><div class="page-header"><button class="back-btn" onclick="goBack('p-home')">← Orqaga</button><span class="page-title" id="acad-cat-title"></span></div></div>
   <div id="acad-cat-intro-box"></div><div id="acad-items-list" class="section-list"></div><div id="acad-items-form"></div>
 </div>
 <div class="page" id="p-acad-detail">
@@ -3311,11 +3331,12 @@ function renderMuammoliDashboard(){
   });
   var xodimlarSorted=Object.entries(xodimlarHaqi).sort(function(a,b){return b[1].pul-a[1].pul;});
 
-  var barsHtml=function(sorted,max){
+  var barsHtml=function(sorted,max,filterType){
     return sorted.map(function(entry,i){
       var color=MM_BAR_COLORS[i%MM_BAR_COLORS.length];
       var pct=max?Math.round(entry[1]/max*100):0;
-      return `<div class="mm-bar-row">
+      var valEsc=esc(entry[0]).replace(/'/g,"\\'");
+      return `<div class="mm-bar-row" style="cursor:pointer" onclick="muammoliShowFilteredList('${filterType}','${valEsc}')">
         <div class="mm-bar-head"><span>${esc(entry[0])}</span><span style="font-weight:700;color:var(--white)">${entry[1]}</span></div>
         <div class="mm-bar-track"><div class="mm-bar-fill" style="width:${pct}%;background:${color}"></div></div>
       </div>`;
@@ -3368,11 +3389,11 @@ function renderMuammoliDashboard(){
     </div>
     <div class="mm-dash-section">
       <div class="mm-dash-title">📌 Eng ko'p uchraydigan muammo turi</div>
-      ${turiSorted.length?barsHtml(turiSorted,turiMax):'<div style="color:var(--white-50);font-size:13px">Ma\'lumot yo\'q</div>'}
+      ${turiSorted.length?barsHtml(turiSorted,turiMax,'turi'):'<div style="color:var(--white-50);font-size:13px">Ma\'lumot yo\'q</div>'}
     </div>
     <div class="mm-dash-section">
       <div class="mm-dash-title">🏪 Eng ko'p shikoyat qilingan restoranlar</div>
-      ${restoranSorted.length?barsHtml(restoranSorted,restoranMax):'<div style="color:var(--white-50);font-size:13px">Ma\'lumot yo\'q</div>'}
+      ${restoranSorted.length?barsHtml(restoranSorted,restoranMax,'restoran'):'<div style="color:var(--white-50);font-size:13px">Ma\'lumot yo\'q</div>'}
     </div>
     <div class="mm-dash-section">
       <div class="mm-dash-title">⏳ Hal qilinmagan murojaatlar (kutish vaqti bo'yicha)</div>
@@ -3383,6 +3404,29 @@ function renderMuammoliDashboard(){
       ${xodimlarHtml}
     </div>
   `;
+}
+function muammoliShowFilteredList(filterType,value){
+  var items=(muammoliDb.items||[]).filter(function(it){
+    if(filterType==='turi') return it.turi===value;
+    if(filterType==='restoran') return it.restoran===value;
+    return false;
+  });
+  var rows=items.map(function(it){
+    var isHal=it.holati==='hal_qilindi';
+    var nom=it.manba==='hamkor'?(it.restoran||'—'):(it.ism||'—');
+    return `<div class="mm-pending-item">
+      <div style="min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--white)">${esc(nom)}</div>
+        <div style="font-size:11px;color:var(--white-50)">${esc(it.turi||'Boshqa')} · ${muammoliFormatDate(it.createdAt)}</div>
+      </div>
+      <span class="mm-badge ${isHal?'mm-badge-hal':'mm-badge-ochiq'}">${isHal?'Hal qilindi':'Ochiq'}</span>
+    </div>`;
+  }).join('');
+  if(!rows) rows='<div style="text-align:center;padding:16px;color:var(--white-50);font-size:13px">Topilmadi</div>';
+  var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:12px">${esc(value)}</div>
+    <div style="max-height:340px;overflow-y:auto">${rows}</div>
+    <button class="fcancel" style="width:100%;margin-top:12px" onclick="orgCloseModal()">Yopish</button>`;
+  orgShowModal(html);
 }
 
 // =========================
@@ -4003,7 +4047,6 @@ function sirlyRender(p){
   else if(p==='p-section')renderCats();
   else if(p==='p-cat')renderFlows();
   else if(p==='p-flow')renderTree();
-  else if(p==='p-acad-cats')renderAcadCats();
   else if(p==='p-acad-items')renderAcadItems();
   else if(p==='p-acad-detail')renderAcadDetail();
   else if(p==='p-kaiten')renderKaiten();
@@ -4018,6 +4061,7 @@ function sirlyRender(p){
   else if(p==='p-baza415')renderBaza415List();
   else if(p==='p-baza415-restoran')renderBaza415Restoran();
   else if(p==='p-partnership-calls')renderPartnershipCalls();
+  else if(p==='p-entry1')aiAgentStart();
   else if(p==='p-ish-grafigi')renderIshGrafigiList();
   else if(p==='p-ish-grafigi-bolim')renderIshGrafigiBolim();
   updateBc();
@@ -4143,7 +4187,8 @@ function renderAcadItems(){
   var items=sec.items||[];
   var h='';
   items.forEach((item,i)=>{
-    h+=`<div class="section-item" onclick="openAcadItem('${item.id}')" ${isAdmin?'draggable="true"':''}><div style="display:flex;align-items:center;flex:1;min-width:0">${isAdmin?`<div class="drag-handle" onclick="event.stopPropagation()"><span></span><span></span><span></span></div>`:''}<div class="section-num">${String(i+1).padStart(2,'00')}</div><div class="section-name">${esc(item.title)}</div></div><div style="display:flex;align-items:center;gap:6px;flex-shrink:0">${isAdmin?`<div class="action-btns"><button class="abtn" onclick="event.stopPropagation();showAcadItemForm('${curAcadSec}','${item.id}')">✏</button><button class="abtn abtn-red" onclick="event.stopPropagation();delAcadItem('${curAcadSec}','${item.id}')">✕</button></div>`:''}<span class="chevron">›</span></div></div>`;
+    var hint=(item.manba==='hamkor'?'🤝 Hamkor':'🙋 Mijoz')+(item.isTop?' · ⭐ Top 10':'');
+    h+=`<div class="section-item" onclick="openAcadItem('${item.id}')" ${isAdmin?'draggable="true"':''}><div style="display:flex;align-items:center;flex:1;min-width:0">${isAdmin?`<div class="drag-handle" onclick="event.stopPropagation()"><span></span><span></span><span></span></div>`:''}<div class="section-num">${String(i+1).padStart(2,'00')}</div><div style="min-width:0"><div class="section-name">${esc(item.title)}</div><div style="font-size:11px;color:var(--white-50);margin-top:2px">${hint}</div></div></div><div style="display:flex;align-items:center;gap:6px;flex-shrink:0">${isAdmin?`<div class="action-btns"><button class="abtn" onclick="event.stopPropagation();showAcadItemForm('${curAcadSec}','${item.id}')">✏</button><button class="abtn abtn-red" onclick="event.stopPropagation();delAcadItem('${curAcadSec}','${item.id}')">✕</button></div>`:''}<span class="chevron">›</span></div></div>`;
   });
   if(!items.length)h='<div style="text-align:center;padding:32px;color:var(--white-50);font-size:13px">Mavzular yo\'q</div>';
   document.getElementById('acad-items-list').innerHTML=h;
@@ -4199,12 +4244,25 @@ function showAcadItemForm(secId,itemId,inDetail){
   var sec=acadDb.sections.find(s=>s.id===secId);
   var item=itemId?(sec?.items||[]).find(i=>i.id===itemId):null;
   var containerId=inDetail?'acad-detail-form':'acad-items-form';
-  document.getElementById(containerId).innerHTML=`<div class="form-box fade"><div class="frow"><label class="flbl">Mavzu nomi</label><input class="fi" id="afi-title" value="${esc(item?.title||'')}" placeholder="Mavzu nomi..."></div><div class="frow"><label class="flbl" style="color:#a5b4fc">Standart</label><textarea class="fi" id="afi-standard" style="min-height:100px;resize:vertical;font-size:12px;font-family:monospace" placeholder="Qoida va ruxsat chegaralari...">${esc(item?.standard||'')}</textarea></div><div class="frow"><label class="flbl" style="color:#ff9090">Qoidabuzarlik</label><textarea class="fi" id="afi-violation" style="min-height:100px;resize:vertical;font-size:12px;font-family:monospace" placeholder="Qachon buzilgan hisoblanadi...">${esc(item?.violation||'')}</textarea></div><div class="frow"><label class="flbl" style="color:var(--lime)">Qaror va harakat</label><textarea class="fi" id="afi-decision" style="min-height:100px;resize:vertical;font-size:12px;font-family:monospace" placeholder="Qaror va harakatlar...">${esc(item?.decision||'')}</textarea></div><div class="fbtns"><button class="fsave" onclick="saveAcadItem('${secId}','${itemId||''}','${inDetail||''}')">Saqlash</button><button class="fcancel" onclick="${inDetail?'renderAcadDetail()':'renderAcadItems()'}">Bekor</button></div></div>`;
+  var manba=item?.manba||'mijoz';
+  document.getElementById(containerId).innerHTML=`<div class="form-box fade"><div class="frow"><label class="flbl">Mavzu nomi</label><input class="fi" id="afi-title" value="${esc(item?.title||'')}" placeholder="Mavzu nomi..."></div>
+  <div class="frow">
+    <label class="flbl">Manba</label>
+    <div style="display:flex;gap:6px;margin-top:5px">
+      <button type="button" onclick="document.getElementById('afi-manba').value='mijoz';document.getElementById('afi-manba-mijoz').style.background='var(--lime)';document.getElementById('afi-manba-mijoz').style.color='var(--green-dark)';document.getElementById('afi-manba-hamkor').style.background='var(--white-06)';document.getElementById('afi-manba-hamkor').style.color='var(--white-50)';" id="afi-manba-mijoz" style="flex:1;padding:9px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;background:${manba==='mijoz'?'var(--lime)':'var(--white-06)'};color:${manba==='mijoz'?'var(--green-dark)':'var(--white-50)'}">🙋 Mijoz</button>
+      <button type="button" onclick="document.getElementById('afi-manba').value='hamkor';document.getElementById('afi-manba-hamkor').style.background='var(--lime)';document.getElementById('afi-manba-hamkor').style.color='var(--green-dark)';document.getElementById('afi-manba-mijoz').style.background='var(--white-06)';document.getElementById('afi-manba-mijoz').style.color='var(--white-50)';" id="afi-manba-hamkor" style="flex:1;padding:9px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;background:${manba==='hamkor'?'var(--lime)':'var(--white-06)'};color:${manba==='hamkor'?'var(--green-dark)':'var(--white-50)'}">🤝 Hamkor</button>
+    </div>
+    <input type="hidden" id="afi-manba" value="${manba}">
+  </div>
+  <div class="frow"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:5px"><input type="checkbox" id="afi-top10" ${item?.isTop?'checked':''} style="width:18px;height:18px"><span style="font-size:13px;color:var(--white-80)">⭐ Top 10 ro'yxatiga qo'shish (AI Agent'da ko'rinadi)</span></label></div>
+  <div class="frow"><label class="flbl" style="color:#a5b4fc">Standart</label><textarea class="fi" id="afi-standard" style="min-height:100px;resize:vertical;font-size:12px;font-family:monospace" placeholder="Qoida va ruxsat chegaralari...">${esc(item?.standard||'')}</textarea></div><div class="frow"><label class="flbl" style="color:#ff9090">Qoidabuzarlik</label><textarea class="fi" id="afi-violation" style="min-height:100px;resize:vertical;font-size:12px;font-family:monospace" placeholder="Qachon buzilgan hisoblanadi...">${esc(item?.violation||'')}</textarea></div><div class="frow"><label class="flbl" style="color:var(--lime)">Qaror va harakat</label><textarea class="fi" id="afi-decision" style="min-height:100px;resize:vertical;font-size:12px;font-family:monospace" placeholder="Qaror va harakatlar...">${esc(item?.decision||'')}</textarea></div><div class="fbtns"><button class="fsave" onclick="saveAcadItem('${secId}','${itemId||''}','${inDetail||''}')">Saqlash</button><button class="fcancel" onclick="${inDetail?'renderAcadDetail()':'renderAcadItems()'}">Bekor</button></div></div>`;
   document.getElementById('afi-title').focus();
 }
 function saveAcadItem(secId,itemId,inDetail){
   var sec=acadDb.sections.find(s=>s.id===secId);if(!sec)return;
   var title=document.getElementById('afi-title').value.trim();
+  var manba=document.getElementById('afi-manba').value;
+  var isTop=document.getElementById('afi-top10').checked;
   var standard=document.getElementById('afi-standard').value.trim();
   var violation=document.getElementById('afi-violation').value.trim();
   var decision=document.getElementById('afi-decision').value.trim();
@@ -4212,8 +4270,8 @@ function saveAcadItem(secId,itemId,inDetail){
   if(!sec.items)sec.items=[];
   if(itemId){
     var it=sec.items.find(x=>x.id===itemId);
-    if(it){it.title=title;it.standard=standard;it.violation=violation;it.decision=decision;}
-  }else sec.items.push({id:'ai'+Date.now(),title,standard,violation,decision});
+    if(it){it.title=title;it.manba=manba;it.isTop=isTop;it.standard=standard;it.violation=violation;it.decision=decision;}
+  }else sec.items.push({id:'ai'+Date.now(),title,manba,isTop,standard,violation,decision});
   acadSave();notify('Saqlandi ✓');
   if(inDetail)renderAcadDetail();else renderAcadItems();
 }
@@ -4985,6 +5043,231 @@ function saveWorkSchedule(target,id){
   if(target==='bolim') renderIshGrafigiBolim();
   else renderIshGrafigiBolim();
 }
+var aiAgentInterval=null;
+function aiAgentStart(){
+  if(aiAgentInterval) return;
+  function step(){
+    if(aiChatPanelOpen) return;
+    var el=document.getElementById('ai-agent-char');
+    var page=document.getElementById('p-entry1');
+    if(!el||!page||!page.classList.contains('active'))return;
+    var w=window.innerWidth, h=window.innerHeight;
+    var newLeft=20+Math.random()*(Math.max(w-90,40));
+    var newBottom=20+Math.random()*(Math.max(h-220,60));
+    var curLeft=parseFloat(el.style.left)||20;
+    el.style.transform=(newLeft<curLeft)?'scaleX(-1)':'scaleX(1)';
+    el.style.left=newLeft+'px';
+    el.style.bottom=newBottom+'px';
+  }
+  step();
+  aiAgentInterval=setInterval(step, 3000);
+}
+var aiChatPanelOpen=false;
+function aiChatOpenPanel(){
+  aiChatPanelOpen=true;
+  var charEl=document.getElementById('ai-agent-char');
+  var panel=document.getElementById('ai-chat-panel');
+  if(!charEl||!panel)return;
+  var winW=window.innerWidth;
+  var charLeft=parseFloat(charEl.style.left)||20;
+  var charBottom=parseFloat(charEl.style.bottom)||20;
+  var panelW=Math.min(260, winW*0.8);
+  var left=charLeft+50;
+  if(left+panelW>winW-10) left=Math.max(10, charLeft-panelW-10);
+  panel.style.left=left+'px';
+  panel.style.bottom=charBottom+'px';
+  panel.style.display='block';
+  aiChatShowMenu();
+}
+function aiChatClosePanel(){
+  aiChatPanelOpen=false;
+  var panel=document.getElementById('ai-chat-panel');
+  if(panel)panel.style.display='none';
+}
+function aiChatAddMsg(html){
+  var wrap=document.getElementById('ai-chat-msgs');
+  if(!wrap)return;
+  var bubble=document.createElement('div');
+  bubble.style.cssText='background:#f3f1ec;color:#2e2c28;border-radius:14px;padding:12px 14px;max-width:88%;font-size:13px;line-height:1.5;align-self:flex-start';
+  bubble.innerHTML=html;
+  wrap.appendChild(bubble);
+  wrap.scrollTop=wrap.scrollHeight;
+}
+function aiChatSetOptions(options){
+  var wrap=document.getElementById('ai-chat-options');
+  if(!wrap)return;
+  wrap.innerHTML=options.map(function(o,i){
+    return `<button class="sek-abtn" style="width:100%;text-align:left;padding:12px 14px" onclick="aiChatPick(${i})">${esc(o.label)}</button>`;
+  }).join('');
+  window.aiChatCurrentOptions=options;
+}
+function aiChatPick(i){
+  var opt=window.aiChatCurrentOptions&&window.aiChatCurrentOptions[i];
+  if(!opt)return;
+  aiChatAddMsg('<b>'+esc(opt.label)+'</b>');
+  setTimeout(function(){ opt.action(); }, 250);
+}
+function aiChatMainMenuOptions(){
+  return [
+    {label:'📊 Umumiy statistika', action:aiChatShowStats},
+    {label:'⏳ Ochiq murojaatlar', action:aiChatShowOpen},
+    {label:'📌 Eng ko\'p uchraydigan muammo turi', action:aiChatShowTopTuri},
+    {label:'🏪 Eng ko\'p shikoyat qilingan restoran', action:aiChatShowTopRestoran},
+    {label:'💰 Xodimlar haqi', action:aiChatShowXodimlarHaqi},
+    {label:'🛠 Muammoni hal qilish bo\'yicha yordam', action:aiChatStartSolve}
+  ];
+}
+var aiChatAcadItems=null;
+async function aiChatLoadAcadItems(){
+  if(aiChatAcadItems) return aiChatAcadItems;
+  var flat=[];
+  try{
+    var r=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.academy',{headers:SB_H});
+    var rows=await r.json();
+    var data=(rows&&rows.length&&rows[0].data)?rows[0].data:{sections:[]};
+    (data.sections||[]).forEach(function(sec){
+      (sec.items||[]).forEach(function(it){
+        if(it.decision) flat.push(it);
+      });
+      (sec.cats||[]).forEach(function(cat){
+        (cat.items||[]).forEach(function(it){
+          if(it.decision) flat.push(it);
+        });
+      });
+    });
+  }catch(e){}
+  aiChatAcadItems=flat;
+  return flat;
+}
+function aiChatParseSteps(decisionText){
+  return decisionText.split('\n').map(function(line){
+    return line.replace(/^\s*\d+[.)]\s*/, '').trim();
+  }).filter(Boolean);
+}
+async function aiChatStartSolve(){
+  aiChatAddMsg("Kimdan murojaat keldi?");
+  aiChatSetOptions([
+    {label:'🙋 Mijoz', action:function(){ aiChatShowTop10('mijoz'); }},
+    {label:'🤝 Hamkor', action:function(){ aiChatShowTop10('hamkor'); }}
+  ]);
+}
+async function aiChatShowTop10(manba){
+  await aiChatLoadAcadItems();
+  var items=(aiChatAcadItems||[]).filter(function(it){ return (it.manba||'mijoz')===manba && it.isTop; }).slice(0,10);
+  if(!items.length){
+    aiChatAddMsg("Hozircha bu turdagi Top 10 ro'yxati kiritilmagan.");
+    aiChatSetOptions([aiChatBackToMenuOption()]);
+    return;
+  }
+  aiChatAddMsg("Qaysi muammo turi bo'yicha yordam kerak?");
+  var options=items.map(function(it){
+    return {label:it.title, action:function(){ aiChatPickSolveItemByObj(it); }};
+  });
+  options.push(aiChatBackToMenuOption());
+  aiChatSetOptions(options);
+}
+function aiChatPickSolveItemByObj(item){
+  if(!item)return;
+  aiChatSolveSteps=aiChatParseSteps(item.decision||'');
+  aiChatSolveIdx=0;
+  if(!aiChatSolveSteps.length){
+    aiChatAddMsg("Bu mavzu uchun qadamlar kiritilmagan.");
+    aiChatSetOptions([aiChatBackToMenuOption()]);
+    return;
+  }
+  aiChatShowNextStep();
+}
+var aiChatSolveSteps=[];
+var aiChatSolveIdx=0;
+function aiChatShowNextStep(){
+  if(aiChatSolveIdx>=aiChatSolveSteps.length){
+    aiChatAddMsg("🎉 Barcha qadamlar bajarildi! Murojaatni \"Hal qilindi\" deb belgilashni unutmang.");
+    aiChatSetOptions([aiChatBackToMenuOption()]);
+    return;
+  }
+  var stepNum=aiChatSolveIdx+1;
+  var prefix=aiChatSolveIdx===0?'':'👍 Zo\'r! Endi: ';
+  aiChatAddMsg(prefix+'<b>'+stepNum+'-qadam:</b> '+esc(aiChatSolveSteps[aiChatSolveIdx]));
+  aiChatSetOptions([{label:'✅ Bajardim', action:aiChatStepDone}, aiChatBackToMenuOption()]);
+}
+function aiChatStepDone(){
+  aiChatSolveIdx++;
+  aiChatShowNextStep();
+}
+function aiChatShowMenu(){
+  document.getElementById('ai-chat-msgs').innerHTML='';
+  aiChatAddMsg("Salom! 👋 Sizga muammoni hal qilishda yordam bera olaman.");
+  aiChatStartSolve();
+}
+function aiChatBackToMenuOption(){
+  return {label:'⬅ Asosiy menyu', action:aiChatShowMenu};
+}
+function aiChatShowStats(){
+  var items=(muammoliDb.items||[]);
+  var ochiq=items.filter(function(x){ return x.holati!=='hal_qilindi'; }).length;
+  var hal=items.filter(function(x){ return x.holati==='hal_qilindi'; }).length;
+  aiChatAddMsg('📊 <b>Umumiy statistika:</b><br>Jami murojaat: <b>'+items.length+'</b><br>Ochiq: <b>'+ochiq+'</b><br>Hal qilindi: <b>'+hal+'</b>');
+  aiChatSetOptions([aiChatBackToMenuOption()]);
+}
+function aiChatShowOpen(){
+  var open=(muammoliDb.items||[]).filter(function(x){ return x.holati!=='hal_qilindi'; });
+  if(!open.length){
+    aiChatAddMsg("✅ Hozircha ochiq murojaat yo'q.");
+  }else{
+    var html='⏳ <b>Ochiq murojaatlar ('+open.length+' ta):</b><br><br>'+open.map(function(it,i){
+      var nom=it.restoran||it.masulBolim||'—';
+      var kim=it.manba==='hamkor'?nom:(it.ism||'—');
+      return (i+1)+'. '+esc(kim)+' — '+esc(it.turi||'Boshqa');
+    }).join('<br>');
+    aiChatAddMsg(html);
+  }
+  aiChatSetOptions([aiChatBackToMenuOption()]);
+}
+function aiChatShowTopTuri(){
+  var items=(muammoliDb.items||[]);
+  var counts={};
+  items.forEach(function(it){ var t=it.turi||'Boshqa'; counts[t]=(counts[t]||0)+1; });
+  var sorted=Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; });
+  if(!sorted.length){
+    aiChatAddMsg("Hozircha ma'lumot yo'q.");
+  }else{
+    aiChatAddMsg('📌 <b>Eng ko\'p uchraydigan muammo turi:</b><br>'+esc(sorted[0])+' — <b>'+counts[sorted[0]]+'</b> marta');
+  }
+  aiChatSetOptions([aiChatBackToMenuOption()]);
+}
+function aiChatShowTopRestoran(){
+  var items=(muammoliDb.items||[]);
+  var counts={};
+  items.forEach(function(it){ if(it.restoran) counts[it.restoran]=(counts[it.restoran]||0)+1; });
+  var sorted=Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; });
+  if(!sorted.length){
+    aiChatAddMsg("Hozircha ma'lumot yo'q.");
+  }else{
+    aiChatAddMsg('🏪 <b>Eng ko\'p shikoyat qilingan restoran:</b><br>'+esc(sorted[0])+' — <b>'+counts[sorted[0]]+'</b> marta');
+  }
+  aiChatSetOptions([aiChatBackToMenuOption()]);
+}
+function aiChatShowXodimlarHaqi(){
+  var items=(muammoliDb.items||[]);
+  var xodimlar={};
+  items.forEach(function(it){
+    if(it.holati!=='hal_qilindi')return;
+    if(it.halQildiBy){
+      xodimlar[it.halQildiBy]=(xodimlar[it.halQildiBy]||0)+(it.toLovResolver||0);
+    }
+    if(it.yordamchi){
+      xodimlar[it.yordamchi]=(xodimlar[it.yordamchi]||0)+(it.toLovYordamchi||0);
+    }
+  });
+  var names=Object.keys(xodimlar).sort(function(a,b){ return xodimlar[b]-xodimlar[a]; });
+  if(!names.length){
+    aiChatAddMsg("Hozircha ma'lumot yo'q.");
+  }else{
+    var html='💰 <b>Xodimlar haqi:</b><br><br>'+names.map(function(n){ return esc(n)+' — <b>'+xodimlar[n]+" so'm</b>"; }).join('<br>');
+    aiChatAddMsg(html);
+  }
+  aiChatSetOptions([aiChatBackToMenuOption()]);
+}
 function copyToClipboard(text){
   function fallback(){
     try{
@@ -5412,6 +5695,7 @@ function sirlyStart(role){
     isAdmin = true;
   }
   updateLogoutBtn('p-entry1');
+  aiAgentStart();
   entryTitlesLoad().catch(function(){ entryTitlesRender(); });
   load().then(function(){ updateBc(); });
   acadLoad().catch(function(){});
