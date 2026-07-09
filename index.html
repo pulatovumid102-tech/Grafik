@@ -3625,7 +3625,7 @@ function renderPartnershipCalls(){
   var today=partnershipTodayStr();
   var q2=(document.getElementById('search-partnership-calls')?.value||'').trim().toLowerCase();
   function servingMinutes(r){
-    if(!r.berishVaqtiDan) return Infinity;
+    if(!r.berishVaqtiDan) return 999999;
     var parts=r.berishVaqtiDan.split(':');
     return parseInt(parts[0],10)*60+parseInt(parts[1],10);
   }
