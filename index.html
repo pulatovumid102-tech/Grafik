@@ -3425,7 +3425,7 @@ function renderBaza415List(){
     var kontaktSoni=(r.kontaktlar||[]).length;
     var hintParts=[];
     if(kontaktSoni) hintParts.push(kontaktSoni+' ta kontakt');
-    if(r.berishVaqtiDan&&r.berishVaqtiGacha) hintParts.push('🍽 '+r.berishVaqtiDan+'–'+r.berishVaqtiGacha);
+    if(r.berishVaqtiDan) hintParts.push('🍽 '+r.berishVaqtiDan+(r.berishVaqtiGacha?'–'+r.berishVaqtiGacha:''));
     var hint=hintParts.join(' · ');
     return `<div class="section-item" onclick="openBaza415Rest('${r.id}')">
       <div style="display:flex;align-items:center;flex:1;min-width:0">
@@ -3534,7 +3534,7 @@ function saveBaza415Rest(id){
     });
     if(buxIsm||(buxTel&&buxTel!=='+998'))kontaktlar.push({id:'kt'+Date.now()+'_bux', rol:'Buxgalter', ism:buxIsm, tel:buxTel});
     baza415Db.restoranlar.push({id:'bz'+Date.now(), nom, berishVaqtiDan:berishDan, berishVaqtiGacha:berishGacha, kontaktlar:kontaktlar});
-    var lines=['🏪 YANGI RESTORAN QO\'SHILDI (415 baza)','Nomi: '+nom];
+    var lines=['🏪 YANGI RESTORAN QO\'SHILDI (415 baza)','Nomi: '+nom,'👤 Kim qo\'shdi: '+kaitenCreatorNameNow()];
     if(callcenterTel&&callcenterTel!=='+998')lines.push('📞 Call center: '+callcenterTel);
     if(direktorIsm||direktorTel)lines.push('👤 Direktor: '+(direktorIsm||'—')+' — '+(direktorTel||'—'));
     if(menejerIsm||menejerTel)lines.push('👤 Menejer: '+(menejerIsm||'—')+' — '+(menejerTel||'—'));
@@ -3636,7 +3636,7 @@ function renderPartnershipCalls(){
   var h=list.map(function(r,i){
     var q=r.qongiroq||{};
     var calledToday=q.lastCalledDate===today;
-    var vaqt=(r.berishVaqtiDan&&r.berishVaqtiGacha)?(r.berishVaqtiDan+'–'+r.berishVaqtiGacha):'';
+    var vaqt=r.berishVaqtiDan?(r.berishVaqtiGacha?(r.berishVaqtiDan+'–'+r.berishVaqtiGacha):r.berishVaqtiDan):'';
     var isOpen=partnershipExpandedId===r.id;
     var compactRow=`<div class="section-item" onclick="partnershipToggleExpand('${r.id}')">
       <div style="display:flex;align-items:center;flex:1;min-width:0">
