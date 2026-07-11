@@ -456,7 +456,7 @@ function renderPartnershipFrame(){
       <span class="page-title">Arxiv</span>
     </div>
   </div>
-  <div class="search-wrap"><input class="search-inp" id="search-muammoli-arxiv" placeholder="🔍 Mijoz yoki restoran nomi..." oninput="renderMuammoliArchive()"></div>
+  <div class="search-wrap"><input class="search-inp" id="search-muammoli-arxiv" placeholder="🔍 Mijoz, restoran yoki xodim nomi..." oninput="renderMuammoliArchive()"></div>
   <div id="muammoli-archive-list" class="section-list"></div>
 </div>
 
@@ -2623,7 +2623,12 @@ function renderMuammoliArchive(){
   var q=(document.getElementById('search-muammoli-arxiv')?.value||'').trim().toLowerCase();
   var items=muammoliDb.items.filter(x=>x.archived).slice().sort(function(a,b){ return new Date(b.archivedAt||0)-new Date(a.archivedAt||0); });
   if(q) items=items.filter(function(it){
-    return (it.ism||'').toLowerCase().includes(q) || (it.restoran||'').toLowerCase().includes(q);
+    return (it.ism||'').toLowerCase().includes(q)
+      || (it.restoran||'').toLowerCase().includes(q)
+      || (it.halQildiBy||'').toLowerCase().includes(q)
+      || (it.archivedBy||'').toLowerCase().includes(q)
+      || (it.createdByName||'').toLowerCase().includes(q)
+      || (it.yordamchi||'').toLowerCase().includes(q);
   });
   var h=items.map(function(it){
     return `<div class="mm-card" style="opacity:.8">
@@ -2706,6 +2711,7 @@ function muammoliCard(it){
   if(!isExpanded){
     return `<div class="mm-card" style="${cardStyle}">
       ${headerHtml}
+      <div class="mm-meta" style="padding-left:56px;margin-top:-4px">${it.createdByName?'Qabul qildi: '+esc(it.createdByName)+' · ':''}${muammoliFormatDateTime(it.createdAt)}</div>
       ${expandArrow}
     </div>`;
   }
