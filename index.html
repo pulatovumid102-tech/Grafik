@@ -3316,8 +3316,13 @@ function renderMuammoliDashboard(){
   // Eng ko'p uchraydigan muammo turi
   var turiCounts={};
   items.forEach(function(it){ var t=it.turi||'Boshqa'; turiCounts[t]=(turiCounts[t]||0)+1; });
-  var turiSorted=Object.entries(turiCounts).sort(function(a,b){return b[1]-a[1];});
-  var turiMax=turiSorted.length?turiSorted[0][1]:0;
+  var turiSortedAll=Object.entries(turiCounts).sort(function(a,b){return b[1]-a[1];});
+  var turiMulti=turiSortedAll.filter(function(e){ return e[1]>1; });
+  var turiSingleNames=turiSortedAll.filter(function(e){ return e[1]===1; }).map(function(e){ return e[0]; });
+  var turiSorted=turiMulti.slice();
+  if(turiSingleNames.length) turiSorted.push(['__boshqalar__', turiSingleNames.length]);
+  var turiMax=turiSorted.length?Math.max.apply(null,turiSorted.map(function(e){return e[1];})):0;
+  window.muammoliTuriSingleNames=turiSingleNames;
 
   // Eng ko'p shikoyat qilingan restoranlar (faqat restoran bilan bog'liqlar)
   var restoranCounts={};
@@ -3358,14 +3363,18 @@ function renderMuammoliDashboard(){
     }
   });
   var xodimlarSorted=Object.entries(xodimlarHaqi).sort(function(a,b){return b[1].pul-a[1].pul;});
+  var jamiDaromad=Object.values(xodimlarHaqi).reduce(function(sum,d){ return sum+d.pul; },0);
 
   var barsHtml=function(sorted,max,filterType){
     return sorted.map(function(entry,i){
       var color=MM_BAR_COLORS[i%MM_BAR_COLORS.length];
       var pct=max?Math.round(entry[1]/max*100):0;
+      var isBoshqalar=entry[0]==='__boshqalar__';
+      var label=isBoshqalar?'Boshqalar (bittalik turlar)':entry[0];
       var valEsc=esc(entry[0]).replace(/'/g,"\\'");
-      return `<div class="mm-bar-row" style="cursor:pointer" onclick="muammoliShowFilteredList('${filterType}','${valEsc}')">
-        <div class="mm-bar-head"><span>${esc(entry[0])}</span><span style="font-weight:700;color:var(--white)">${entry[1]}</span></div>
+      var onclick=isBoshqalar?'muammoliShowSingleTuriList()':`muammoliShowFilteredList('${filterType}','${valEsc}')`;
+      return `<div class="mm-bar-row" style="cursor:pointer" onclick="${onclick}">
+        <div class="mm-bar-head"><span>${esc(label)}</span><span style="font-weight:700;color:var(--white)">${entry[1]}</span></div>
         <div class="mm-bar-track"><div class="mm-bar-fill" style="width:${pct}%;background:${color}"></div></div>
       </div>`;
     }).join('');
@@ -3428,10 +3437,27 @@ function renderMuammoliDashboard(){
       ${pendingHtml}
     </div>
     <div class="mm-dash-section">
-      <div class="mm-dash-title">💰 Xodimlar haqi</div>
+      <div class="mm-dash-title">💰 Support bo'limi daromadi</div>
+      <div style="font-size:24px;font-weight:700;color:var(--lime);margin-bottom:12px">${jamiDaromad.toLocaleString('uz-UZ')} so'm</div>
+      <div class="mm-seclbl">Xodimlar bo'yicha taqsimot</div>
       ${xodimlarHtml}
     </div>
   `;
+}
+function muammoliShowSingleTuriList(){
+  var names=(window.muammoliTuriSingleNames||[]).slice().sort(function(a,b){ return a.localeCompare(b,'uz'); });
+  var rows=names.map(function(nom){
+    var nomEsc=esc(nom).replace(/'/g,"\\'");
+    return `<div class="mm-pending-item" style="cursor:pointer" onclick="orgCloseModal();muammoliShowFilteredList('turi','${nomEsc}')">
+      <div style="font-size:13px;color:var(--white)">${esc(nom)}</div>
+      <span style="font-weight:700;color:var(--white-50)">1</span>
+    </div>`;
+  }).join('');
+  if(!rows) rows='<div style="text-align:center;padding:16px;color:var(--white-50);font-size:13px">Yo\'q</div>';
+  var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:12px">Boshqalar (bittalik turlar)</div>
+    <div style="max-height:60vh;overflow-y:auto">${rows}</div>
+    <button class="fcancel" style="width:100%;margin-top:12px" onclick="orgCloseModal()">Yopish</button>`;
+  orgShowModal(html);
 }
 function muammoliShowFilteredList(filterType,value){
   var items=(muammoliDb.items||[]).filter(function(it){
