@@ -2687,18 +2687,28 @@ function muammoliCard(it){
   var murojaatchiName=isHamkor?(it.restoran||'—'):(it.ism||'—');
   var initial=(murojaatchiName||'?').trim().charAt(0).toUpperCase();
   var restoranContacts=it.restoran?muammoliMenejerKassirContacts(it.restoran):[];
+  var isExpanded=muammoliExpandedIds.has(it.id);
 
-  var headerHtml=`<div class="mm-top" style="align-items:flex-start">
+  var headerHtml=`<div class="mm-top" style="align-items:flex-start;cursor:pointer" onclick="muammoliToggleExpand('${it.id}')">
     <div style="display:flex;align-items:center;gap:12px">
       <div class="mm-avatar${isHamkor?' mm-avatar-hamkor':''}">${isHamkor?'🏪':esc(initial)}</div>
       <div>
         <div class="mm-restoran" style="margin-bottom:1px">${esc(murojaatchiName)}${overdue?' ⚠️':''}</div>
-        ${!isHamkor&&it.tel?`<a href="tel:${esc(it.tel.replace(/[^\d+]/g,''))}" class="mm-contact-link">${esc(it.tel)}</a>`:''}
-        ${isHamkor?`<div class="mm-meta" style="margin-top:1px">Hamkor so'rovi</div>`:''}
+        ${isExpanded&&!isHamkor&&it.tel?`<a href="tel:${esc(it.tel.replace(/[^\d+]/g,''))}" class="mm-contact-link" onclick="event.stopPropagation()">${esc(it.tel)}</a>`:''}
+        ${isExpanded&&isHamkor?`<div class="mm-meta" style="margin-top:1px">Hamkor so'rovi</div>`:''}
       </div>
     </div>
     <span class="mm-badge ${isHal?'mm-badge-hal':'mm-badge-ochiq'}">${isHal?'Hal qilindi':'Ochiq'}</span>
   </div>`;
+
+  var expandArrow=`<div style="text-align:center;padding-top:2px;cursor:pointer;color:#9a9588;font-size:14px" onclick="muammoliToggleExpand('${it.id}')">${isExpanded?'⌃':'⌄'}</div>`;
+
+  if(!isExpanded){
+    return `<div class="mm-card" style="${cardStyle}">
+      ${headerHtml}
+      ${expandArrow}
+    </div>`;
+  }
 
   var hamkorContactsHtml=isHamkor&&it.restoran?`<div style="margin-top:10px">${muammoliContactsRowsHtml(muammoliMenejerKassirContacts(it.restoran))}</div>`:'';
 
@@ -2761,7 +2771,14 @@ function muammoliCard(it){
     ${holatiBlock}
     ${resolutionBlock}
     ${footerHtml}
+    ${expandArrow}
   </div>`;
+}
+var muammoliExpandedIds=new Set();
+function muammoliToggleExpand(id){
+  if(muammoliExpandedIds.has(id)) muammoliExpandedIds.delete(id);
+  else muammoliExpandedIds.add(id);
+  renderMuammoli();
 }
 function muammoliOpenHolatModal(id){
   var it=muammoliDb.items.find(x=>x.id===id);
