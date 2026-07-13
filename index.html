@@ -657,6 +657,7 @@ function renderPartnershipFrame(){
   }
 
   function orgCloseModal(){
+    if(typeof muammoliCurrentRenderFn!=='undefined') muammoliCurrentRenderFn=null;
     document.getElementById('org-modal-bg').style.display='none';
     document.getElementById('org-modal').style.display='none';
     document.getElementById('org-modal').innerHTML='';
@@ -2605,6 +2606,7 @@ function muammoliIsOverdue(it){
   return !it.archived && it.holati!=='hal_qilindi' && muammoliHoursSince(it.createdAt)>=MUAMMOLI_MUDDAT_SOAT;
 }
 function renderMuammoli(){
+  muammoliCurrentRenderFn=renderMuammoli;
   renderMuammoliFilter();
   var addBtn=document.getElementById('muammoli-add-btn');
   if(addBtn) addBtn.style.display=(muammoliFilter==='hal_qilindi')?'none':'';
@@ -2620,6 +2622,7 @@ function renderMuammoli(){
   muammoliDraft=null; muammoliEditId=null;
 }
 function renderMuammoliArchive(){
+  muammoliCurrentRenderFn=renderMuammoliArchive;
   var q=(document.getElementById('search-muammoli-arxiv')?.value||'').trim().toLowerCase();
   var items=muammoliDb.items.filter(x=>x.archived).slice().sort(function(a,b){ return new Date(b.archivedAt||0)-new Date(a.archivedAt||0); });
   if(q) items=items.filter(function(it){
@@ -2630,21 +2633,7 @@ function renderMuammoliArchive(){
       || (it.createdByName||'').toLowerCase().includes(q)
       || (it.yordamchi||'').toLowerCase().includes(q);
   });
-  var h=items.map(function(it){
-    return `<div class="mm-card" style="opacity:.8">
-      <div class="mm-top">
-        <div class="mm-restoran">${esc(it.restoran||'—')}</div>
-        <span class="mm-badge ${it.holati==='hal_qilindi'?'mm-badge-hal':'mm-badge-ochiq'}">${it.holati==='hal_qilindi'?'Hal qilindi':'Ochiq'}</span>
-      </div>
-      <div class="mm-row"><span class="mm-lbl">Mijoz:</span> ${esc(it.ism||'—')}</div>
-      <div><span class="mm-turi">${esc(it.turi||'Boshqa')}</span></div>
-      <div class="mm-row" style="font-size:11px;color:#8b877c">Arxivlandi: ${esc(it.archivedBy||'—')} · ${muammoliFormatDate(it.archivedAt)}</div>
-      <div class="mm-btns">
-        <button class="sek-abtn" onclick="muammoliRestore('${it.id}')">↩ Qaytarish</button>
-        <button class="sek-abtn sek-abtn-red" onclick="muammoliDeleteForever('${it.id}')">✕ Butunlay o'chirish</button>
-      </div>
-    </div>`;
-  }).join('');
+  var h=items.map(muammoliArchiveCard).join('');
   if(!h)h=`<div style="text-align:center;padding:32px;color:var(--white-50);font-size:13px">${q?'Topilmadi':"Arxiv bo'sh"}</div>`;
   document.getElementById('muammoli-archive-list').innerHTML=h;
 }
@@ -2781,10 +2770,78 @@ function muammoliCard(it){
   </div>`;
 }
 var muammoliExpandedIds=new Set();
+var muammoliCurrentRenderFn=null;
 function muammoliToggleExpand(id){
   if(muammoliExpandedIds.has(id)) muammoliExpandedIds.delete(id);
   else muammoliExpandedIds.add(id);
-  renderMuammoli();
+  if(muammoliCurrentRenderFn) muammoliCurrentRenderFn();
+  else renderMuammoli();
+}
+function muammoliArchiveCard(it){
+  var isHamkor=it.manba==='hamkor';
+  var murojaatchiName=isHamkor?(it.restoran||'—'):(it.ism||'—');
+  var initial=(murojaatchiName||'?').trim().charAt(0).toUpperCase();
+  var isExpanded=muammoliExpandedIds.has(it.id);
+
+  var headerHtml=`<div class="mm-top" style="align-items:flex-start;cursor:pointer" onclick="muammoliToggleExpand('${it.id}')">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="mm-avatar${isHamkor?' mm-avatar-hamkor':''}">${isHamkor?'🏪':esc(initial)}</div>
+      <div>
+        <div class="mm-restoran" style="margin-bottom:1px">${esc(murojaatchiName)}</div>
+        ${isExpanded&&!isHamkor&&it.tel?`<a href="tel:${esc(it.tel.replace(/[^\d+]/g,''))}" class="mm-contact-link" onclick="event.stopPropagation()">${esc(it.tel)}</a>`:''}
+      </div>
+    </div>
+    <span class="mm-badge mm-badge-hal">Hal qilindi</span>
+  </div>`;
+
+  var expandArrow=`<div style="text-align:center;padding-top:2px;cursor:pointer;color:#9a9588;font-size:14px" onclick="muammoliToggleExpand('${it.id}')">${isExpanded?'⌃':'⌄'}</div>`;
+
+  if(!isExpanded){
+    return `<div class="mm-card" style="opacity:.85">
+      ${headerHtml}
+      <div class="mm-meta" style="padding-left:56px;margin-top:-4px">Arxivlandi: ${it.archivedBy?esc(it.archivedBy)+' · ':''}${muammoliFormatDate(it.archivedAt)}</div>
+      ${expandArrow}
+    </div>`;
+  }
+
+  var restoranContacts=it.restoran?muammoliMenejerKassirContacts(it.restoran):[];
+  var hamkorContactsHtml=isHamkor&&it.restoran?`<div style="margin-top:10px">${muammoliContactsRowsHtml(muammoliMenejerKassirContacts(it.restoran))}</div>`:'';
+
+  var muammoBlock=`<div class="mm-divider"></div>
+    <div class="mm-seclbl">${isHamkor?"So'rov":'Muammo'}</div>
+    <div style="font-size:15px;font-weight:700;color:#1a1815;margin-bottom:2px">${esc(it.turi||'Boshqa')}</div>
+    ${it.izoh?`<div style="font-size:14px;color:#5a574f">${esc(it.izoh)}</div>`:''}`;
+
+  var restoranBlock=(!isHamkor&&it.restoran)?`<div class="mm-divider"></div>
+    <div class="mm-seclbl">Restoran — ${esc(it.restoran)}</div>
+    ${muammoliContactsRowsHtml(restoranContacts)}`:'';
+
+  var masulBlock=it.masulBolim?`<div class="mm-divider"></div>
+    <div class="mm-seclbl">Masul bo'lim</div>
+    <span class="mm-badge-bolim">${esc(it.masulBolim)}</span>`:'';
+
+  var resolutionBlock=`<div class="mm-divider"></div>
+    <div class="mm-row" style="font-size:12px;color:#1e7a4a;font-weight:600">✓ Hal qildi: ${esc(it.halQildiBy||'—')} · ${muammoliFormatDateTime(it.halQildiAt)}${it.yordamchi?' · Yordamchi: '+esc(it.yordamchi):''}</div>
+    <div class="mm-row" style="font-size:12px;color:#8a5c00">💰 To'lov: ${it.yordamchi?(it.toLovResolver||0)+' so\'m (+ '+esc(it.yordamchi)+"ga "+(it.toLovYordamchi||0)+" so'm)":(it.toLovResolver||MUAMMOLI_TOLOV_SOM)+" so'm"}</div>
+    ${it.yechimIzohi?`<div class="mm-izoh" style="background:rgba(30,122,74,0.08);padding:8px 10px;border-radius:8px"><b>Yechim:</b> ${esc(it.yechimIzohi)}</div>`:''}`;
+
+  var footerHtml=`<div class="mm-divider"></div>
+    <div class="mm-meta">Arxivlandi: ${it.archivedBy?esc(it.archivedBy)+' · ':''}${muammoliFormatDateTime(it.archivedAt)}</div>
+    <div class="mm-btns" style="margin-top:6px">
+      <button class="sek-abtn" onclick="muammoliRestore('${it.id}')">↩ Qaytarish</button>
+      <button class="sek-abtn sek-abtn-red" onclick="muammoliDeleteForever('${it.id}')">✕ Butunlay o'chirish</button>
+    </div>`;
+
+  return `<div class="mm-card" style="opacity:.85">
+    ${headerHtml}
+    ${hamkorContactsHtml}
+    ${muammoBlock}
+    ${restoranBlock}
+    ${masulBlock}
+    ${resolutionBlock}
+    ${footerHtml}
+    ${expandArrow}
+  </div>`;
 }
 function muammoliOpenHolatModal(id){
   var it=muammoliDb.items.find(x=>x.id===id);
@@ -3080,7 +3137,7 @@ function muammoliRefreshForm(){
   document.getElementById('muammoli-form').innerHTML=`<div class="form-box fade">
     ${manbaBlock}
     ${bodyBlock}
-    <div class="frow"><label class="flbl">Sabab</label><textarea class="fi" id="mm-izoh" style="min-height:70px;resize:vertical">${esc(d.izoh||'')}</textarea></div>
+    <div class="frow"><label class="flbl">Batafsil</label><textarea class="fi" id="mm-izoh" style="min-height:70px;resize:vertical" placeholder="Nima bo'lganini batafsil yozing...">${esc(d.izoh||'')}</textarea></div>
     <div class="fbtns"><button class="fsave" onclick="saveMuammoliForm()">Saqlash</button><button class="fcancel" onclick="renderMuammoli()">Bekor</button></div>
   </div>`;
   document.removeEventListener('click', mmRestoranOutsideClick);
@@ -3236,7 +3293,7 @@ function saveMuammoliForm(){
       var hamkorLines=[
         '🤝 HAMKORDAN MUROJAT',
         '📋 Murojaat turi: '+turi,
-        '📝 Sabab: '+(izoh||'—'),
+        '📝 Batafsil: '+(izoh||'—'),
         '👤 Murojatni qabul qildi: '+kaitenFallbackName(),
         '',
         '🏪 Restoran nomi: '+muammoliDraft.restoran
@@ -3463,6 +3520,7 @@ function muammoliShowSingleTuriList(){
   orgShowModal(html);
 }
 function muammoliShowFilteredList(filterType,value){
+  muammoliCurrentRenderFn=function(){ muammoliShowFilteredList(filterType,value); };
   var items=(muammoliDb.items||[]).filter(function(it){
     if(filterType==='turi') return it.turi===value;
     if(filterType==='restoran') return it.restoran===value;
