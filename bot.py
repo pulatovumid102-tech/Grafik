@@ -556,12 +556,11 @@ def main() -> None:
         .build()
     )
     app.add_handler(CommandHandler("start", start_cmd))
-    app.add_handler(CallbackQueryHandler(muammoli_check_callback, pattern="^muammoli_check:"))
     app.job_queue.run_repeating(poll_job, interval=POLL_SECONDS, first=5)
 
-    # Muammoli mijozlar — davriy tekshiruv xabari, 10:15 dan 23:30 gacha har 15 daqiqada
-    for check_time in generate_check_times():
-        app.job_queue.run_daily(muammoli_check_job, time=check_time)
+    # Muammoli mijozlar — davriy TEKSHIRUV xabari O'CHIRILGAN (foydalanuvchi so'rovi bo'yicha)
+    # for check_time in generate_check_times():
+    #     app.job_queue.run_daily(muammoli_check_job, time=check_time)
 
     # Muammoli mijozlar — kunlik eslatma, har kuni 10:30, 15:00, 19:00 (Toshkent vaqti)
     app.job_queue.run_daily(daily_muammoli_reminder, time=dt_time(hour=10, minute=30, tzinfo=TASHKENT_TZ))
