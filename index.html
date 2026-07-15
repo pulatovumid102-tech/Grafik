@@ -2661,13 +2661,20 @@ function muammoliMenejerKassirContacts(restoranNom){
     return r.indexOf('menejer')!==-1||r.indexOf('kassir')!==-1;
   });
 }
+function partnershipCallContacts(restoranNom){
+  var contacts=muammoliGetContactsForRestoran(restoranNom);
+  return contacts.filter(function(k){
+    var r=(k.rol||'').toLowerCase();
+    return r.indexOf('menejer')!==-1||r.indexOf('kassir')!==-1||r.indexOf('call')!==-1;
+  });
+}
 function muammoliContactsRowsHtml(contacts){
   if(!contacts.length)return '<div style="font-size:13px;color:#9a9588">Kontakt topilmadi</div>';
   return contacts.map(function(k){
     var telHref=(k.tel||'').replace(/[^\d+]/g,'');
     return `<div class="mm-contact-row">
       <span class="mm-contact-role">${esc(k.rol||'Kontakt')}</span>
-      ${telHref?`<a href="tel:${esc(telHref)}" class="mm-contact-link">${esc(k.ism?k.ism+' · ':'')}${esc(k.tel)}</a>
+      ${telHref?`<a href="tel:${esc(telHref)}" class="mm-contact-link">${esc(k.ism?k.ism+' · ':'')}${esc(formatUzPhone(k.tel))}</a>
       <button onclick="copyToClipboard('${esc(k.tel).replace(/'/g,"\\'")}')" style="border:1px solid #ddd9cc;background:#f3f1ec;border-radius:6px;width:22px;height:22px;font-size:11px;cursor:pointer;flex-shrink:0">📋</button>`
       :`<span style="font-size:13px;color:#9a9588">Raqam yo'q</span>`}
     </div>`;
@@ -2688,7 +2695,7 @@ function muammoliCard(it){
       <div class="mm-avatar${isHamkor?' mm-avatar-hamkor':''}">${isHamkor?'🏪':esc(initial)}</div>
       <div>
         <div class="mm-restoran" style="margin-bottom:1px">${esc(murojaatchiName)}${overdue?' ⚠️':''}</div>
-        ${isExpanded&&!isHamkor&&it.tel?`<a href="tel:${esc(it.tel.replace(/[^\d+]/g,''))}" class="mm-contact-link" onclick="event.stopPropagation()">${esc(it.tel)}</a>`:''}
+        ${isExpanded&&!isHamkor&&it.tel?`<a href="tel:${esc(it.tel.replace(/[^\d+]/g,''))}" class="mm-contact-link" onclick="event.stopPropagation()">${esc(formatUzPhone(it.tel))}</a> <button onclick="event.stopPropagation();copyToClipboard('${esc(it.tel).replace(/'/g,"\\'")}')" style="border:1px solid #ddd9cc;background:#f3f1ec;border-radius:6px;width:20px;height:20px;font-size:10px;cursor:pointer;vertical-align:middle">📋</button>`:''}
         ${isExpanded&&isHamkor?`<div class="mm-meta" style="margin-top:1px">Hamkor so'rovi</div>`:''}
       </div>
     </div>
@@ -2788,7 +2795,7 @@ function muammoliArchiveCard(it){
       <div class="mm-avatar${isHamkor?' mm-avatar-hamkor':''}">${isHamkor?'🏪':esc(initial)}</div>
       <div>
         <div class="mm-restoran" style="margin-bottom:1px">${esc(murojaatchiName)}</div>
-        ${isExpanded&&!isHamkor&&it.tel?`<a href="tel:${esc(it.tel.replace(/[^\d+]/g,''))}" class="mm-contact-link" onclick="event.stopPropagation()">${esc(it.tel)}</a>`:''}
+        ${isExpanded&&!isHamkor&&it.tel?`<a href="tel:${esc(it.tel.replace(/[^\d+]/g,''))}" class="mm-contact-link" onclick="event.stopPropagation()">${esc(formatUzPhone(it.tel))}</a> <button onclick="event.stopPropagation();copyToClipboard('${esc(it.tel).replace(/'/g,"\\'")}')" style="border:1px solid #ddd9cc;background:#f3f1ec;border-radius:6px;width:20px;height:20px;font-size:10px;cursor:pointer;vertical-align:middle">📋</button>`:''}
       </div>
     </div>
     <span class="mm-badge mm-badge-hal">Hal qilindi</span>
@@ -3546,8 +3553,18 @@ var baza415ContactDraft=null;
 var baza415ContactEditId=null;
 
 async function baza415Save(){
-  try{await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.baza415',{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({data:baza415Db})});}
-  catch(e){localStorage.setItem('baza415',JSON.stringify(baza415Db));}
+  try{
+    var resp=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.baza415',{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({data:baza415Db})});
+    if(!resp.ok){
+      console.error('baza415Save xato:', resp.status, await resp.text().catch(()=>''));
+      localStorage.setItem('baza415',JSON.stringify(baza415Db));
+      return false;
+    }
+    return true;
+  }catch(e){
+    localStorage.setItem('baza415',JSON.stringify(baza415Db));
+    return false;
+  }
 }
 async function baza415Load(){
   try{
@@ -3748,7 +3765,7 @@ function renderBaza415Restoran(){
       <div style="min-width:0">
         <div class="bz-contact-role">${esc(k.rol)}</div>
         <div class="bz-contact-name">${esc(k.ism||'—')}</div>
-        <div class="bz-contact-tel">${esc(k.tel||'—')}</div>
+        <div class="bz-contact-tel">${k.tel?esc(formatUzPhone(k.tel)):'—'}</div>
       </div>
       ${isAdmin?`<div class="action-btns"><button class="abtn" onclick="showBaza415ContactForm('${k.id}')">✏</button><button class="abtn abtn-red" onclick="baza415DelContact('${k.id}')">✕</button></div>`:''}
     </div>`;
@@ -3836,7 +3853,7 @@ function renderPartnershipCalls(){
       </div>
     </div>`;
     if(!isOpen)return compactRow;
-    var contacts=muammoliMenejerKassirContacts(r.nom);
+    var contacts=partnershipCallContacts(r.nom);
     var detail=`<div class="mm-card" style="margin-top:-6px;margin-bottom:10px;border-top-left-radius:0;border-top-right-radius:0">
       ${muammoliContactsRowsHtml(contacts)}
       ${calledToday?`<div class="mm-meta" style="color:#1e7a4a">Bugun qildi: ${esc(q.lastCalledBy||'—')} · ${muammoliFormatDateTime(q.lastCalledAt)}</div>`:''}
@@ -3866,7 +3883,7 @@ function partnershipMarkCalled(restoranId){
   orgShowModal(html);
   setTimeout(function(){ var inp=document.getElementById('pc-izoh-inp'); if(inp) inp.focus(); }, 50);
 }
-function partnershipSaveCalled(restoranId){
+async function partnershipSaveCalled(restoranId){
   var r=baza415Db.restoranlar.find(x=>x.id===restoranId);
   if(!r)return;
   var izohInp=document.getElementById('pc-izoh-inp').value.trim();
@@ -3875,7 +3892,10 @@ function partnershipSaveCalled(restoranId){
   r.qongiroq.lastCalledBy=kaitenCreatorNameNow();
   r.qongiroq.lastCalledAt=new Date().toISOString();
   if(izohInp) r.qongiroq.izoh=izohInp;
-  baza415Save(); orgCloseModal(); renderPartnershipCalls(); notify('Saqlandi ✓');
+  var ok=await baza415Save();
+  orgCloseModal(); renderPartnershipCalls();
+  if(!ok){ notify("⚠️ Saqlashda xatolik! Internetni tekshirib, qayta urinib ko'ring."); return; }
+  notify('Saqlandi ✓');
   sendGroupMessage(
     '☎ RESTORANGA QO\'NG\'IROQ QILINDI\n'+
     '🏪 Restoran: '+r.nom+'\n'+
@@ -4230,6 +4250,17 @@ function rmNode(ns,id){return ns.filter(n=>n.id!==id).map(n=>({...n,children:rmN
 function openImg(nid){var flow=getFlow();var n=findNode(flow.nodes,nid);if(!n?.img)return;document.getElementById('img-src').src=n.img;document.getElementById('img-modal').classList.add('open');}
 function closeImg(){document.getElementById('img-modal').classList.remove('open');document.getElementById('img-src').src='';}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function formatUzPhone(raw){
+  if(!raw)return '';
+  var digits=String(raw).replace(/\D/g,'');
+  if(digits.length===12&&digits.indexOf('998')===0){
+    return '+998 '+digits.slice(3,5)+' '+digits.slice(5,8)+' '+digits.slice(8,10)+' '+digits.slice(10,12);
+  }
+  if(digits.length===9){
+    return '+998 '+digits.slice(0,2)+' '+digits.slice(2,5)+' '+digits.slice(5,7)+' '+digits.slice(7,9);
+  }
+  return raw;
+}
 function notify(m){var n=document.getElementById('notif');n.textContent=m;n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2000);}
 
 var ACAD_IDS=['academy','academy2','academy3'];
