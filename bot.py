@@ -24,7 +24,7 @@ from zoneinfo import ZoneInfo
 
 import httpx
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
 
 # ============================================================
 # SOZLAMALAR — to'g'ridan-to'g'ri shu yerga yozilgan
@@ -451,10 +451,80 @@ async def check_overdue_muammoli(context: ContextTypes.DEFAULT_TYPE) -> None:
         log.error("Muddat tekshirish xatosi: %s", e)
 
 
-async def check_serving_time_reminders(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """415 baza'dagi restoranlarning 'ovqat berish vaqti'gacha 1 soat qolganda
-    Partnership guruhiga bir martalik eslatma yuboradi (kunlik, restoran uchun)."""
+SCREENSHOT_STATE = {"count": 0}
+
+
+def generate_screenshot_times() -> list:
+    """10:30 dan 23:30 gacha, har 30 daqiqada."""
+    times = []
+    start_minutes = 10 * 60 + 30
+    end_minutes = 23 * 60 + 30
+    cur = start_minutes
+    while cur <= end_minutes:
+        h, m = divmod(cur, 60)
+        times.append(dt_time(hour=h, minute=m, tzinfo=TASHKENT_TZ))
+        cur += 30
+    return times
+
+
+async def screenshot_request_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     app = context.application
+    try:
+        SCREENSHOT_STATE["count"] = 0
+        await app.bot.send_message(
+            chat_id=SUPPORT_GROUP_ID,
+            text="📸 Iltimos, skrinshot yuboring",
+        )
+        log.info("Skrinshot so'rovi yuborildi")
+        context.job_queue.run_once(screenshot_followup_check, when=15 * 60)
+    except Exception as e:
+        log.error("Skrinshot so'rovi xatosi: %s", e)
+
+
+async def screenshot_followup_check(context: ContextTypes.DEFAULT_TYPE) -> None:
+    app = context.application
+    try:
+        if SCREENSHOT_STATE["count"] < 2:
+            await app.bot.send_message(
+                chat_id=SUPPORT_GROUP_ID,
+                text="⚠️ Support bo'limi xodimlari rasm yubormadi\n@umidpulatov",
+            )
+            log.info("Skrinshot kelmagani haqida ogohlantirish yuborildi")
+    except Exception as e:
+        log.error("Skrinshot follow-up xatosi: %s", e)
+
+
+async def handle_support_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not update.effective_chat or update.effective_chat.id != SUPPORT_GROUP_ID:
+        return
+    user = update.effective_user
+    if not user or not user.username:
+        return
+    try:
+        org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
+        org_nodes = org_rows[0]["data"] if org_rows else []
+        usernames = collect_support_usernames(org_nodes)
+    except Exception as e:
+        log.error("Org struktura tekshirish xatosi: %s", e)
+        return
+    if user.username.lstrip("@") not in usernames:
+        return
+
+    SCREENSHOT_STATE["count"] += 1
+    if SCREENSHOT_STATE["count"] >= 2:
+        try:
+            await update.message.reply_text("✅ Rasmlar qabul qilindi")
+        except Exception as e:
+            log.error("Rasm tasdiqlash xatosi: %s", e)
+        SCREENSHOT_STATE["count"] = 0
+
+
+async def check_serving_time_reminders(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """415 baza'dagi restoranlarning HAFTALIK grafigi bo'yicha, bugungi kun uchun
+    belgilangan vaqtgacha 1 soat qolganda Partnership guruhiga eslatma yuboradi.
+    Agar restoran bugun (hafta kuni) ishlamasa, eslatma yuborilmaydi."""
+    app = context.application
+    day_map = {0: "dush", 1: "sesh", 2: "chor", 3: "pay", 4: "jum", 5: "shan", 6: "yak"}
     try:
         rows = await sb_get("biznes_data", params={"id": "eq.baza415"})
         if not rows:
@@ -465,20 +535,25 @@ async def check_serving_time_reminders(context: ContextTypes.DEFAULT_TYPE) -> No
         restoranlar = baza_data.get("restoranlar", [])
         now = datetime.now(TASHKENT_TZ)
         today_str = now.strftime("%Y-%m-%d")
+        today_key = day_map[now.weekday()]
         matched = []
         changed = False
         for r in restoranlar:
-            dan = r.get("berishVaqtiDan")
-            if not dan:
+            grafik = r.get("haftalikGrafik") or {}
+            today_graf = grafik.get(today_key)
+            if not today_graf or not today_graf.get("on"):
+                continue
+            vaqt = today_graf.get("vaqt")
+            if not vaqt:
                 continue
             try:
-                h, m = map(int, dan.split(":"))
+                h, m = map(int, vaqt.split(":"))
             except Exception:
                 continue
             serving_dt = now.replace(hour=h, minute=m, second=0, microsecond=0)
             diff_minutes = (serving_dt - now).total_seconds() / 60
             if 59 <= diff_minutes <= 60 and r.get("oxirgiEslatmaSanasi") != today_str:
-                matched.append(r)
+                matched.append((r, today_graf))
                 r["oxirgiEslatmaSanasi"] = today_str
                 changed = True
         if matched:
@@ -487,10 +562,9 @@ async def check_serving_time_reminders(context: ContextTypes.DEFAULT_TYPE) -> No
                 "Ularni Partnership bo'limidan kirib ko'ring",
                 "",
             ]
-            for r in matched:
-                gacha = r.get("berishVaqtiGacha") or ""
-                vaqt = r.get("berishVaqtiDan", "") + (("–" + gacha) if gacha else "")
-                lines.append(f"🏪 {r.get('nom','—')} — {vaqt}")
+            for r, g in matched:
+                bok = g.get("bokSoni", 0)
+                lines.append(f"🏪 {r.get('nom','—')} — {g.get('vaqt','')} · {bok} ta bok")
             try:
                 org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
                 org_nodes = org_rows[0]["data"] if org_rows else []
@@ -556,7 +630,12 @@ def main() -> None:
         .build()
     )
     app.add_handler(CommandHandler("start", start_cmd))
+    app.add_handler(MessageHandler(filters.PHOTO, handle_support_photo))
     app.job_queue.run_repeating(poll_job, interval=POLL_SECONDS, first=5)
+
+    # Skrinshot so'rovi — har 30 daqiqada, 10:30 dan 23:30 gacha
+    for shot_time in generate_screenshot_times():
+        app.job_queue.run_daily(screenshot_request_job, time=shot_time)
 
     # Muammoli mijozlar — davriy TEKSHIRUV xabari O'CHIRILGAN (foydalanuvchi so'rovi bo'yicha)
     # for check_time in generate_check_times():
@@ -571,7 +650,8 @@ def main() -> None:
     app.job_queue.run_repeating(check_overdue_muammoli, interval=1800, first=60)
 
     # 415 baza — ovqat berish vaqtiga 1 soat qolganda Partnership guruhiga eslatma
-    app.job_queue.run_repeating(check_serving_time_reminders, interval=60, first=30)
+    # 415 baza — haftalik grafik olib tashlandi, shuning uchun bu job o'chirildi
+    # app.job_queue.run_repeating(check_serving_time_reminders, interval=60, first=30)
 
     log.info("Bot polling boshlandi...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
