@@ -3877,13 +3877,15 @@ function partnershipMarkCalled(restoranId){
   var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">Qo'ng'iroq izohi (ixtiyoriy)</div>
     <div class="frow"><textarea class="fi" id="pc-izoh-inp" style="min-height:70px;resize:vertical" placeholder="Nima deyishdi..."></textarea></div>
     <div class="fbtns">
-      <button class="fsave" onclick="partnershipSaveCalled('${restoranId}')">Saqlash</button>
+      <button class="fsave" id="pc-save-btn" onclick="partnershipSaveCalled('${restoranId}')">Saqlash</button>
       <button class="fcancel" onclick="orgCloseModal()">Bekor</button>
     </div>`;
   orgShowModal(html);
   setTimeout(function(){ var inp=document.getElementById('pc-izoh-inp'); if(inp) inp.focus(); }, 50);
 }
 async function partnershipSaveCalled(restoranId){
+  var btn=document.getElementById('pc-save-btn');
+  if(btn){ if(btn.disabled)return; btn.disabled=true; btn.textContent='Saqlanmoqda...'; }
   var r=baza415Db.restoranlar.find(x=>x.id===restoranId);
   if(!r)return;
   var izohInp=document.getElementById('pc-izoh-inp').value.trim();
