@@ -36,7 +36,7 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN", "8693834890:AAFs3rg_ZTlu1hOc0rBm9zgjD1az
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://qtrniovpkrwimeohamkc.supabase.co").rstrip("/")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0cm5pb3Zwa3J3aW1lb2hhbWtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMTY4NjUsImV4cCI6MjA5NjU5Mjg2NX0.j4gUqZlqMHR0ltIMCDB-UfWPvuPVs9B9HF0If2fPxhU")
 GROUP_CHAT_ID = int(os.environ.get("GROUP_CHAT_ID", "-5417855498"))
-SUPPORT_GROUP_ID = -1003823489442
+SUPPORT_GROUP_ID = -5417855498
 PARTNERSHIP_GROUP_ID = -5467968653
 MINIAPP_URL = os.environ.get("MINIAPP_URL", "https://pulatovumid102-tech.github.io/Grafik/")
 POLL_SECONDS = int(os.environ.get("POLL_SECONDS", "15"))
@@ -471,10 +471,16 @@ async def screenshot_request_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     app = context.application
     try:
         SCREENSHOT_STATE["count"] = 0
-        await app.bot.send_message(
-            chat_id=SUPPORT_GROUP_ID,
-            text="📸 Iltimos, skrinshot yuboring",
-        )
+        text = "📸 Iltimos, skrinshot yuboring"
+        try:
+            org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
+            org_nodes = org_rows[0]["data"] if org_rows else []
+            usernames = collect_support_usernames(org_nodes)
+            if usernames:
+                text += "\n\n" + " ".join(f"@{u}" for u in usernames)
+        except Exception as e:
+            log.error("Skrinshot so'rovida tag xatosi: %s", e)
+        await app.bot.send_message(chat_id=SUPPORT_GROUP_ID, text=text)
         log.info("Skrinshot so'rovi yuborildi")
         context.job_queue.run_once(screenshot_followup_check, when=15 * 60)
     except Exception as e:
