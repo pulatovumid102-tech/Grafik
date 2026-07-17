@@ -520,11 +520,9 @@ async def handle_support_photo(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def check_serving_time_reminders(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """415 baza'dagi restoranlarning HAFTALIK grafigi bo'yicha, bugungi kun uchun
-    belgilangan vaqtgacha 1 soat qolganda Partnership guruhiga eslatma yuboradi.
-    Agar restoran bugun (hafta kuni) ishlamasa, eslatma yuborilmaydi."""
+    """415 baza'dagi restoranlarning 'ovqat berish vaqti'gacha 1 soat qolganda
+    Partnership guruhiga bir martalik eslatma yuboradi (kunlik, restoran uchun)."""
     app = context.application
-    day_map = {0: "dush", 1: "sesh", 2: "chor", 3: "pay", 4: "jum", 5: "shan", 6: "yak"}
     try:
         rows = await sb_get("biznes_data", params={"id": "eq.baza415"})
         if not rows:
@@ -535,25 +533,20 @@ async def check_serving_time_reminders(context: ContextTypes.DEFAULT_TYPE) -> No
         restoranlar = baza_data.get("restoranlar", [])
         now = datetime.now(TASHKENT_TZ)
         today_str = now.strftime("%Y-%m-%d")
-        today_key = day_map[now.weekday()]
         matched = []
         changed = False
         for r in restoranlar:
-            grafik = r.get("haftalikGrafik") or {}
-            today_graf = grafik.get(today_key)
-            if not today_graf or not today_graf.get("on"):
-                continue
-            vaqt = today_graf.get("vaqt")
-            if not vaqt:
+            dan = r.get("berishVaqtiDan")
+            if not dan:
                 continue
             try:
-                h, m = map(int, vaqt.split(":"))
+                h, m = map(int, dan.split(":"))
             except Exception:
                 continue
             serving_dt = now.replace(hour=h, minute=m, second=0, microsecond=0)
             diff_minutes = (serving_dt - now).total_seconds() / 60
             if 59 <= diff_minutes <= 60 and r.get("oxirgiEslatmaSanasi") != today_str:
-                matched.append((r, today_graf))
+                matched.append(r)
                 r["oxirgiEslatmaSanasi"] = today_str
                 changed = True
         if matched:
@@ -562,9 +555,10 @@ async def check_serving_time_reminders(context: ContextTypes.DEFAULT_TYPE) -> No
                 "Ularni Partnership bo'limidan kirib ko'ring",
                 "",
             ]
-            for r, g in matched:
-                bok = g.get("bokSoni", 0)
-                lines.append(f"🏪 {r.get('nom','—')} — {g.get('vaqt','')} · {bok} ta bok")
+            for r in matched:
+                gacha = r.get("berishVaqtiGacha") or ""
+                vaqt = r.get("berishVaqtiDan", "") + (("–" + gacha) if gacha else "")
+                lines.append(f"🏪 {r.get('nom','—')} — {vaqt}")
             try:
                 org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
                 org_nodes = org_rows[0]["data"] if org_rows else []
@@ -650,8 +644,7 @@ def main() -> None:
     app.job_queue.run_repeating(check_overdue_muammoli, interval=1800, first=60)
 
     # 415 baza — ovqat berish vaqtiga 1 soat qolganda Partnership guruhiga eslatma
-    # 415 baza — haftalik grafik olib tashlandi, shuning uchun bu job o'chirildi
-    # app.job_queue.run_repeating(check_serving_time_reminders, interval=60, first=30)
+    app.job_queue.run_repeating(check_serving_time_reminders, interval=60, first=30)
 
     log.info("Bot polling boshlandi...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
