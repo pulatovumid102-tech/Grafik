@@ -3046,10 +3046,10 @@ function muammoliConfirmHal(id){
   mmYordamChecked=false;
   muammoliSave(); orgCloseModal(); renderMuammoli(); notify('Hal qilindi ✓');
   sendGroupMessage(
-    '✅ MUROJAAT HAL QILINDI\n'+
+    '✅ MUROJAAT HAL QILINDI\n\n'+
+    '🙋 Mijoz: '+(it.ism||'—')+(it.tel?' ('+it.tel+')':'')+'\n\n'+
+    '📝 Yechim: '+yechim+'\n\n'+
     '🏪 Restoran/masul: '+(it.restoran||it.masulBolim||'—')+'\n'+
-    '🙋 Mijoz: '+(it.ism||'—')+'\n'+
-    '📝 Yechim: '+yechim+'\n'+
     '👤 Kim hal qildi: '+it.halQildiBy,
     MUAMMOLI_GROUP_SUPPORT
   );
@@ -3314,12 +3314,12 @@ function saveMuammoliForm(){
       sendGroupMessage(mainMsgH);
       if(groupIdForBolim) sendGroupMessage(mainMsgH,groupIdForBolim);
     }else{
-      var mainMsg='⚠️ YANGI MUROJAAT\n'+
-        '👤 Qabul qildi: '+muammoliDraft.createdByName+'\n'+
-        '🙋 Mijoz: '+muammoliDraft.ism+(muammoliDraft.tel?' ('+muammoliDraft.tel+')':'')+'\n'+
+      var mainMsg='⚠️ YANGI MUROJAAT\n\n'+
+        '🙋 Mijoz: '+muammoliDraft.ism+(muammoliDraft.tel?' ('+muammoliDraft.tel+')':'')+'\n\n'+
         '📋 Turi: '+turi+'\n'+
-        '📝 Izoh: '+(izoh||'—')+'\n'+
-        '🏢 Masul bo\'lim: '+masulBolim;
+        '📝 Izoh: '+(izoh||'—')+'\n\n'+
+        '🏢 Masul bo\'lim: '+masulBolim+'\n'+
+        '👤 Qabul qildi: '+muammoliDraft.createdByName;
       sendGroupMessage(mainMsg);
       if(muammoliDraft.restoran){
         var shikoyatSoni=muammoliDb.items.filter(function(x){ return x.manba!=='hamkor' && x.restoran===muammoliDraft.restoran; }).length;
