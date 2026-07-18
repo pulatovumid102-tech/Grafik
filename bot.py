@@ -585,6 +585,65 @@ async def check_serving_time_reminders(context: ContextTypes.DEFAULT_TYPE) -> No
         log.error("Berish vaqti eslatmasi xatosi: %s", e)
 
 
+async def check_calling_status_before_serving(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Ovqat berish vaqtidan 2 daqiqa oldin, o'sha vaqtga to'g'ri kelgan
+    restoranlar orasida kim tel qilingan, kim qilinmaganini Partnership
+    guruhiga yuboradi."""
+    app = context.application
+    try:
+        rows = await sb_get("biznes_data", params={"id": "eq.baza415"})
+        if not rows:
+            return
+        baza_data = rows[0]["data"]
+        if not isinstance(baza_data, dict):
+            return
+        restoranlar = baza_data.get("restoranlar", [])
+        now = datetime.now(TASHKENT_TZ)
+        today_str = now.strftime("%Y-%m-%d")
+        changed = False
+
+        # Vaqti 1-2 daqiqa qolgan (bugun hali yuborilmagan) guruhlarni topamiz
+        due_times = set()
+        for r in restoranlar:
+            dan = r.get("berishVaqtiDan")
+            if not dan:
+                continue
+            try:
+                h, m = map(int, dan.split(":"))
+            except Exception:
+                continue
+            serving_dt = now.replace(hour=h, minute=m, second=0, microsecond=0)
+            diff_minutes = (serving_dt - now).total_seconds() / 60
+            if 1 <= diff_minutes <= 2 and r.get("holatXabarSanasi_" + dan) != today_str:
+                due_times.add(dan)
+
+        for dan in due_times:
+            group = [r for r in restoranlar if r.get("berishVaqtiDan") == dan]
+            called = [r for r in group if (r.get("qongiroq") or {}).get("lastCalledDate") == today_str]
+            not_called = [r for r in group if (r.get("qongiroq") or {}).get("lastCalledDate") != today_str]
+
+            lines = [f"📋 {dan} uchun qo'ng'iroqlar holati", ""]
+            lines.append(f"✅ Tel qilingan: {len(called)} ta")
+            for r in called:
+                lines.append(f"🏪 {r.get('nom','—')}")
+            lines.append("")
+            lines.append(f"⏳ Tel qilinmagan: {len(not_called)} ta")
+            for r in not_called:
+                lines.append(f"🏪 {r.get('nom','—')}")
+
+            await app.bot.send_message(chat_id=PARTNERSHIP_GROUP_ID, text="\n".join(lines))
+            log.info("Qo'ng'iroq holati yuborildi: %s", dan)
+
+            for r in group:
+                r["holatXabarSanasi_" + dan] = today_str
+            changed = True
+
+        if changed:
+            await sb_patch("biznes_data", "baza415", {"data": baza_data})
+    except Exception as e:
+        log.error("Qo'ng'iroq holati xatosi: %s", e)
+
+
 # ============================================================
 # DAVRIY TEKSHIRUV (JobQueue)
 # ============================================================
@@ -654,6 +713,7 @@ def main() -> None:
 
     # 415 baza — ovqat berish vaqtiga 1 soat qolganda Partnership guruhiga eslatma
     app.job_queue.run_repeating(check_serving_time_reminders, interval=60, first=30)
+    app.job_queue.run_repeating(check_calling_status_before_serving, interval=60, first=45)
 
     log.info("Bot polling boshlandi...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
