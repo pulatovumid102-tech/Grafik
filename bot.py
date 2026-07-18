@@ -35,7 +35,7 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "8693834890:AAFs3rg_ZTlu1hOc0rBm9zgjD1az-R2xr_c")
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://qtrniovpkrwimeohamkc.supabase.co").rstrip("/")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0cm5pb3Zwa3J3aW1lb2hhbWtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMTY4NjUsImV4cCI6MjA5NjU5Mjg2NX0.j4gUqZlqMHR0ltIMCDB-UfWPvuPVs9B9HF0If2fPxhU")
-GROUP_CHAT_ID = int(os.environ.get("GROUP_CHAT_ID", "-5417855498"))
+GROUP_CHAT_ID = int(os.environ.get("GROUP_CHAT_ID", "-1003823489442"))
 SUPPORT_GROUP_ID = -1003823489442
 PARTNERSHIP_GROUP_ID = -5467968653
 MINIAPP_URL = os.environ.get("MINIAPP_URL", "https://pulatovumid102-tech.github.io/Grafik/")
@@ -451,7 +451,7 @@ async def check_overdue_muammoli(context: ContextTypes.DEFAULT_TYPE) -> None:
         log.error("Muddat tekshirish xatosi: %s", e)
 
 
-SCREENSHOT_STATE = {"count": 0}
+SCREENSHOT_STATE = {"count": 0, "confirmed": False}
 
 
 def generate_screenshot_times() -> list:
@@ -471,6 +471,7 @@ async def screenshot_request_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     app = context.application
     try:
         SCREENSHOT_STATE["count"] = 0
+        SCREENSHOT_STATE["confirmed"] = False
         text = "📸 Iltimos, skrinshot yuboring"
         try:
             org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
@@ -490,7 +491,7 @@ async def screenshot_request_job(context: ContextTypes.DEFAULT_TYPE) -> None:
 async def screenshot_followup_check(context: ContextTypes.DEFAULT_TYPE) -> None:
     app = context.application
     try:
-        if SCREENSHOT_STATE["count"] < 2:
+        if not SCREENSHOT_STATE["confirmed"]:
             await app.bot.send_message(
                 chat_id=SUPPORT_GROUP_ID,
                 text="⚠️ Support bo'limi xodimlari rasm yubormadi\n@umidpulatov",
@@ -506,6 +507,8 @@ async def handle_support_photo(update: Update, context: ContextTypes.DEFAULT_TYP
     user = update.effective_user
     if not user or not user.username:
         return
+    if SCREENSHOT_STATE["confirmed"]:
+        return
     try:
         org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
         org_nodes = org_rows[0]["data"] if org_rows else []
@@ -518,11 +521,11 @@ async def handle_support_photo(update: Update, context: ContextTypes.DEFAULT_TYP
 
     SCREENSHOT_STATE["count"] += 1
     if SCREENSHOT_STATE["count"] >= 2:
+        SCREENSHOT_STATE["confirmed"] = True
         try:
             await update.message.reply_text("✅ Rasmlar qabul qilindi")
         except Exception as e:
             log.error("Rasm tasdiqlash xatosi: %s", e)
-        SCREENSHOT_STATE["count"] = 0
 
 
 async def check_serving_time_reminders(context: ContextTypes.DEFAULT_TYPE) -> None:
