@@ -3246,6 +3246,7 @@ function saveMuammoliForm(){
       '🙋 Mijoz: '+muammoliDraft.ism+(muammoliDraft.tel?' ('+muammoliDraft.tel+')':'')+'\n\n'+
       '📋 Turi: '+turi+'\n'+
       '📝 Izoh: '+(izoh||'—')+'\n\n'+
+      (muammoliDraft.restoran?'🏪 Restoran: '+muammoliDraft.restoran+'\n':'')+
       '🏢 Masul bo\'lim: '+masulBolim+'\n'+
       '👤 Qabul qildi: '+muammoliDraft.createdByName;
     sendGroupMessage(mainMsg);
