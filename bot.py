@@ -554,13 +554,13 @@ async def check_serving_time_reminders(context: ContextTypes.DEFAULT_TYPE) -> No
                 continue
             serving_dt = now.replace(hour=h, minute=m, second=0, microsecond=0)
             diff_minutes = (serving_dt - now).total_seconds() / 60
-            if 59 <= diff_minutes <= 60 and r.get("oxirgiEslatmaSanasi") != today_str:
+            if 89 <= diff_minutes <= 90 and r.get("oxirgiEslatmaSanasi") != today_str:
                 matched.append(r)
                 r["oxirgiEslatmaSanasi"] = today_str
                 changed = True
         if matched:
             lines = [
-                f"⏰ Berish vaqti boshlanishiga 1 soat qolgan {len(matched)} ta restoran bor",
+                f"⏰ Berish vaqti boshlanishiga 1 soat 30 daqiqa qolgan {len(matched)} ta restoran bor",
                 "Ularni Partnership bo'limidan kirib ko'ring",
                 "",
             ]
