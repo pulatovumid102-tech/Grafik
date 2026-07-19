@@ -2475,6 +2475,12 @@ function muammoliMigrateTurlarMijoz(){
       changed=true;
     }
   });
+  var oldItemCount=(muammoliDb.items||[]).length;
+  muammoliDb.items=(muammoliDb.items||[]).filter(function(it){
+    if(it.manba==='hamkor') return false;
+    return !it.turi || MUAMMOLI_TURLARI_MIJOZ_REMOVED.indexOf(it.turi)===-1;
+  });
+  if(muammoliDb.items.length!==oldItemCount) changed=true;
   return changed;
 }
 function muammoliEnsureLists(){
