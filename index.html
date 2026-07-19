@@ -633,6 +633,7 @@ function renderPartnershipFrame(){
 
   function orgCloseModal(){
     if(typeof muammoliCurrentRenderFn!=='undefined') muammoliCurrentRenderFn=null;
+    if(typeof muammoliTuriGroupCurRestoran!=='undefined') muammoliTuriGroupCurRestoran=null;
     document.getElementById('org-modal-bg').style.display='none';
     document.getElementById('org-modal').style.display='none';
     document.getElementById('org-modal').innerHTML='';
@@ -3347,6 +3348,16 @@ function renderMuammoliDashboard(){
   });
   var kunlikKeys=Object.keys(kunlikCounts).sort();
   var kunlikOrtacha=kunlikKeys.length?(items.length/kunlikKeys.length):0;
+  var kunlikRecentKeys=kunlikKeys.slice(-7);
+  var kunlikRestKeys=kunlikKeys.slice(0,-7);
+  var OY_NOMLARI=['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
+  var oylikCounts={};
+  kunlikRestKeys.forEach(function(k){
+    var parts=k.split('-');
+    var oyKey=parts[0]+'-'+parts[1];
+    oylikCounts[oyKey]=(oylikCounts[oyKey]||0)+kunlikCounts[k];
+  });
+  var oylikKeys=Object.keys(oylikCounts).sort();
 
   var barsHtml=function(sorted,max,filterType){
     return sorted.map(function(entry,i){
@@ -3377,7 +3388,7 @@ function renderMuammoliDashboard(){
     </div>`;
   }).join(''):'<div style="text-align:center;padding:20px;color:var(--white-50);font-size:13px">Hal qilinmagan murojaatlar yo\'q 🎉</div>';
 
-  var kunlikHtml=kunlikKeys.length?kunlikKeys.map(function(k){
+  var kunlikHtml=kunlikRecentKeys.length?kunlikRecentKeys.map(function(k){
     var parts=k.split('-');
     var label=parts[2]+'.'+parts[1]+'.'+parts[0];
     return `<div class="mm-pending-item">
@@ -3386,15 +3397,20 @@ function renderMuammoliDashboard(){
     </div>`;
   }).join(''):'<div style="text-align:center;padding:20px;color:var(--white-50);font-size:13px">Ma\'lumot yo\'q</div>';
 
+  var oylikHtml=oylikKeys.length?oylikKeys.map(function(k){
+    var parts=k.split('-');
+    var label=OY_NOMLARI[parseInt(parts[1],10)-1]+' '+parts[0];
+    return `<div class="mm-pending-item">
+      <div style="font-size:13px;color:var(--white)">${label}</div>
+      <span style="font-weight:700;color:var(--lime)">${oylikCounts[k]}</span>
+    </div>`;
+  }).join(''):'<div style="text-align:center;padding:16px;color:var(--white-50);font-size:13px">Ma\'lumot yo\'q</div>';
+
   body.innerHTML=`
     <div class="mm-dash-kpis">
       <div class="mm-dash-kpi"><div class="mm-dash-kpi-lbl">Jami murojaat</div><div class="mm-dash-kpi-val">${jami}</div></div>
       <div class="mm-dash-kpi"><div class="mm-dash-kpi-lbl" style="color:#ff9090">Ochiq</div><div class="mm-dash-kpi-val" style="color:#ff9090">${ochiqList.length}</div></div>
       <div class="mm-dash-kpi"><div class="mm-dash-kpi-lbl" style="color:var(--lime)">Hal qilindi</div><div class="mm-dash-kpi-val" style="color:var(--lime)">${halList.length}</div></div>
-    </div>
-    <div class="mm-dash-section">
-      <div class="mm-dash-title">📅 Kunlik murojaatlar soni <span style="font-weight:400;color:var(--white-50);font-size:12px">(o'rtacha ${kunlikOrtacha.toFixed(1)}/kun)</span></div>
-      ${kunlikHtml}
     </div>
     <div class="mm-dash-section">
       <div class="mm-dash-title">📌 Eng ko'p uchraydigan muammo turi</div>
@@ -3408,7 +3424,20 @@ function renderMuammoliDashboard(){
       <div class="mm-dash-title">⏳ Hal qilinmagan murojaatlar (kutish vaqti bo'yicha)</div>
       ${pendingHtml}
     </div>
+    <div class="mm-dash-section">
+      <div class="mm-dash-title">📅 Kunlik murojaatlar soni <span style="font-weight:400;color:var(--white-50);font-size:12px">(o'rtacha ${kunlikOrtacha.toFixed(1)}/kun)</span></div>
+      ${kunlikHtml}
+      ${kunlikRestKeys.length?`<div class="mm-action-row" style="margin-top:8px;justify-content:center" onclick="muammoliToggleQolganKunlar()">
+        <span style="font-size:12px;color:#5a574f;font-weight:600">${muammoliQolganKunlarOpen?'▲ Yopish':'▼ Qolgan kunlar'}</span>
+      </div>
+      <div id="muammoli-qolgan-kunlar" style="${muammoliQolganKunlarOpen?'':'display:none'};margin-top:6px">${oylikHtml}</div>`:''}
+    </div>
   `;
+}
+var muammoliQolganKunlarOpen=false;
+function muammoliToggleQolganKunlar(){
+  muammoliQolganKunlarOpen=!muammoliQolganKunlarOpen;
+  renderMuammoliDashboard();
 }
 function muammoliShowSingleTuriList(){
   var rest=(window.muammoliTuriRest||[]).slice().sort(function(a,b){ return b[1]-a[1]; });
@@ -3425,6 +3454,8 @@ function muammoliShowSingleTuriList(){
     <button class="fcancel" style="width:100%;margin-top:12px" onclick="orgCloseModal()">Yopish</button>`;
   orgShowModal(html);
 }
+var muammoliTuriGroupExpanded={};
+var muammoliTuriGroupCurRestoran=null;
 function muammoliShowFilteredList(filterType,value){
   muammoliCurrentRenderFn=function(){ muammoliShowFilteredList(filterType,value); };
   var items=(muammoliDb.items||[]).filter(function(it){
@@ -3432,12 +3463,56 @@ function muammoliShowFilteredList(filterType,value){
     if(filterType==='restoran') return it.restoran===value;
     return false;
   });
+
+  if(filterType==='restoran'){
+    if(muammoliTuriGroupCurRestoran!==value){
+      muammoliTuriGroupExpanded={};
+      muammoliTuriGroupCurRestoran=value;
+    }
+    var turiCountsR={};
+    items.forEach(function(it){ var t=it.turi||'Boshqa'; turiCountsR[t]=(turiCountsR[t]||0)+1; });
+    var turiSortedR=Object.entries(turiCountsR).sort(function(a,b){ return b[1]-a[1]; });
+
+    var summaryHtml=turiSortedR.map(function(entry){
+      return `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px">
+        <span style="color:var(--white-80)">${esc(entry[0])}</span>
+        <span style="font-weight:700;color:var(--lime)">${entry[1]} marta</span>
+      </div>`;
+    }).join('');
+
+    var groupsHtml=turiSortedR.map(function(entry){
+      var turiNom=entry[0], soni=entry[1];
+      var isOpen=!!muammoliTuriGroupExpanded[turiNom];
+      var turiEsc=esc(turiNom).replace(/'/g,"\\'");
+      var groupItems=items.filter(function(it){ return (it.turi||'Boshqa')===turiNom; });
+      var cardsHtml=isOpen?groupItems.map(function(it){ return muammoliCard(it); }).join(''):'';
+      return `<div style="margin-bottom:8px">
+        <div class="mm-action-row" onclick="muammoliToggleTuriGroup('${turiEsc}')">
+          <span style="font-size:13px;color:#5a574f;font-weight:600;flex:1">${esc(turiNom)} (${soni} ta)</span>
+          <span style="color:#9a9588">${isOpen?'⌃':'⌄'}</span>
+        </div>
+        ${isOpen?`<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">${cardsHtml}</div>`:''}
+      </div>`;
+    }).join('');
+
+    var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:10px">${esc(value)}</div>
+      <div style="background:var(--white-06);border-radius:10px;padding:10px 12px;margin-bottom:14px">${summaryHtml||'<div style="color:var(--white-50);font-size:13px">Ma\'lumot yo\'q</div>'}</div>
+      <div style="max-height:60vh;overflow-y:auto">${groupsHtml||'<div style="text-align:center;padding:16px;color:var(--white-50);font-size:13px">Topilmadi</div>'}</div>
+      <button class="fcancel" style="width:100%;margin-top:12px" onclick="orgCloseModal()">Yopish</button>`;
+    orgShowModal(html);
+    return;
+  }
+
   var rows=items.map(function(it){ return muammoliCard(it); }).join('');
   if(!rows) rows='<div style="text-align:center;padding:16px;color:var(--white-50);font-size:13px">Topilmadi</div>';
   var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:12px">${esc(value)}</div>
     <div style="max-height:70vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px">${rows}</div>
     <button class="fcancel" style="width:100%;margin-top:12px" onclick="orgCloseModal()">Yopish</button>`;
   orgShowModal(html);
+}
+function muammoliToggleTuriGroup(turiNom){
+  muammoliTuriGroupExpanded[turiNom]=!muammoliTuriGroupExpanded[turiNom];
+  muammoliShowFilteredList('restoran',muammoliTuriGroupCurRestoran);
 }
 
 // =========================
