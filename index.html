@@ -2678,7 +2678,10 @@ function muammoliCard(it){
   if(!isExpanded){
     return `<div class="mm-card" style="${cardStyle}">
       ${headerHtml}
-      <div class="mm-meta" style="padding-left:56px;margin-top:-4px">${it.createdByName?'Qabul qildi: '+esc(it.createdByName)+' · ':''}${muammoliFormatDateTime(it.createdAt)}</div>
+      <div style="padding-left:56px;margin-top:-4px">
+        ${it.turi?`<div style="font-size:13px;color:#5a574f;font-weight:600">${esc(it.turi)}</div>`:''}
+        <div style="font-size:12px;color:#8b877c;margin-top:2px">📅 ${muammoliFormatDateTime(it.createdAt)}${it.createdByName?' · 👤 '+esc(it.createdByName):''}</div>
+      </div>
       ${expandArrow}
     </div>`;
   }
@@ -2777,7 +2780,10 @@ function muammoliArchiveCard(it){
   if(!isExpanded){
     return `<div class="mm-card" style="opacity:.85">
       ${headerHtml}
-      <div class="mm-meta" style="padding-left:56px;margin-top:-4px">Arxivlandi: ${it.archivedBy?esc(it.archivedBy)+' · ':''}${muammoliFormatDate(it.archivedAt)}</div>
+      <div style="padding-left:56px;margin-top:-4px">
+        ${it.turi?`<div style="font-size:13px;color:#5a574f;font-weight:600">${esc(it.turi)}</div>`:''}
+        <div style="font-size:12px;color:#8b877c;margin-top:2px">📅 Arxivlandi: ${muammoliFormatDateTime(it.archivedAt)}${it.archivedBy?' · 👤 '+esc(it.archivedBy):''}</div>
+      </div>
       ${expandArrow}
     </div>`;
   }
