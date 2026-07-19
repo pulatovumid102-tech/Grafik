@@ -2451,23 +2451,14 @@ async function muammoliSave(){
 }
 function muammoliMigrateTurlarMijoz(){
   var changed=false;
-  if(!muammoliDb.turlarMijoz||!muammoliDb.turlarMijoz.length){
-    muammoliDb.turlarMijoz=MUAMMOLI_TURLARI_MIJOZ.slice();
+  var whitelist=MUAMMOLI_TURLARI_MIJOZ.slice();
+  var cleanedList=(muammoliDb.turlarMijoz||[]).map(function(t){
+    return MUAMMOLI_TURLARI_MIJOZ_MIGRATION[t]||t;
+  }).filter(function(t){ return whitelist.indexOf(t)!==-1; });
+  whitelist.forEach(function(t){ if(cleanedList.indexOf(t)===-1) cleanedList.push(t); });
+  if(JSON.stringify(cleanedList)!==JSON.stringify(muammoliDb.turlarMijoz||[])){
+    muammoliDb.turlarMijoz=cleanedList;
     changed=true;
-  }else{
-    var migrated=muammoliDb.turlarMijoz.map(function(t){
-      return MUAMMOLI_TURLARI_MIJOZ_MIGRATION[t]||t;
-    }).filter(function(t){
-      return MUAMMOLI_TURLARI_MIJOZ_REMOVED.indexOf(t)===-1;
-    });
-    migrated=migrated.filter(function(t,i){ return migrated.indexOf(t)===i; });
-    MUAMMOLI_TURLARI_MIJOZ.forEach(function(t){
-      if(migrated.indexOf(t)===-1) migrated.push(t);
-    });
-    if(JSON.stringify(migrated)!==JSON.stringify(muammoliDb.turlarMijoz)){
-      muammoliDb.turlarMijoz=migrated;
-      changed=true;
-    }
   }
   (muammoliDb.items||[]).forEach(function(it){
     if(it.turi&&MUAMMOLI_TURLARI_MIJOZ_MIGRATION[it.turi]){
@@ -2478,7 +2469,7 @@ function muammoliMigrateTurlarMijoz(){
   var oldItemCount=(muammoliDb.items||[]).length;
   muammoliDb.items=(muammoliDb.items||[]).filter(function(it){
     if(it.manba==='hamkor') return false;
-    return !it.turi || MUAMMOLI_TURLARI_MIJOZ_REMOVED.indexOf(it.turi)===-1;
+    return !it.turi || whitelist.indexOf(it.turi)!==-1;
   });
   if(muammoliDb.items.length!==oldItemCount) changed=true;
   return changed;
@@ -3085,10 +3076,11 @@ function muammoliRefreshForm(){
   var d=muammoliDraft;
   d.manba='mijoz';
 
-  var turiBlock=`<div class="frow" style="position:relative">
+  var turiOptions=`<option value="" ${!d.turi?'selected':''}>— tanlang —</option>`
+    +MUAMMOLI_TURLARI_MIJOZ.map(t=>`<option value="${esc(t)}" ${d.turi===t?'selected':''}>${esc(t)}</option>`).join('');
+  var turiBlock=`<div class="frow">
       <label class="flbl">Murojaat turi <span style="color:#ff7070">*</span></label>
-      <input class="fi" id="mm-turi" autocomplete="off" value="${esc(d.turi||'')}" placeholder="Yozing va ro'yxatdan tanlang, yoki yangi tur kiriting" oninput="mmTuriSearch()" onfocus="mmTuriSearch()">
-      <div id="mm-turi-dropdown" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:20;background:var(--green-card);border:1px solid var(--white-10);border-radius:10px;margin-top:4px;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.3)"></div>
+      <select class="fi" id="mm-turi">${turiOptions}</select>
     </div>`;
 
   var restoranBlock=`<div class="frow" style="position:relative">
@@ -3215,12 +3207,8 @@ function mmRestoranPick(nom){
 }
 function saveMuammoliForm(){
   if(!muammoliDraft)return;
-  var turi=document.getElementById('mm-turi').value.trim();
-  if(!turi){notify('Murojaat turini kiriting!');return;}
-  if(!muammoliDb.turlarMijoz)muammoliDb.turlarMijoz=MUAMMOLI_TURLARI_MIJOZ.slice();
-  if(!muammoliDb.turlarMijoz.some(t=>t.toLowerCase()===turi.toLowerCase())){
-    muammoliDb.turlarMijoz.push(turi);
-  }
+  var turi=document.getElementById('mm-turi').value;
+  if(!turi){notify('Murojaat turini tanlang!');return;}
   var izoh=document.getElementById('mm-izoh').value.trim();
   var masulBolim=document.getElementById('mm-masul-bolim').value;
   if(!masulBolim){notify("Masul bo'limni tanlang!");return;}
