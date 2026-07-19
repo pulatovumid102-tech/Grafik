@@ -3847,14 +3847,13 @@ var DB_KEY='biznes_db_v1';
 var db={sections:[]};
 var curSection=null,curCat=null,curFlow=null;
 var navStack=['p-entry1'];
-var BOLIM_IDS=['main','main2','main3'];
+var BOLIM_IDS=['main2','main3'];
 var curBolim=0;
-var bolimTitles=["Support bo'limi","Support bo'limi 2","Support bo'limi 3"];
+var bolimTitles=["Support bo'limi 2","Support bo'limi 3"];
 
-var ENTRY_TITLE_DEFAULTS = {bolimlar:"Bo'limlar", org:"Org struktura", kaiten:"Kaiten", hujjatlar:"Hujjatlar", muammoli:"Muammoli mijozlar", baza415:"415 baza"};
+var ENTRY_TITLE_DEFAULTS = {org:"Org struktura", kaiten:"Kaiten", hujjatlar:"Hujjatlar", muammoli:"Muammoli mijozlar", baza415:"415 baza"};
 var entryTitles = Object.assign({}, ENTRY_TITLE_DEFAULTS);
 var ENTRY_CARD_DEFS={
-  bolimlar:{onclick:"goTo('p-entry2')"},
   org:{onclick:"goTo('p-org')"},
   kaiten:{onclick:"goTo('p-kaiten')", badge:true},
   hujjatlar:{onclick:"goTo('p-hujjatlar')"},
@@ -4005,7 +4004,13 @@ async function bolimTitlesLoad(){
   try{
     var r=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.bolim_titles',{headers:SB_H});
     var rows=await r.json();
-    if(rows&&rows.length&&rows[0].data&&rows[0].data.titles) bolimTitles=rows[0].data.titles;
+    if(rows&&rows.length&&rows[0].data&&rows[0].data.titles){
+      bolimTitles=rows[0].data.titles;
+      if(bolimTitles.length>2){
+        bolimTitles=bolimTitles.slice(1);
+        bolimTitlesSave();
+      }
+    }
     else{
       try{await fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'bolim_titles',data:{titles:bolimTitles}})});}catch(e2){}
     }
@@ -4155,7 +4160,7 @@ function formatUzPhone(raw){
 }
 function notify(m){var n=document.getElementById('notif');n.textContent=m;n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2000);}
 
-var ACAD_IDS=['academy','academy2','academy3'];
+var ACAD_IDS=['academy2','academy3'];
 var ACAD_KEY='academy_db_v1';
 var curAcadSec=null,curAcadCat=null,curAcadItem=null;
 
