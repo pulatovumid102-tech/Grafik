@@ -2403,6 +2403,7 @@ function muammoliCard(it){
       ${headerHtml}
       <div style="padding-left:56px;margin-top:-4px">
         ${it.turi?`<div style="font-size:13px;color:#5a574f;font-weight:600">${esc(it.turi)}</div>`:''}
+        ${it.restoran?`<div style="font-size:12px;color:#8a5c00;margin-top:2px">🏪 ${esc(it.restoran)}</div>`:''}
         <div style="font-size:12px;color:#8b877c;margin-top:2px">📅 ${muammoliFormatDateTime(it.createdAt)}${it.createdByName?' · 👤 '+esc(it.createdByName):''}</div>
       </div>
       ${expandArrow}
@@ -2505,6 +2506,7 @@ function muammoliArchiveCard(it){
       ${headerHtml}
       <div style="padding-left:56px;margin-top:-4px">
         ${it.turi?`<div style="font-size:13px;color:#5a574f;font-weight:600">${esc(it.turi)}</div>`:''}
+        ${it.restoran?`<div style="font-size:12px;color:#8a5c00;margin-top:2px">🏪 ${esc(it.restoran)}</div>`:''}
         <div style="font-size:12px;color:#8b877c;margin-top:2px">📅 Arxivlandi: ${muammoliFormatDateTime(it.archivedAt)}${it.archivedBy?' · 👤 '+esc(it.archivedBy):''}</div>
       </div>
       ${expandArrow}
@@ -2786,6 +2788,45 @@ function showMuammoliForm(id){
   if(!muammoliDraft.manba) muammoliDraft.manba='mijoz';
   muammoliRefreshForm();
   document.getElementById('muammoli-form').scrollIntoView({behavior:'smooth', block:'center'});
+}
+function muammoliRefreshForm(){
+  var d=muammoliDraft;
+  d.manba='mijoz';
+
+  var turiOptions=`<option value="" ${!d.turi?'selected':''}>— tanlang —</option>`
+    +MUAMMOLI_TURLARI_MIJOZ.map(t=>`<option value="${esc(t)}" ${d.turi===t?'selected':''}>${esc(t)}</option>`).join('');
+  var turiBlock=`<div class="frow">
+      <label class="flbl">Murojaat turi <span style="color:#ff7070">*</span></label>
+      <select class="fi" id="mm-turi">${turiOptions}</select>
+    </div>`;
+
+  var restoranBlock=`<div class="frow" style="position:relative">
+      <label class="flbl">Restoran nomi (ixtiyoriy)</label>
+      <input class="fi" id="mm-restoran" autocomplete="off" value="${esc(d.restoran||'')}" placeholder="Restoran nomini yozing va ro'yxatdan tanlang" oninput="mmRestoranSearch()" onfocus="mmRestoranSearch()">
+      <div id="mm-restoran-dropdown" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:20;background:var(--green-card);border:1px solid var(--white-10);border-radius:10px;margin-top:4px;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.3)"></div>
+    </div>`;
+
+  var masulList=muammoliGetSababchiIchki();
+  var masulOptions=`<option value="" ${!d.masulBolim?'selected':''}>— tanlang —</option>`
+    +masulList.map(t=>`<option value="${esc(t)}" ${d.masulBolim===t?'selected':''}>${esc(t)}</option>`).join('');
+  var masulBlock=`<div class="frow">
+    <label class="flbl">Masul bo'lim <span style="color:#ff7070">*</span></label>
+    <select class="fi" id="mm-masul-bolim">${masulOptions}</select>
+  </div>`;
+
+  var bodyBlock=`<div class="frow"><label class="flbl">Mijoz ismi <span style="color:#ff7070">*</span></label><input class="fi" id="mm-ism" value="${esc(d.ism||'')}" placeholder="Mijozning ismi"></div>
+       <div class="frow"><label class="flbl">Mijoz raqami</label><input class="fi" id="mm-tel" value="${esc(d.tel||'+998')}" placeholder="+998..."></div>
+       ${turiBlock}
+       ${restoranBlock}
+       ${masulBlock}`;
+
+  document.getElementById('muammoli-form').innerHTML=`<div class="form-box fade">
+    ${bodyBlock}
+    <div class="frow"><label class="flbl">Batafsil</label><textarea class="fi" id="mm-izoh" style="min-height:70px;resize:vertical" placeholder="Nima bo'lganini batafsil yozing...">${esc(d.izoh||'')}</textarea></div>
+    <div class="fbtns"><button class="fsave" onclick="saveMuammoliForm()">Saqlash</button><button class="fcancel" onclick="renderMuammoli()">Bekor</button></div>
+  </div>`;
+  document.removeEventListener('click', mmRestoranOutsideClick);
+  document.addEventListener('click', mmRestoranOutsideClick);
 }
 function muammoliSyncCommon(){
   var d=muammoliDraft;
