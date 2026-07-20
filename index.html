@@ -454,7 +454,6 @@ function renderPartnershipFrame(){
     <div class="page-header">
       <button class="back-btn" onclick="goBack('p-entry1')">← Orqaga</button>
       <span class="page-title" id="page-title-org">Org struktura</span>
-      <button class="abtn" style="margin-left:auto" onclick="goTo('p-ish-grafigi')">📅 Ish grafigi</button>
     </div>
   </div>
   <div id="org-pan-wrap" class="org-pan-wrap" style="overflow:scroll;width:100%;height:calc(100vh - 120px);-webkit-overflow-scrolling:touch;">
@@ -646,129 +645,10 @@ function renderPartnershipFrame(){
         <div><span class="flbl">Telegram</span><br><span style="color:var(--white-80)">${esc(tgDisplay)}</span></div>`}
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
-        <button class="add-item-btn" style="margin-top:0" onclick="orgShowTasksModal('${id}')">Vazifalar ro'yxati</button>
-        <button class="add-item-btn" style="margin-top:0" onclick="orgResetChecklistTmp();orgShowChecklistModal('${id}')">Cheklist</button>
         ${orgIsAdmin()?`<button class="add-item-btn" style="margin-top:0" onclick="orgShowEditModal('${id}')">Tahrirlash</button>`:''}
         <button class="fcancel" onclick="orgCloseModal()">Yopish</button>
       </div>`;
     orgShowModal(html);
-  }
-  function orgShowTasksModal(id){
-    var node=orgData.find(n=>n.id===id);
-    var tasksHtml=(node.tasks&&node.tasks.length)?node.tasks.map((t,i)=>`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--white-10)">
-      <span style="flex:1;color:var(--white-80);white-space:pre-wrap">${i+1}. ${esc(t)}</span>
-      ${orgIsAdmin()?`<button class="abtn abtn-red" onclick="orgDelTaskModal('${id}',${i})">x</button>`:''}
-    </div>`).join(''):'<div style="color:var(--white-50);padding:12px 0">Vazifalar yo\'q</div>';
-    var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">${esc(node.name)} — Vazifalar</div>
-      <div style="margin-bottom:12px">${tasksHtml}</div>
-      ${orgIsAdmin()?`<div class="frow"><textarea class="fi" id="org-task-inp" placeholder="Yangi vazifa..." rows="3" enterkeyhint="enter" onkeydown="orgTextareaEnterHandler(event,this)" style="resize:vertical;font-family:inherit"></textarea></div>
-      <div class="fbtns"><button class="fsave" onclick="orgAddTaskModal('${id}')">Qo'shish</button></div>`:''}
-      <button class="fcancel" style="margin-top:8px" onclick="orgCloseModal()">Yopish</button>`;
-    orgShowModal(html);
-  }
-  function orgAddTaskModal(id){
-    var inp=document.getElementById('org-task-inp');
-    var val=inp.value.trim(); if(!val){notify('Matn kiriting!');return;}
-    var node=orgData.find(n=>n.id===id);
-    if(!node.tasks)node.tasks=[];
-    node.tasks.push(val);
-    orgSave(); orgShowTasksModal(id);
-  }
-  function orgDelTaskModal(id,idx){
-    var node=orgData.find(n=>n.id===id);
-    node.tasks.splice(idx,1);
-    orgSave(); orgShowTasksModal(id);
-  }
-  var orgChecklistTmpDays=[], orgChecklistTmpText='', orgChecklistTmpTime='09:00', orgChecklistEditIdx=-1;
-  var ORG_CL_DAY_LABELS=[['mon','Dush'],['tue','Sesh'],['wed','Chor'],['thu','Pay'],['fri','Jum'],['sat','Shan'],['sun','Yak']];
-  function orgResetChecklistTmp(){
-    orgChecklistTmpDays=[]; orgChecklistTmpText=''; orgChecklistTmpTime='09:00'; orgChecklistEditIdx=-1;
-  }
-  function orgShowChecklistModal(id){
-    var node=orgData.find(n=>n.id===id);
-    var list=node.checklist||[];
-    var itemsHtml = list.length ? list.map((c,i)=>{
-      var daysStr=(c.days||[]).map(d=>{var f=ORG_CL_DAY_LABELS.find(x=>x[0]===d);return f?f[1]:d;}).join(', ');
-      return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--white-10)">
-        <div style="flex:1">
-          <div style="color:var(--white-80);white-space:pre-wrap">${i+1}. ${esc(c.text)}</div>
-          <div style="font-size:11px;color:var(--white-50);margin-top:2px">${esc(c.time||'')} • ${esc(daysStr)}</div>
-        </div>
-        ${orgIsAdmin()?`<button class="abtn" onclick="orgEditChecklistModal('${id}',${i})">✏</button><button class="abtn abtn-red" onclick="orgDelChecklistModal('${id}',${i})">x</button>`:''}
-      </div>`;
-    }).join('') : '<div style="color:var(--white-50);padding:12px 0">Cheklist bo&#39;sh</div>';
-
-    var daysHtml = ORG_CL_DAY_LABELS.map(([key,label])=>{
-      var active=orgChecklistTmpDays.includes(key);
-      return `<button onclick="orgToggleChecklistDay('${id}','${key}')" style="flex:1;padding:8px 4px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;background:${active?'var(--lime)':'var(--white-06)'};color:${active?'var(--green-dark)':'var(--white-50)'}">${label}</button>`;
-    }).join('');
-
-    var isEditing = orgChecklistEditIdx > -1;
-    var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">${esc(node.name)} — Cheklist</div>
-      <div style="margin-bottom:12px">${itemsHtml}</div>
-      ${orgIsAdmin()?`
-      ${isEditing?`<div style="font-size:12px;color:var(--lime);margin-bottom:8px">✏ Punkt tahrirlanmoqda...</div>`:''}
-      <div class="frow"><label class="flbl">Vazifa matni</label><textarea class="fi" id="org-cl-text" placeholder="Vazifa matni..." rows="3" enterkeyhint="enter" onkeydown="orgTextareaEnterHandler(event,this)" style="resize:vertical;font-family:inherit">${esc(orgChecklistTmpText)}</textarea></div>
-      <div class="frow">
-        <label class="flbl">Vaqt</label>
-        <input class="fi" type="time" id="org-cl-time" value="${esc(orgChecklistTmpTime)}" style="margin-top:5px">
-      </div>
-      <div class="frow">
-        <label class="flbl">Kunlar</label>
-        <div style="display:flex;gap:4px;margin-top:5px">${daysHtml}</div>
-      </div>
-      <div class="fbtns">
-        <button class="fsave" onclick="orgAddChecklistModal('${id}')">${isEditing?'Saqlash':"Qo'shish"}</button>
-        ${isEditing?`<button class="fcancel" onclick="orgResetChecklistTmp();orgShowChecklistModal('${id}')">Bekor</button>`:''}
-      </div>
-      `:''}
-      <button class="fcancel" style="margin-top:8px" onclick="orgCloseModal();orgResetChecklistTmp()">Yopish</button>`;
-    orgShowModal(html);
-  }
-  function orgEditChecklistModal(id, idx){
-    var node=orgData.find(n=>n.id===id);
-    var item=node.checklist[idx];
-    if(!item) return;
-    orgChecklistEditIdx = idx;
-    orgChecklistTmpText = item.text||'';
-    orgChecklistTmpTime = item.time||'09:00';
-    orgChecklistTmpDays = (item.days||[]).slice();
-    orgShowChecklistModal(id);
-  }
-  function orgToggleChecklistDay(id, key){
-    var textEl=document.getElementById('org-cl-text');
-    var timeEl=document.getElementById('org-cl-time');
-    if(textEl) orgChecklistTmpText=textEl.value;
-    if(timeEl) orgChecklistTmpTime=timeEl.value;
-    var idx=orgChecklistTmpDays.indexOf(key);
-    if(idx>-1) orgChecklistTmpDays.splice(idx,1); else orgChecklistTmpDays.push(key);
-    orgShowChecklistModal(id);
-  }
-  function orgAddChecklistModal(id){
-    var text=document.getElementById('org-cl-text').value.trim();
-    var time=document.getElementById('org-cl-time').value;
-    if(!text){notify('Matn kiriting!');return;}
-    if(!time){notify('Vaqtni kiriting!');return;}
-    if(!orgChecklistTmpDays.length){notify('Kamida bitta kun tanlang!');return;}
-    var node=orgData.find(n=>n.id===id);
-    if(!node.checklist)node.checklist=[];
-    if(orgChecklistEditIdx > -1 && node.checklist[orgChecklistEditIdx]){
-      var existing = node.checklist[orgChecklistEditIdx];
-      existing.text = text; existing.time = time; existing.days = orgChecklistTmpDays.slice();
-      existing.sent_dates = [];
-    } else {
-      node.checklist.push({id:'cl'+Date.now()+'_'+Math.random().toString(36).slice(2,7), text:text, time:time, days:orgChecklistTmpDays.slice()});
-    }
-    orgSave(); notify('Saqlandi ✓');
-    orgResetChecklistTmp();
-    orgShowChecklistModal(id);
-  }
-  function orgDelChecklistModal(id, idx){
-    askConfirm("Cheklist punktini o'chirasizmi?",()=>{
-      var node=orgData.find(n=>n.id===id);
-      node.checklist.splice(idx,1);
-      orgSave(); orgShowChecklistModal(id);
-    });
   }
   function orgOpenMenu(id){
     var node=orgData.find(n=>n.id===id);
@@ -1076,8 +956,6 @@ function renderPartnershipFrame(){
     if(color)node.color=color;else delete node.color;
     orgSave();orgCloseModal();renderOrg();
   }
-  function orgToggleMenu(id){ orgOpenMenu(id); }
-  function orgSetColor(id,color){ orgSetColorModal(id,color); }
 
   function orgRenderChildren(parentId, container){
     var children = orgData.filter(n=>n.parentId===parentId);
@@ -1114,40 +992,11 @@ function renderPartnershipFrame(){
     go(root);
   }
 
-  function orgEdit(id){ orgShowEditModal(id); }
-  function orgAddChild(id){ orgAddChildModal(id); }
-  function orgAddSibling(id,dir){ orgAddSiblingModal(id,dir); }
-  function orgDel(id){ orgDelModal(id); }
-
   setTimeout(function(){
     var pan = document.getElementById('org-pan-wrap');
     if(pan) pan.scrollLeft = (pan.scrollWidth - pan.clientWidth) / 2;
   }, 200);
   </script>
-</div>
-
-<div class="page" id="p-ish-grafigi">
-  <div class="page-topbar">
-    <div class="page-header">
-      <button class="back-btn" onclick="goBack('p-org')">← Orqaga</button>
-      <span class="page-title">Ish grafigi</span>
-    </div>
-  </div>
-  <div id="ish-grafigi-dash"></div>
-</div>
-
-<div class="page" id="p-ish-grafigi-bolim">
-  <div class="page-topbar">
-    <div class="page-header">
-      <button class="back-btn" onclick="goBack('p-ish-grafigi')">← Orqaga</button>
-      <span class="page-title" id="ish-grafigi-bolim-title">Bo'lim</span>
-    </div>
-  </div>
-  <div id="ish-grafigi-bolim-standart"></div>
-  <div class="flbl" style="margin:14px 0 8px">Bo'sh vaqtlar (hodim yo'q)</div>
-  <div id="ish-grafigi-headcount" style="overflow-x:auto"></div>
-  <div class="flbl" style="margin:14px 0 8px">Xodimlar</div>
-  <div id="ish-grafigi-xodimlar-list" class="section-list"></div>
 </div>
 
 <div class="page" id="p-entry2">
@@ -2751,7 +2600,8 @@ function muammoliConfirmHal(id){
     '✅ MUROJAAT HAL QILINDI\n\n'+
     '🙋 Mijoz: '+(it.ism||'—')+(it.tel?' ('+it.tel+')':'')+'\n\n'+
     '📝 Yechim: '+yechim+'\n\n'+
-    '🏪 Restoran/masul: '+(it.restoran||it.masulBolim||'—')+'\n'+
+    (it.restoran?'🏪 Restoran: '+it.restoran+'\n':'')+
+    '🏢 Masul bo\'lim: '+(it.masulBolim||'—')+'\n'+
     '👤 Kim hal qildi: '+it.halQildiBy,
     MUAMMOLI_GROUP_SUPPORT
   );
@@ -3395,11 +3245,12 @@ function renderBaza415Restoran(){
   document.getElementById('baza415-rest-title').textContent=r.nom;
   var kontaktlar=r.kontaktlar||[];
   var h=kontaktlar.map(function(k){
+    var telEsc=esc(k.tel||'').replace(/'/g,"\\'");
     return `<div class="bz-contact-card">
       <div style="min-width:0">
         <div class="bz-contact-role">${esc(k.rol)}</div>
         <div class="bz-contact-name">${esc(k.ism||'—')}</div>
-        <div class="bz-contact-tel">${k.tel?esc(formatUzPhone(k.tel)):'—'}</div>
+        <div class="bz-contact-tel">${k.tel?esc(formatUzPhone(k.tel)):'—'} ${k.tel?`<button onclick="event.stopPropagation();copyToClipboard('${telEsc}')" style="border:1px solid #ddd9cc;background:#f3f1ec;border-radius:6px;width:20px;height:20px;font-size:10px;cursor:pointer;vertical-align:middle">📋</button>`:''}</div>
       </div>
       ${isAdmin?`<div class="action-btns"><button class="abtn" onclick="showBaza415ContactForm('${k.id}')">✏</button><button class="abtn abtn-red" onclick="baza415DelContact('${k.id}')">✕</button></div>`:''}
     </div>`;
@@ -3525,7 +3376,7 @@ async function partnershipSaveCalled(restoranId){
   var izohInp=document.getElementById('pc-izoh-inp').value.trim();
   if(!r.qongiroq)r.qongiroq={};
   r.qongiroq.lastCalledDate=partnershipTodayStr();
-  r.qongiroq.lastCalledBy=kaitenCreatorNameNow();
+  r.qongiroq.lastCalledBy=kaitenMyFio()||'Xodim';
   r.qongiroq.lastCalledAt=new Date().toISOString();
   if(izohInp) r.qongiroq.izoh=izohInp;
   var ok=await baza415Save();
@@ -3824,8 +3675,6 @@ function sirlyRender(p){
   else if(p==='p-baza415')renderBaza415List();
   else if(p==='p-baza415-restoran')renderBaza415Restoran();
   else if(p==='p-partnership-calls')renderPartnershipCalls();
-  else if(p==='p-ish-grafigi')renderIshGrafigiList();
-  else if(p==='p-ish-grafigi-bolim')renderIshGrafigiBolim();
   updateBc();
 }
 function updateBc(){
@@ -4548,273 +4397,6 @@ function mmDDTouchEnd(e,kind,value){
     if(kind==='restoran') mmRestoranPick(value);
   }
 }
-// =========================
-// ISH GRAFIGI (bo'lim standart + xodim alohida)
-// =========================
-var workDb={bolimlar:{},xodimlar:{}};
-var WORK_DAYS=[
-  {key:'dush',label:'Dushanba'},
-  {key:'sesh',label:'Seshanba'},
-  {key:'chor',label:'Chorshanba'},
-  {key:'pay',label:'Payshanba'},
-  {key:'jum',label:'Juma'},
-  {key:'shan',label:'Shanba'},
-  {key:'yak',label:'Yakshanba'}
-];
-var curIshGrafigiBolim=null;
-async function workLoad(){
-  try{
-    var r=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.ish_grafigi',{headers:SB_H});
-    var rows=await r.json();
-    if(rows&&rows.length&&rows[0].data){
-      workDb=rows[0].data;
-      if(!workDb.bolimlar)workDb.bolimlar={};
-      if(!workDb.xodimlar)workDb.xodimlar={};
-    }else{
-      workDb={bolimlar:{},xodimlar:{}};
-      try{await fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'ish_grafigi',data:workDb})});}catch(e2){}
-    }
-  }catch(e){ workDb={bolimlar:{},xodimlar:{}}; }
-}
-async function workSave(){
-  try{await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.ish_grafigi',{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({data:workDb})});}catch(e){}
-}
-function workGetOrgTopBolimNodes(){
-  if(typeof orgData==='undefined'||!orgData||!orgData.length)return [];
-  var root=orgData.find(n=>!n.parentId);
-  var direct=root?orgData.filter(function(n){ return n.parentId===root.id && n.cardType==='bolim'; }):[];
-  if(!direct.length) direct=orgData.filter(function(n){ return n.cardType==='bolim'; });
-  return direct.slice().sort((a,b)=>a.name.localeCompare(b.name,'uz'));
-}
-function workGetEmployeesUnder(bolimId){
-  var list=[];
-  function walk(pid){
-    orgData.filter(function(n){ return n.parentId===pid; }).forEach(function(n){
-      if(n.fio&&n.fio.trim()) list.push(n);
-      walk(n.id);
-    });
-  }
-  walk(bolimId);
-  return list;
-}
-function workFormatSchedule(sched){
-  if(!sched)return "Belgilanmagan";
-  var on=WORK_DAYS.filter(function(d){ return sched[d.key]&&sched[d.key].on; });
-  if(!on.length)return "Dam kunlari (hech qanday ish kuni yo'q)";
-  return on.map(function(d){
-    var s=sched[d.key];
-    return d.label.slice(0,3)+' '+(s.from||'--')+'–'+(s.to||'--');
-  }).join(', ');
-}
-function workFindGaps(bolimId){
-  var data=workComputeHourlyHeadcount(bolimId);
-  var gaps=[];
-  WORK_DAYS.forEach(function(d){
-    var counts=data.byDay[d.key];
-    var i=0;
-    while(i<counts.length){
-      if(counts[i]===0){
-        var startH=data.hours[i];
-        var j=i;
-        while(j<counts.length&&counts[j]===0) j++;
-        var endH=data.hours[j-1]+1;
-        gaps.push({day:d.label, from:startH, to:endH});
-        i=j;
-      }else{
-        i++;
-      }
-    }
-  });
-  return gaps;
-}
-function renderIshGrafigiList(){
-  var bolimlar=workGetOrgTopBolimNodes();
-  var jamiXodim=0;
-  bolimlar.forEach(function(b){ jamiXodim+=workGetEmployeesUnder(b.id).length; });
-
-  var bolimRows=bolimlar.map(function(b){
-    var sched=workDb.bolimlar[b.id];
-    var xodimSoni=workGetEmployeesUnder(b.id).length;
-    return `<div class="mm-pending-item" style="cursor:pointer" onclick="openIshGrafigiBolim('${b.id}')">
-      <div style="min-width:0">
-        <div style="font-size:13px;font-weight:600;color:var(--white)">${esc(b.name)}</div>
-        <div style="font-size:11px;color:var(--white-50)">${xodimSoni} ta xodim</div>
-      </div>
-      <span style="font-size:12px;color:var(--lime);white-space:nowrap">${esc(workFormatSchedule(sched))}</span>
-    </div>`;
-  }).join('');
-  if(!bolimlar.length) bolimRows='<div style="text-align:center;padding:20px;color:var(--white-50);font-size:13px">Org strukturada bo\'lim topilmadi</div>';
-
-  var gapRows=[];
-  bolimlar.forEach(function(b){
-    var gaps=workFindGaps(b.id);
-    gaps.forEach(function(g){
-      gapRows.push({bolim:b.name, day:g.day, from:g.from, to:g.to});
-    });
-  });
-  var gapHtml=gapRows.length?gapRows.map(function(g){
-    return `<div class="mm-pending-item">
-      <div style="min-width:0">
-        <div style="font-size:13px;font-weight:600;color:var(--white)">${esc(g.bolim)}</div>
-        <div style="font-size:11px;color:var(--white-50)">${esc(g.day)}</div>
-      </div>
-      <span class="mm-pending-days" style="background:rgba(227,73,72,0.15);color:#e34948">${g.from}:00–${g.to}:00 bo'sh</span>
-    </div>`;
-  }).join(''):'<div style="text-align:center;padding:20px;color:var(--white-50);font-size:13px">Bo\'sh vaqt topilmadi 🎉</div>';
-
-  document.getElementById('ish-grafigi-dash').innerHTML=`
-    <div class="mm-dash-kpis" style="grid-template-columns:1fr 1fr">
-      <div class="mm-dash-kpi"><div class="mm-dash-kpi-lbl">Jami bo'lim</div><div class="mm-dash-kpi-val">${bolimlar.length}</div></div>
-      <div class="mm-dash-kpi"><div class="mm-dash-kpi-lbl" style="color:var(--lime)">Jami xodim</div><div class="mm-dash-kpi-val" style="color:var(--lime)">${jamiXodim}</div></div>
-    </div>
-    <div class="mm-dash-section">
-      <div class="mm-dash-title">🏢 Bo'limlar ish vaqti</div>
-      ${bolimRows}
-    </div>
-    <div class="mm-dash-section">
-      <div class="mm-dash-title">⏳ Bo'sh vaqtlar (hodim yo'q)</div>
-      ${gapHtml}
-    </div>
-  `;
-}
-function openIshGrafigiBolim(id){ curIshGrafigiBolim=id; goTo('p-ish-grafigi-bolim'); }
-function renderIshGrafigiBolim(){
-  var bolimId=curIshGrafigiBolim;
-  var bolimNode=orgData.find(n=>n.id===bolimId);
-  if(!bolimNode)return;
-  document.getElementById('ish-grafigi-bolim-title').textContent=bolimNode.name;
-  var sched=workDb.bolimlar[bolimId];
-  document.getElementById('ish-grafigi-bolim-standart').innerHTML=`<div class="bz-buxgalter-box">
-    <div class="flbl" style="margin-bottom:6px">Bo'lim standart jadvali</div>
-    <div style="font-size:14px;font-weight:700;color:var(--white)">${esc(workFormatSchedule(sched))}</div>
-    ${isAdmin?`<button class="abtn" style="margin-top:8px" onclick="showWorkScheduleModal('bolim','${bolimId}','${esc(bolimNode.name).replace(/'/g,"\\'")}')">✏ Tahrirlash</button>`:''}
-  </div>`;
-  var xodimlar=workGetEmployeesUnder(bolimId);
-  var h=xodimlar.map(function(x){
-    var custom=workDb.xodimlar[x.id];
-    var effective=custom||sched;
-    return `<div class="bz-contact-card">
-      <div style="min-width:0">
-        <div class="bz-contact-name">${esc(x.fio)}</div>
-        <div class="bz-contact-tel" style="color:${custom?'var(--lime)':'var(--white-50)'}">${esc(workFormatSchedule(effective))}${custom?' (alohida)':' (standart)'}</div>
-      </div>
-      ${isAdmin?`<div class="action-btns">
-        <button class="abtn" onclick="showWorkScheduleModal('xodim','${x.id}','${esc(x.fio).replace(/'/g,"\\'")}')">✏</button>
-        ${custom?`<button class="abtn abtn-red" onclick="workResetXodim('${x.id}')">↩</button>`:''}
-      </div>`:''}
-    </div>`;
-  }).join('');
-  if(!xodimlar.length)h='<div style="text-align:center;padding:24px;color:var(--white-50);font-size:13px">Bu bo\'limda xodim yo\'q</div>';
-  document.getElementById('ish-grafigi-xodimlar-list').innerHTML=h;
-  renderIshGrafigiHeadcount(bolimId);
-}
-function workComputeHourlyHeadcount(bolimId){
-  var sched=workDb.bolimlar[bolimId];
-  var xodimlar=workGetEmployeesUnder(bolimId);
-  var hours=[]; for(var h=8;h<=21;h++) hours.push(h);
-  var result={};
-  WORK_DAYS.forEach(function(d){
-    result[d.key]=hours.map(function(){ return 0; });
-  });
-  xodimlar.forEach(function(x){
-    var effective=workDb.xodimlar[x.id]||sched;
-    if(!effective)return;
-    WORK_DAYS.forEach(function(d){
-      var s=effective[d.key];
-      if(!s||!s.on||!s.from||!s.to)return;
-      var fromH=parseInt(s.from.split(':')[0],10);
-      var toH=parseInt(s.to.split(':')[0],10);
-      hours.forEach(function(h,idx){
-        if(h>=fromH&&h<toH) result[d.key][idx]++;
-      });
-    });
-  });
-  return {hours:hours, byDay:result};
-}
-function workBuildHeadcountHtml(bolimId){
-  var data=workComputeHourlyHeadcount(bolimId);
-  var maxCount=1;
-  WORK_DAYS.forEach(function(d){ data.byDay[d.key].forEach(function(c){ if(c>maxCount)maxCount=c; }); });
-  var headerCells=data.hours.map(function(h){ return `<div style="width:30px;text-align:center;font-size:10px;color:var(--white-50);flex-shrink:0">${h}</div>`; }).join('');
-  var rows=WORK_DAYS.map(function(d){
-    var cells=data.byDay[d.key].map(function(c){
-      var bg=c===0?'var(--white-06)':('rgba(27,175,122,'+Math.min(1,0.15+0.7*c/maxCount)+')');
-      return `<div style="width:30px;height:26px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${c===0?'var(--white-30)':'var(--white)'};background:${bg};border-radius:5px;margin:1px">${c}</div>`;
-    }).join('');
-    return `<div style="display:flex;align-items:center;gap:0;margin-bottom:2px">
-      <div style="width:60px;flex-shrink:0;font-size:11px;color:var(--white-70)">${d.label.slice(0,3)}</div>
-      <div style="display:flex">${cells}</div>
-    </div>`;
-  }).join('');
-  return `<div style="min-width:max-content">
-    <div style="display:flex;align-items:center;margin-bottom:4px">
-      <div style="width:60px;flex-shrink:0"></div>
-      <div style="display:flex">${headerCells}</div>
-    </div>
-    ${rows}
-  </div>`;
-}
-function renderIshGrafigiHeadcount(bolimId){
-  var el=document.getElementById('ish-grafigi-headcount');
-  if(!el)return;
-  var gaps=workFindGaps(bolimId);
-  el.innerHTML=gaps.length?gaps.map(function(g){
-    return `<div class="mm-pending-item">
-      <div style="font-size:13px;color:var(--white)">${esc(g.day)}</div>
-      <span class="mm-pending-days" style="background:rgba(227,73,72,0.15);color:#e34948">${g.from}:00–${g.to}:00 bo'sh</span>
-    </div>`;
-  }).join(''):'<div style="text-align:center;padding:16px;color:var(--white-50);font-size:13px">Bo\'sh vaqt topilmadi 🎉</div>';
-}
-function workResetXodim(xodimId){
-  askConfirm("Bu xodim uchun alohida jadvalni o'chirib, bo'lim standartiga qaytarilsinmi?",function(){
-    delete workDb.xodimlar[xodimId];
-    workSave(); renderIshGrafigiBolim(); notify("Standartga qaytarildi ✓");
-  });
-}
-function showWorkScheduleModal(target,id,name){
-  var current=(target==='bolim'?workDb.bolimlar[id]:workDb.xodimlar[id])||{};
-  var rowsHtml=WORK_DAYS.map(function(d){
-    var s=current[d.key]||{on:false,from:'09:00',to:'18:00'};
-    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--white-10)">
-      <label style="display:flex;align-items:center;gap:6px;width:110px;flex-shrink:0;cursor:pointer">
-        <input type="checkbox" id="wd-${d.key}-on" ${s.on?'checked':''} onchange="workDayToggle('${d.key}')" style="width:16px;height:16px">
-        <span style="font-size:13px;color:var(--white-80)">${d.label}</span>
-      </label>
-      <input type="time" id="wd-${d.key}-from" value="${s.from||'09:00'}" style="flex:1;background:var(--white-06);border:1px solid var(--white-10);border-radius:8px;color:var(--white);padding:6px;font-size:13px" ${s.on?'':'disabled'}>
-      <span style="color:var(--white-50)">—</span>
-      <input type="time" id="wd-${d.key}-to" value="${s.to||'18:00'}" style="flex:1;background:var(--white-06);border:1px solid var(--white-10);border-radius:8px;color:var(--white);padding:6px;font-size:13px" ${s.on?'':'disabled'}>
-    </div>`;
-  }).join('');
-  var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:4px">${esc(name)}</div>
-    <div style="font-size:12px;color:var(--white-50);margin-bottom:14px">Ish kunlari va soatlarini belgilang</div>
-    ${rowsHtml}
-    <div class="fbtns" style="margin-top:14px">
-      <button class="fsave" onclick="saveWorkSchedule('${target}','${id}')">Saqlash</button>
-      <button class="fcancel" onclick="orgCloseModal()">Bekor</button>
-    </div>`;
-  orgShowModal(html);
-}
-function workDayToggle(dayKey){
-  var chk=document.getElementById('wd-'+dayKey+'-on');
-  var fromEl=document.getElementById('wd-'+dayKey+'-from');
-  var toEl=document.getElementById('wd-'+dayKey+'-to');
-  if(fromEl)fromEl.disabled=!chk.checked;
-  if(toEl)toEl.disabled=!chk.checked;
-}
-function saveWorkSchedule(target,id){
-  var sched={};
-  WORK_DAYS.forEach(function(d){
-    var on=document.getElementById('wd-'+d.key+'-on').checked;
-    var from=document.getElementById('wd-'+d.key+'-from').value;
-    var to=document.getElementById('wd-'+d.key+'-to').value;
-    sched[d.key]={on:on,from:from,to:to};
-  });
-  if(target==='bolim') workDb.bolimlar[id]=sched;
-  else workDb.xodimlar[id]=sched;
-  workSave(); orgCloseModal(); notify('Saqlandi ✓');
-  if(target==='bolim') renderIshGrafigiBolim();
-  else renderIshGrafigiBolim();
-}
 function copyToClipboard(text){
   function fallback(){
     try{
@@ -5249,7 +4831,6 @@ function sirlyStart(role){
   kaitenLoad().catch(function(){}).then(function(){ if(document.getElementById('p-kaiten').classList.contains('active')) renderKaiten(); kaitenSetupRealtime(); });
   muammoliLoad().catch(function(){}).then(function(){ muammoliSetupRealtime(); });
   baza415Load().catch(function(){}).then(function(){ baza415SetupRealtime(); });
-  workLoad().catch(function(){});
   bolimTitlesLoad().catch(function(){}).then(function(){ if(document.getElementById('p-entry2').classList.contains('active')) renderBolimCards(); });
 }
 </script>
