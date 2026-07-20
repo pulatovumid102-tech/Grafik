@@ -3329,7 +3329,7 @@ function renderPartnershipCalls(){
         <div class="section-num">${String(i+1).padStart(2,'0')}</div>
         <div style="min-width:0">
           <div class="section-name">${esc(r.nom)}</div>
-          ${vaqt?`<div style="font-size:11px;color:var(--white-50);margin-top:2px">🍽 ${esc(vaqt)}</div>`:''}
+          ${vaqt?`<div style="font-size:15px;font-weight:700;color:var(--lime);margin-top:3px">🍽 ${esc(vaqt)}</div>`:''}
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
@@ -3343,20 +3343,55 @@ function renderPartnershipCalls(){
       ${muammoliContactsRowsHtml(contacts)}
       ${calledToday?`<div class="mm-meta" style="color:#1e7a4a">Bugun qildi: ${esc(q.lastCalledBy||'—')} · ${muammoliFormatDateTime(q.lastCalledAt)}</div>`:''}
       <div style="margin-top:6px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span class="mm-seclbl" style="margin-bottom:0">Izoh</span>
-          <button class="sek-abtn" onclick="partnershipEditIzoh('${r.id}')" style="padding:3px 10px;font-size:11px">✏ Tahrirlash</button>
-        </div>
+        <span class="mm-seclbl">Izoh</span>
         <div style="font-size:13px;color:#2e2c28;margin-top:4px">${q.izoh?esc(q.izoh):'<span style="color:#9a9588">Izoh yo\'q</span>'}</div>
       </div>
-      <div class="mm-btns" style="margin-top:8px">
+      <div class="mm-btns" style="margin-top:8px;flex-wrap:wrap">
         ${calledToday?`<button class="sek-abtn" onclick="partnershipUnmarkCalled('${r.id}')">↩ Bekor qilish</button>`:`<button class="sek-abtn" onclick="partnershipMarkCalled('${r.id}')">☎ Tel qildim</button>`}
+        <button class="sek-abtn" onclick="partnershipEditIzoh('${r.id}')">✏ Izohni tahrirlash</button>
+        <button class="sek-abtn" onclick="partnershipEditContactsModal('${r.id}')">📞 Raqamlarni tahrirlash</button>
       </div>
     </div>`;
     return compactRow+detail;
   }).join('');
   if(!list.length)h=`<div style="text-align:center;padding:24px;color:var(--white-50);font-size:13px">${q2?'Topilmadi':"415 bazada restoran yo'q"}</div>`;
   document.getElementById('partnership-calls-list').innerHTML=h;
+}
+function partnershipEditContactsModal(restoranId){
+  var r=baza415Db.restoranlar.find(x=>x.id===restoranId);
+  if(!r)return;
+  var contacts=partnershipCallContacts(r.nom);
+  if(!contacts.length){
+    orgShowModal(`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:12px">${esc(r.nom)}</div>
+      <div style="color:var(--white-50);font-size:13px;margin-bottom:16px">Bu restoranda Menejer/Kassir/Call Center kontakti yo'q. Avval 415 baza bo'limida qo'shing.</div>
+      <button class="fcancel" style="width:100%" onclick="orgCloseModal()">Yopish</button>`);
+    return;
+  }
+  var rowsHtml=contacts.map(function(k){
+    return `<div class="frow"><label class="flbl">${esc(k.rol||'Kontakt')}${k.ism?' — '+esc(k.ism):''}</label>
+      <input class="fi" id="pc-tel-${k.id}" value="${esc(k.tel||'')}" placeholder="+998..."></div>`;
+  }).join('');
+  var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">${esc(r.nom)} — raqamlar</div>
+    ${rowsHtml}
+    <div class="fbtns" style="margin-top:8px">
+      <button class="fsave" onclick="partnershipSaveContacts('${restoranId}')">Saqlash</button>
+      <button class="fcancel" onclick="orgCloseModal()">Bekor</button>
+    </div>`;
+  orgShowModal(html);
+}
+async function partnershipSaveContacts(restoranId){
+  var r=baza415Db.restoranlar.find(x=>x.id===restoranId);
+  if(!r)return;
+  var contacts=partnershipCallContacts(r.nom);
+  contacts.forEach(function(k){
+    var inp=document.getElementById('pc-tel-'+k.id);
+    if(inp) k.tel=inp.value.trim();
+  });
+  var ok=await baza415Save();
+  orgCloseModal();
+  if(!ok){ notify("⚠️ Saqlashda xatolik! Qayta urinib ko'ring."); return; }
+  notify('Saqlandi ✓');
+  renderPartnershipCalls();
 }
 function partnershipMarkCalled(restoranId){
   var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">Qo'ng'iroq izohi (ixtiyoriy)</div>
