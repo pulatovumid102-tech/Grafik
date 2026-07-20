@@ -1283,20 +1283,10 @@ async function adminShowNewProfileForm(){
   document.getElementById('anp-save').addEventListener('click', adminCreateProfile);
 }
 function escAdmin(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function adminPermsHtml(perms, allBolimSections){
+function adminPermsHtml(perms){
   perms = perms || {};
-  allBolimSections = allBolimSections || [{title: bolimTitles[0], sections: db.sections||[]}];
-  var bolimlarChecked = perms.bolimlar!==false;
-  var secHtml = allBolimSections.map(function(bolim){
-    if(!bolim.sections||!bolim.sections.length) return '';
-    return '<div style="padding:4px 0 2px 8px;font-size:11px;font-weight:700;color:#16573a;margin-top:4px">'+escAdmin(bolim.title)+'</div>'
-      + bolim.sections.map(function(s){
-          var checked = !perms.sections || perms.sections.includes(s.id);
-          return '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;padding:3px 0 3px 18px;"><input type="checkbox" class="aperm-sec" value="'+escAdmin(s.id)+'" '+(checked?'checked':'')+'> '+escAdmin(s.title)+'</label>';
-        }).join('');
-  }).join('');
   function chk(key,label,checked){
-    return '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;padding:4px 0;font-weight:600;"><input type="checkbox" id="aperm-'+key+'" '+(checked?'checked':'')+(key==='bolimlar'?' onchange="document.getElementById(\'aperm-sections-wrap\').style.opacity=this.checked?1:.4;document.getElementById(\'aperm-sections-wrap\').style.pointerEvents=this.checked?\'\':\'none\'"':'')+'> '+label+'</label>';
+    return '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;padding:4px 0;font-weight:600;"><input type="checkbox" id="aperm-'+key+'" '+(checked?'checked':'')+'> '+label+'</label>';
   }
   return '<div style="border:1px solid #eee;border-radius:8px;padding:8px 10px;margin-bottom:10px;">'+
     '<div style="font-size:12px;color:#888;margin-bottom:4px;font-weight:700;">Ko&#39;rinadigan bo&#39;limlar</div>'+
@@ -1306,34 +1296,19 @@ function adminPermsHtml(perms, allBolimSections){
     chk('dashboard','Dashboard', perms.dashboard!==false)+
     chk('muammoli','Muammoli mijozlar', perms.muammoli!==false)+
     chk('baza415','415 baza', perms.baza415!==false)+
-    chk('bolimlar','Bo&#39;limlar', bolimlarChecked)+
-    '<div id="aperm-sections-wrap" style="'+(bolimlarChecked?'':'opacity:.4;pointer-events:none')+'">'+secHtml+'</div>'+
   '</div>';
 }
 async function adminPermsHtmlAsync(perms){
-  // Load all 3 bolim sections from Supabase in parallel
-  var allBolimSections = [];
-  await Promise.all(BOLIM_IDS.map(async function(key, i){
-    try{
-      var r = await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.'+key, {headers:SB_H});
-      var rows = await r.json();
-      var sections = (rows&&rows.length&&rows[0].data&&rows[0].data.sections) ? rows[0].data.sections : [];
-      allBolimSections[i] = {title: bolimTitles[i]||('Bo\'lim '+(i+1)), sections: sections};
-    }catch(e){ allBolimSections[i] = {title: bolimTitles[i]||('Bo\'lim '+(i+1)), sections:[]}; }
-  }));
-  return adminPermsHtml(perms, allBolimSections);
+  return adminPermsHtml(perms);
 }
 function adminReadPerms(){
-  var sections = [].slice.call(document.querySelectorAll('.aperm-sec:checked')).map(function(el){return el.value;});
   return {
     org: document.getElementById('aperm-org').checked,
     kaiten: document.getElementById('aperm-kaiten').checked,
     hujjatlar: document.getElementById('aperm-hujjatlar').checked,
     dashboard: document.getElementById('aperm-dashboard').checked,
     muammoli: document.getElementById('aperm-muammoli').checked,
-    baza415: document.getElementById('aperm-baza415').checked,
-    bolimlar: document.getElementById('aperm-bolimlar').checked,
-    sections: sections
+    baza415: document.getElementById('aperm-baza415').checked
   };
 }
 async function adminCreateProfile(){
