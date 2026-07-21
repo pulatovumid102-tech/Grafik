@@ -771,6 +771,18 @@ async def poll_job(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 # ============================================================
+# /test_dedlayn BUYRUG'I — 23:00 ni kutmasdan, xabarni darhol
+# yuborib ko'rish uchun (test maqsadida)
+# ============================================================
+async def test_deadline_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("⏳ Tekshirilmoqda, biroz kuting...")
+    await daily_deadline_reminder(context)
+    await update.message.reply_text(
+        "✅ Tayyor! Sirly xodimlar guruhini tekshiring — xabar o'sha yerga yuborildi."
+    )
+
+
+# ============================================================
 # /start BUYRUG'I — mini-appni ochish tugmasi
 # ============================================================
 async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -808,6 +820,7 @@ def main() -> None:
         .build()
     )
     app.add_handler(CommandHandler("start", start_cmd))
+    app.add_handler(CommandHandler("test_dedlayn", test_deadline_cmd))
     app.add_handler(MessageHandler(filters.PHOTO, handle_support_photo))
     app.job_queue.run_repeating(poll_job, interval=POLL_SECONDS, first=5)
 
