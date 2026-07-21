@@ -3950,7 +3950,7 @@ function kaitenSaveAlarm(id){
     setterName+' '+t.dept+'dagi, '+assigneeForAlarm+' uchun yaratilgan',
     '"'+t.text+'" vazifasiga '+kaitenFormatDeadline(iso)+' ga budilnik qo\'ydi'+(sabab?(': '+sabab):'')+'.'
   ];
-  fetch(SB_URL+'/rest/v1/bot_group_messages',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'kalarmset'+Date.now()+'_'+Math.random().toString(36).slice(2,7), text:confirmLines.join(String.fromCharCode(10)), status:'pending'})}).catch(function(e){ console.error('alarm confirm send error', e); });
+  fetch(SB_URL+'/rest/v1/bot_group_messages',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'kalarmset'+Date.now()+'_'+Math.random().toString(36).slice(2,7), text:confirmLines.join(String.fromCharCode(10)), status:'pending', chat_id:SIRLY_STAFF_GROUP_ID})}).catch(function(e){ console.error('alarm confirm send error', e); });
   // 2) Kechiktirilgan eslatma (belgilangan vaqtda)
   var lines = [
     'Eslatma: '+t.dept+'dagi, '+assigneeForAlarm+' uchun yaratilgan',
@@ -3961,7 +3961,7 @@ function kaitenSaveAlarm(id){
   fetch(SB_URL+'/rest/v1/bot_group_messages?on_conflict=id',{
     method:'POST',
     headers:{...SB_H,'Prefer':'resolution=merge-duplicates,return=minimal'},
-    body:JSON.stringify({id:'kalarm_'+t.id, text:msgText, send_at:remindAtUTC, status:'pending'})
+    body:JSON.stringify({id:'kalarm_'+t.id, text:msgText, send_at:remindAtUTC, status:'pending', chat_id:SIRLY_STAFF_GROUP_ID})
   }).then(function(r){ if(!r.ok) r.text().then(function(t2){ console.error('alarm save failed', r.status, t2); }); }).catch(function(e){ console.error('alarm fetch error', e); });
 }
 function kaitenConfirmRemoveAlarm(id){
@@ -4449,6 +4449,7 @@ function kaitenCreatorName(t){
   }
   return kaitenFallbackName();
 }
+var SIRLY_STAFF_GROUP_ID=-5076135815;
 function kaitenNotifyGroup(t){
   try{
     var creator = kaitenCreatorName(t);
@@ -4467,7 +4468,7 @@ function kaitenNotifyGroup(t){
     ];
     if(t.deadline) lines.push('⏰ '+kaitenFormatDeadline(t.deadline));
     lines.push(divider);
-    fetch(SB_URL+'/rest/v1/bot_group_messages',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'gm'+Date.now()+'_'+Math.random().toString(36).slice(2,7), text:lines.join(String.fromCharCode(10)), status:'pending'})}).catch(function(){});
+    sendGroupMessage(lines.join(String.fromCharCode(10)), SIRLY_STAFF_GROUP_ID);
   }catch(e){}
 }
 function kaitenFormatDateOnly(dl){
@@ -4594,7 +4595,7 @@ function kaitenNotifyMove(t, oldTitle, colTitle){
       '🙋 '+assignee+' 🏢 '+t.dept+'dagi 📌 "'+t.text+'" vazifasini',
       '↪ '+oldTitle+' ustunidan '+colTitle+' ustuniga ko\'chirdi.'
     ];
-    fetch(SB_URL+'/rest/v1/bot_group_messages',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'gm'+Date.now()+'_'+Math.random().toString(36).slice(2,7),text:lines.join(String.fromCharCode(10)),status:'pending'})}).catch(function(){});
+    fetch(SB_URL+'/rest/v1/bot_group_messages',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'gm'+Date.now()+'_'+Math.random().toString(36).slice(2,7),text:lines.join(String.fromCharCode(10)),status:'pending',chat_id:SIRLY_STAFF_GROUP_ID})}).catch(function(){});
   }catch(e){}
 }
 function kaitenFormatDeadline(dl){
