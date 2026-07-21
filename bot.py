@@ -735,7 +735,7 @@ async def daily_deadline_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
                 lines.append(f"🏢 {dept}")
                 for t in dept_tasks:
                     emp_fio = t.get("empFio") or "—"
-                    emp_tg = (t.get("empTg") or "").strip().lstrip("@") or fio_tg_map.get(norm_fio(emp_fio), "")
+                    emp_tg = fio_tg_map.get(norm_fio(emp_fio), "") or (t.get("empTg") or "").strip().lstrip("@")
                     ijrochi_line = emp_fio + (f" @{emp_tg}" if emp_tg else "")
 
                     naz_fio = t.get("nazFio")
@@ -804,7 +804,7 @@ async def check_deadline_2h_before(context: ContextTypes.DEFAULT_TYPE) -> None:
             divider = "━━━━━━━━━━━━━"
             for t in due:
                 emp_fio = t.get("empFio") or "—"
-                emp_tg = (t.get("empTg") or "").strip().lstrip("@") or fio_tg_map.get(norm_fio(emp_fio), "")
+                emp_tg = fio_tg_map.get(norm_fio(emp_fio), "") or (t.get("empTg") or "").strip().lstrip("@")
                 ijrochi_line = emp_fio + (f" @{emp_tg}" if emp_tg else "")
 
                 naz_fio = t.get("nazFio")
