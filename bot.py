@@ -760,6 +760,81 @@ async def daily_deadline_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
         log.error("Kaiten dedlayn eslatmasi xatosi: %s", e)
 
 
+async def check_deadline_2h_before(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Vazifa dedlayniga 2 soat qolganda, Sirly Staff guruhiga bir martalik
+    eslatma yuboradi (ijrochi va nazoratchi taglanadi)."""
+    app = context.application
+    try:
+        kaiten_rows = await sb_get("biznes_data", params={"id": "eq.kaiten"})
+        if not kaiten_rows:
+            return
+        kaiten_data = kaiten_rows[0]["data"]
+        if not isinstance(kaiten_data, dict):
+            return
+        tasks = kaiten_data.get("tasks", [])
+
+        now = datetime.now(TASHKENT_TZ)
+        due = []
+        changed = False
+        for t in tasks:
+            if t.get("archived") or t.get("status") not in ("todo", "progress"):
+                continue
+            if t.get("deadline2hNotified"):
+                continue
+            deadline = t.get("deadline")
+            if not deadline:
+                continue
+            try:
+                dl = datetime.fromisoformat(deadline)
+                if dl.tzinfo is None:
+                    dl = dl.replace(tzinfo=TASHKENT_TZ)
+            except Exception:
+                continue
+            diff_minutes = (dl - now).total_seconds() / 60
+            if 119 <= diff_minutes <= 121:
+                due.append(t)
+                t["deadline2hNotified"] = True
+                changed = True
+
+        if due:
+            org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
+            org_nodes = org_rows[0]["data"] if org_rows else []
+            fio_tg_map = build_fio_tg_map(org_nodes)
+
+            divider = "━━━━━━━━━━━━━"
+            for t in due:
+                emp_fio = t.get("empFio") or "—"
+                emp_tg = (t.get("empTg") or "").strip().lstrip("@") or fio_tg_map.get(norm_fio(emp_fio), "")
+                ijrochi_line = emp_fio + (f" @{emp_tg}" if emp_tg else "")
+
+                naz_fio = t.get("nazFio")
+                if naz_fio:
+                    naz_tg = fio_tg_map.get(norm_fio(naz_fio), "")
+                    nazoratchi_line = naz_fio + (f" @{naz_tg}" if naz_tg else "")
+                else:
+                    nazoratchi_line = "— (belgilanmagan)"
+
+                lines = [
+                    divider,
+                    "⏳ DEDLAYNGACHA 2 SOAT QOLDI",
+                    divider,
+                    "",
+                    f'📌 "{t.get("text","")}"',
+                    f"🏢 {t.get('dept','—')}",
+                    f"🙋 Ijrochi: {ijrochi_line}",
+                    f"👁 Nazoratchi: {nazoratchi_line}",
+                    f"⏰ Muddat: {_kaiten_fmt_deadline(t.get('deadline',''))}",
+                    divider,
+                ]
+                await app.bot.send_message(chat_id=SIRLY_STAFF_GROUP_ID, text="\n".join(lines))
+            log.info("2 soatlik dedlayn eslatmasi yuborildi: %d ta vazifa", len(due))
+
+        if changed:
+            await sb_patch("biznes_data", "kaiten", {"data": kaiten_data})
+    except Exception as e:
+        log.error("2 soatlik dedlayn eslatmasi xatosi: %s", e)
+
+
 # ============================================================
 # DAVRIY TEKSHIRUV (JobQueue)
 # ============================================================
@@ -846,6 +921,9 @@ def main() -> None:
 
     # Kaiten — ertangi dedlaynlar haqida kunlik eslatma, har kuni 23:00 (Toshkent vaqti)
     app.job_queue.run_daily(daily_deadline_reminder, time=dt_time(hour=23, minute=0, tzinfo=TASHKENT_TZ))
+
+    # Kaiten — dedlaynga 2 soat qolganda eslatma, har daqiqada tekshiriladi
+    app.job_queue.run_repeating(check_deadline_2h_before, interval=60, first=50)
 
     log.info("Bot polling boshlandi...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
