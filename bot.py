@@ -676,6 +676,41 @@ async def check_calling_status_before_serving(context: ContextTypes.DEFAULT_TYPE
         log.error("Qo'ng'iroq holati xatosi: %s", e)
 
 
+async def daily_calling_report(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Har kuni 23:00 (Toshkent) da, 415 baza'dagi barcha restoranlar
+    orasida bugun kim tel qilingan, kim qilinmaganini Partnership
+    guruhiga umumiy hisobot sifatida yuboradi."""
+    app = context.application
+    try:
+        rows = await sb_get("biznes_data", params={"id": "eq.baza415"})
+        if not rows:
+            return
+        baza_data = rows[0]["data"]
+        if not isinstance(baza_data, dict):
+            return
+        restoranlar = baza_data.get("restoranlar", [])
+        today = datetime.now(TASHKENT_TZ)
+        today_str = today.strftime("%Y-%m-%d")
+        today_display = today.strftime("%d.%m.%Y")
+
+        called = [r for r in restoranlar if (r.get("qongiroq") or {}).get("lastCalledDate") == today_str]
+        not_called = [r for r in restoranlar if (r.get("qongiroq") or {}).get("lastCalledDate") != today_str]
+
+        lines = [f"📊 KUNLIK QO'NG'IROQLAR HISOBOTI — {today_display}", ""]
+        lines.append(f"✅ Tel qilingan: {len(called)} ta")
+        for r in called:
+            lines.append(f"🏪 {r.get('nom','—')}")
+        lines.append("")
+        lines.append(f"❌ Tel qilinmagan: {len(not_called)} ta")
+        for r in not_called:
+            lines.append(f"🏪 {r.get('nom','—')}")
+
+        await app.bot.send_message(chat_id=PARTNERSHIP_GROUP_ID, text="\n".join(lines))
+        log.info("Kunlik qo'ng'iroqlar hisoboti yuborildi: %d/%d", len(called), len(restoranlar))
+    except Exception as e:
+        log.error("Kunlik qo'ng'iroqlar hisoboti xatosi: %s", e)
+
+
 # ============================================================
 # KAITEN — ERTANGI DEDLAYNLAR HAQIDA KUNLIK ESLATMA (23:00)
 # ============================================================
@@ -921,6 +956,9 @@ def main() -> None:
 
     # Kaiten — ertangi dedlaynlar haqida kunlik eslatma, har kuni 23:00 (Toshkent vaqti)
     app.job_queue.run_daily(daily_deadline_reminder, time=dt_time(hour=23, minute=0, tzinfo=TASHKENT_TZ))
+
+    # Partnership — kunlik qo'ng'iroqlar hisoboti, har kuni 23:00 (Toshkent vaqti)
+    app.job_queue.run_daily(daily_calling_report, time=dt_time(hour=23, minute=0, tzinfo=TASHKENT_TZ))
 
     # Kaiten — dedlaynga 2 soat qolganda eslatma, har daqiqada tekshiriladi
     app.job_queue.run_repeating(check_deadline_2h_before, interval=60, first=50)
