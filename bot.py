@@ -19,7 +19,7 @@ Ishga tushirish:
 
 import os
 import logging
-from datetime import datetime, timezone, time as dt_time
+from datetime import datetime, timezone, time as dt_time, timedelta
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -38,11 +38,20 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV
 GROUP_CHAT_ID = int(os.environ.get("GROUP_CHAT_ID", "-1003823489442"))
 SUPPORT_GROUP_ID = -1003823489442
 PARTNERSHIP_GROUP_ID = -5467968653
+SIRLY_STAFF_GROUP_ID = -5076135815
 MINIAPP_URL = os.environ.get("MINIAPP_URL", "https://pulatovumid102-tech.github.io/Grafik/")
 POLL_SECONDS = int(os.environ.get("POLL_SECONDS", "15"))
 BATCH_LIMIT = int(os.environ.get("BATCH_LIMIT", "20"))
 MUAMMOLI_MUDDAT_SOAT = 24
 TASHKENT_TZ = ZoneInfo("Asia/Tashkent")
+KAITEN_DEPTS = [
+    "Sotuv bo'limi",
+    "Partnership bo'limi",
+    "Support bo'limi",
+    "IT bo'limi",
+    "Buxgalteriya bo'limi",
+    "Yuridik bo'limi",
+]
 
 logging.basicConfig(
     level=logging.INFO,
@@ -375,6 +384,29 @@ def collect_all_usernames(org_nodes: list) -> list:
     return list(dict.fromkeys(usernames))
 
 
+def norm_fio(s: str) -> str:
+    """Ism-familiyani solishtirish uchun soddalashtiradi (apostrof/probel farqlarini olib tashlaydi)."""
+    s = str(s or "").lower()
+    for ch in ("'", "’", "ʻ", "`"):
+        s = s.replace(ch, "")
+    return " ".join(s.split())
+
+
+def build_fio_tg_map(org_nodes: list) -> dict:
+    """FIO (normallashtirilgan) -> Telegram username xaritasini quradi."""
+    mapping = {}
+    if not isinstance(org_nodes, list):
+        return mapping
+    for n in org_nodes:
+        fio = (n.get("fio") or "").strip()
+        if not fio:
+            continue
+        tgs = parse_tg_field(n)
+        if tgs:
+            mapping[norm_fio(fio)] = tgs[0]
+    return mapping
+
+
 async def daily_muammoli_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
     app = context.application
     try:
@@ -645,6 +677,90 @@ async def check_calling_status_before_serving(context: ContextTypes.DEFAULT_TYPE
 
 
 # ============================================================
+# KAITEN — ERTANGI DEDLAYNLAR HAQIDA KUNLIK ESLATMA (23:00)
+# ============================================================
+def _kaiten_fmt_deadline(iso: str) -> str:
+    try:
+        dt = datetime.fromisoformat(iso.replace("Z", "+00:00")) if "T" in iso else datetime.fromisoformat(iso)
+    except Exception:
+        return iso
+    return dt.strftime("%d.%m.%Y %H:%M")
+
+
+async def daily_deadline_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Har kuni 23:00 (Toshkent) da ertangi kunga muddati tugaydigan
+    Kaiten vazifalarini bo'limlar bo'yicha guruhlab, Sirly xodimlar
+    guruhiga yuboradi. Ijrochi va nazoratchi @username orqali taglanadi."""
+    app = context.application
+    try:
+        kaiten_rows = await sb_get("biznes_data", params={"id": "eq.kaiten"})
+        kaiten_data = kaiten_rows[0]["data"] if kaiten_rows else {}
+        tasks = kaiten_data.get("tasks", []) if isinstance(kaiten_data, dict) else []
+
+        org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
+        org_nodes = org_rows[0]["data"] if org_rows else []
+        fio_tg_map = build_fio_tg_map(org_nodes)
+
+        tomorrow = datetime.now(TASHKENT_TZ) + timedelta(days=1)
+        tomorrow_str = tomorrow.strftime("%Y-%m-%d")
+        tomorrow_display = tomorrow.strftime("%d.%m.%Y")
+
+        filtered = [
+            t for t in tasks
+            if not t.get("archived")
+            and t.get("status") in ("todo", "progress")
+            and t.get("deadline")
+            and str(t["deadline"]).split("T")[0] == tomorrow_str
+        ]
+
+        divider = "━━━━━━━━━━━━━"
+        lines = [divider, f"⏰ ERTANGI DEDLAYNLAR — {tomorrow_display}", divider]
+
+        if not filtered:
+            lines.append("")
+            lines.append(f"✅ Ertaga ({tomorrow_display}) muddati tugaydigan vazifalar yo'q.")
+        else:
+            by_dept = {}
+            for t in filtered:
+                dept = t.get("dept") or "Boshqa"
+                by_dept.setdefault(dept, []).append(t)
+
+            dept_order = list(KAITEN_DEPTS) + [d for d in by_dept if d not in KAITEN_DEPTS]
+
+            for dept in dept_order:
+                dept_tasks = by_dept.get(dept)
+                if not dept_tasks:
+                    continue
+                lines.append("")
+                lines.append(f"🏢 {dept}")
+                for t in dept_tasks:
+                    emp_fio = t.get("empFio") or "—"
+                    emp_tg = (t.get("empTg") or "").strip().lstrip("@") or fio_tg_map.get(norm_fio(emp_fio), "")
+                    ijrochi_line = emp_fio + (f" @{emp_tg}" if emp_tg else "")
+
+                    naz_fio = t.get("nazFio")
+                    if naz_fio:
+                        naz_tg = fio_tg_map.get(norm_fio(naz_fio), "")
+                        nazoratchi_line = naz_fio + (f" @{naz_tg}" if naz_tg else "")
+                    else:
+                        nazoratchi_line = "— (belgilanmagan)"
+
+                    lines.append("")
+                    lines.append(f'📌 "{t.get("text","")}"')
+                    lines.append(f"🙋 Ijrochi: {ijrochi_line}")
+                    lines.append(f"👁 Nazoratchi: {nazoratchi_line}")
+                    lines.append(f"⏰ Muddat: {_kaiten_fmt_deadline(t.get('deadline',''))}")
+                lines.append(divider)
+
+            lines.append(f"Jami: {len(filtered)} ta vazifa muddati ertaga ({tomorrow_display}) tugaydi.")
+
+        await app.bot.send_message(chat_id=SIRLY_STAFF_GROUP_ID, text="\n".join(lines))
+        log.info("Ertangi dedlaynlar eslatmasi yuborildi: %d ta vazifa", len(filtered))
+    except Exception as e:
+        log.error("Kaiten dedlayn eslatmasi xatosi: %s", e)
+
+
+# ============================================================
 # DAVRIY TEKSHIRUV (JobQueue)
 # ============================================================
 async def poll_job(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -714,6 +830,9 @@ def main() -> None:
     # 415 baza — ovqat berish vaqtiga 1 soat qolganda Partnership guruhiga eslatma
     app.job_queue.run_repeating(check_serving_time_reminders, interval=60, first=30)
     app.job_queue.run_repeating(check_calling_status_before_serving, interval=60, first=45)
+
+    # Kaiten — ertangi dedlaynlar haqida kunlik eslatma, har kuni 23:00 (Toshkent vaqti)
+    app.job_queue.run_daily(daily_deadline_reminder, time=dt_time(hour=23, minute=0, tzinfo=TASHKENT_TZ))
 
     log.info("Bot polling boshlandi...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
