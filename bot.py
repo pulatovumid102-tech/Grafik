@@ -701,7 +701,7 @@ async def daily_calling_report(context: ContextTypes.DEFAULT_TYPE) -> None:
         baza_data = rows[0]["data"]
         if not isinstance(baza_data, dict):
             return
-        restoranlar = baza_data.get("restoranlar", [])
+        restoranlar = [r for r in baza_data.get("restoranlar", []) if r.get("berishVaqtiDan")]
         today = datetime.now(TASHKENT_TZ)
         today_str = today.strftime("%Y-%m-%d")
         today_display = today.strftime("%d.%m.%Y")
