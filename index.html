@@ -4841,6 +4841,11 @@ function renderKaiten(){
     var titleEl=document.getElementById('kaiten-title-'+col.id);
     if(titleEl) titleEl.textContent = col.title+' — '+cols[col.id].length+' ta';
     if(!el) return;
+    cols[col.id].sort(function(a,b){
+      var da = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+      var db = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+      return da - db;
+    });
     if(!cols[col.id].length){ el.innerHTML='<div style="text-align:center;padding:16px;color:var(--white-50);font-size:12px">Vazifalar yo&#39;q</div>'; }
     else el.innerHTML = cols[col.id].map(kaitenCard).join('');
   });
