@@ -452,6 +452,14 @@ async def check_overdue_muammoli(context: ContextTypes.DEFAULT_TYPE) -> None:
             return
         items = muammoli_data.get("items", [])
         changed = False
+
+        org_nodes = []
+        try:
+            org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
+            org_nodes = org_rows[0]["data"] if org_rows else []
+        except Exception as e:
+            log.error("Org struktura tekshirish xatosi (overdue): %s", e)
+
         for it in items:
             if it.get("archived") or it.get("holati") == "hal_qilindi":
                 continue
@@ -473,6 +481,11 @@ async def check_overdue_muammoli(context: ContextTypes.DEFAULT_TYPE) -> None:
                     f"📋 Turi: {it.get('turi', 'Boshqa')}\n"
                     "Iltimos, tezroq hal qiling!"
                 )
+                usernames = collect_support_usernames(org_nodes)
+                tags = " ".join(f"@{u}" for u in usernames)
+                text += "\n\n@umidpulatov"
+                if tags:
+                    text += " " + tags
                 await app.bot.send_message(chat_id=SUPPORT_GROUP_ID, text=text)
                 it["overdueNotified"] = True
                 changed = True
