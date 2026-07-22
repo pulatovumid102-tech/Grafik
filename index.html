@@ -4594,8 +4594,10 @@ function kaitenMove(id, dir){
 }
 function kaitenNotifyMove(t, oldTitle, colTitle){
   try{
+    var mover = kaitenCreatorNameNow();
     var assignee = t.empFio||'—';
     var lines=[
+      '👤 '+mover,
       '🙋 '+assignee+' 🏢 '+t.dept+'dagi 📌 "'+t.text+'" vazifasini',
       '↪ '+oldTitle+' ustunidan '+colTitle+' ustuniga ko\'chirdi.'
     ];
