@@ -722,10 +722,10 @@ def _kaiten_fmt_deadline(iso: str) -> str:
     return dt.strftime("%d.%m.%Y %H:%M")
 
 
-async def daily_deadline_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Har kuni 23:00 (Toshkent) da ertangi kunga muddati tugaydigan
-    Kaiten vazifalarini bo'limlar bo'yicha guruhlab, Sirly xodimlar
-    guruhiga yuboradi. Ijrochi va nazoratchi @username orqali taglanadi."""
+async def _kaiten_deadline_digest(context: ContextTypes.DEFAULT_TYPE, days_ahead: int, title: str) -> None:
+    """Kaiten vazifalarini (bugun yoki ertaga muddati tugaydiganlarni)
+    bo'limlar bo'yicha guruhlab, Sirly xodimlar guruhiga yuboradi.
+    Ijrochi va nazoratchi @username orqali taglanadi."""
     app = context.application
     try:
         kaiten_rows = await sb_get("biznes_data", params={"id": "eq.kaiten"})
@@ -736,24 +736,24 @@ async def daily_deadline_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
         org_nodes = org_rows[0]["data"] if org_rows else []
         fio_tg_map = build_fio_tg_map(org_nodes)
 
-        tomorrow = datetime.now(TASHKENT_TZ) + timedelta(days=1)
-        tomorrow_str = tomorrow.strftime("%Y-%m-%d")
-        tomorrow_display = tomorrow.strftime("%d.%m.%Y")
+        target_day = datetime.now(TASHKENT_TZ) + timedelta(days=days_ahead)
+        target_str = target_day.strftime("%Y-%m-%d")
+        target_display = target_day.strftime("%d.%m.%Y")
 
         filtered = [
             t for t in tasks
             if not t.get("archived")
             and t.get("status") in ("todo", "progress")
             and t.get("deadline")
-            and str(t["deadline"]).split("T")[0] == tomorrow_str
+            and str(t["deadline"]).split("T")[0] == target_str
         ]
 
         divider = "━━━━━━━━━━━━━"
-        lines = [divider, f"⏰ ERTANGI DEDLAYNLAR — {tomorrow_display}", divider]
+        lines = [divider, f"{title} — {target_display}", divider]
 
         if not filtered:
             lines.append("")
-            lines.append(f"✅ Ertaga ({tomorrow_display}) muddati tugaydigan vazifalar yo'q.")
+            lines.append(f"✅ ({target_display}) muddati tugaydigan vazifalar yo'q.")
         else:
             by_dept = {}
             for t in filtered:
@@ -787,12 +787,22 @@ async def daily_deadline_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
                     lines.append(f"⏰ Muddat: {_kaiten_fmt_deadline(t.get('deadline',''))}")
                 lines.append(divider)
 
-            lines.append(f"Jami: {len(filtered)} ta vazifa muddati ertaga ({tomorrow_display}) tugaydi.")
+            lines.append(f"Jami: {len(filtered)} ta vazifa muddati ({target_display}) tugaydi.")
 
         await app.bot.send_message(chat_id=SIRLY_STAFF_GROUP_ID, text="\n".join(lines))
-        log.info("Ertangi dedlaynlar eslatmasi yuborildi: %d ta vazifa", len(filtered))
+        log.info("%s yuborildi: %d ta vazifa", title, len(filtered))
     except Exception as e:
-        log.error("Kaiten dedlayn eslatmasi xatosi: %s", e)
+        log.error("Kaiten dedlayn digest xatosi (%s): %s", title, e)
+
+
+async def daily_deadline_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Har kuni 23:00 (Toshkent) da ertangi kunga muddati tugaydigan vazifalar."""
+    await _kaiten_deadline_digest(context, days_ahead=1, title="⏰ ERTANGI DEDLAYNLAR")
+
+
+async def daily_today_tasks_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Har kuni 10:00 (Toshkent) da bugun tugaydigan vazifalar ro'yxati."""
+    await _kaiten_deadline_digest(context, days_ahead=0, title="📋 BUGUNGI ISHLAR RO'YXATI")
 
 
 async def check_deadline_2h_before(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -956,6 +966,9 @@ def main() -> None:
 
     # Kaiten — ertangi dedlaynlar haqida kunlik eslatma, har kuni 23:00 (Toshkent vaqti)
     app.job_queue.run_daily(daily_deadline_reminder, time=dt_time(hour=23, minute=0, tzinfo=TASHKENT_TZ))
+
+    # Kaiten — bugungi ishlar ro'yxati, har kuni 10:00 (Toshkent vaqti)
+    app.job_queue.run_daily(daily_today_tasks_reminder, time=dt_time(hour=10, minute=0, tzinfo=TASHKENT_TZ))
 
     # Partnership — kunlik qo'ng'iroqlar hisoboti, har kuni 23:00 (Toshkent vaqti)
     app.job_queue.run_daily(daily_calling_report, time=dt_time(hour=23, minute=0, tzinfo=TASHKENT_TZ))
