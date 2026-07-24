@@ -2077,6 +2077,14 @@ function muammoliParseTgField(n){
   if(n.tg) return [n.tg.replace(/^@/,'')];
   return [];
 }
+function kaitenTgForFio(fio){
+  if(!fio||typeof orgData==='undefined'||!orgData)return '';
+  var target=kaitenNorm(fio);
+  var node=orgData.find(function(n){ return n.fio && kaitenNorm(n.fio)===target; });
+  if(!node)return '';
+  var tgs=muammoliParseTgField(node);
+  return tgs.length?tgs[0]:'';
+}
 function muammoliGetOrgEmployeeUsernames(bolimNom){
   if(typeof orgData==='undefined'||!orgData||!orgData.length||!bolimNom)return [];
   var bolimNode=orgData.find(function(n){ return n.name===bolimNom && n.cardType==='bolim'; });
@@ -3385,22 +3393,40 @@ function partnershipMarkCalled(restoranId){
 async function partnershipSaveCalled(restoranId){
   var btn=document.getElementById('pc-save-btn');
   if(btn){ if(btn.disabled)return; btn.disabled=true; btn.textContent='Saqlanmoqda...'; }
-  var r=baza415Db.restoranlar.find(x=>x.id===restoranId);
-  if(!r)return;
   var izohInp=document.getElementById('pc-izoh-inp').value.trim();
-  if(!r.qongiroq)r.qongiroq={};
-  r.qongiroq.lastCalledDate=partnershipTodayStr();
-  r.qongiroq.lastCalledBy=kaitenMyFio()||'Xodim';
-  r.qongiroq.lastCalledAt=new Date().toISOString();
-  if(izohInp) r.qongiroq.izoh=izohInp;
-  var ok=await baza415Save();
-  orgCloseModal(); renderPartnershipCalls();
-  if(!ok){ notify("⚠️ Saqlashda xatolik! Internetni tekshirib, qayta urinib ko'ring."); return; }
+  var lastCalledBy=kaitenMyFio()||'Xodim';
+  var lastCalledAt=new Date().toISOString();
+  var lastCalledDate=partnershipTodayStr();
+  var ok=false, savedNom='';
+  try{
+    var resp=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.baza415',{headers:SB_H});
+    var rows=await resp.json();
+    if(rows&&rows.length&&rows[0].data){
+      var freshData=rows[0].data;
+      var freshR=(freshData.restoranlar||[]).find(x=>x.id===restoranId);
+      if(freshR){
+        if(!freshR.qongiroq)freshR.qongiroq={};
+        freshR.qongiroq.lastCalledDate=lastCalledDate;
+        freshR.qongiroq.lastCalledBy=lastCalledBy;
+        freshR.qongiroq.lastCalledAt=lastCalledAt;
+        if(izohInp) freshR.qongiroq.izoh=izohInp;
+        savedNom=freshR.nom;
+        var patchResp=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.baza415',{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({data:freshData})});
+        if(patchResp.ok){
+          ok=true;
+          baza415Db=freshData;
+        }
+      }
+    }
+  }catch(e){ console.error('partnershipSaveCalled error', e); }
+  orgCloseModal();
+  if(!ok){ notify("⚠️ Saqlashda xatolik! Internetni tekshirib, qayta urinib ko'ring."); renderPartnershipCalls(); return; }
+  renderPartnershipCalls();
   notify('Saqlandi ✓');
   sendGroupMessage(
     '☎ RESTORANGA QO\'NG\'IROQ QILINDI\n'+
-    '🏪 Restoran: '+r.nom+'\n'+
-    '👤 Qo\'ng\'iroq qildi: '+r.qongiroq.lastCalledBy+'\n'+
+    '🏪 Restoran: '+savedNom+'\n'+
+    '👤 Qo\'ng\'iroq qildi: '+lastCalledBy+'\n'+
     '📝 Izoh: '+(izohInp||'—'),
     MUAMMOLI_GROUP_RESTORAN
   );
@@ -3956,11 +3982,13 @@ function kaitenSaveAlarm(id){
   ];
   fetch(SB_URL+'/rest/v1/bot_group_messages',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'kalarmset'+Date.now()+'_'+Math.random().toString(36).slice(2,7), text:confirmLines.join(String.fromCharCode(10)), status:'pending', chat_id:SIRLY_STAFF_GROUP_ID})}).catch(function(e){ console.error('alarm confirm send error', e); });
   // 2) Kechiktirilgan eslatma (belgilangan vaqtda)
+  var creatorTg = (t.createdByTg||'').replace(/^@/,'') || kaitenTgForFio(t.createdByName);
   var lines = [
     'Eslatma: '+t.dept+'dagi, '+assigneeForAlarm+' uchun yaratilgan',
     '"'+t.text+'" vazifasi bo\'yicha '+setterName+' qo\'ygan',
     'budilnik vaqti keldi'+(sabab?(' — '+sabab):'')+'.'
   ];
+  if(creatorTg) lines.push('', '@'+creatorTg);
   var msgText = lines.join(String.fromCharCode(10));
   fetch(SB_URL+'/rest/v1/bot_group_messages?on_conflict=id',{
     method:'POST',
