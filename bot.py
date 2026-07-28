@@ -39,6 +39,7 @@ GROUP_CHAT_ID = int(os.environ.get("GROUP_CHAT_ID", "-1003823489442"))
 SUPPORT_GROUP_ID = -1003823489442
 PARTNERSHIP_GROUP_ID = -5467968653
 SIRLY_STAFF_GROUP_ID = -5076135815
+BUXGALTERIYA_PROMOKOD_GROUP_ID = -5574268734
 MINIAPP_URL = os.environ.get("MINIAPP_URL", "https://pulatovumid102-tech.github.io/Grafik/")
 POLL_SECONDS = int(os.environ.get("POLL_SECONDS", "15"))
 BATCH_LIMIT = int(os.environ.get("BATCH_LIMIT", "20"))
@@ -724,6 +725,43 @@ async def daily_calling_report(context: ContextTypes.DEFAULT_TYPE) -> None:
         log.error("Kunlik qo'ng'iroqlar hisoboti xatosi: %s", e)
 
 
+async def weekly_buxgalteriya_report(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Har juma 10:00 (Toshkent) da, hal bo'lmagan murojaatlar orasida
+    'Promokod berish kerak' va 'Restoranga pul tashlab berish kerak'
+    deb belgilanganlarning ro'yxatini Buxgalteriya guruhiga yuboradi."""
+    app = context.application
+    try:
+        rows = await sb_get("biznes_data", params={"id": "eq.muammoli_mijozlar"})
+        muammoli_data = rows[0]["data"] if rows else {}
+        items = muammoli_data.get("items", []) if isinstance(muammoli_data, dict) else []
+        open_items = [it for it in items if not it.get("archived") and it.get("holati") != "hal_qilindi"]
+
+        promokod_items = [it for it in open_items if it.get("promokodKerak")]
+        pul_items = [it for it in open_items if it.get("tasdiqlamadiLekinBekor")]
+
+        divider = "━━━━━━━━━━━━━"
+        lines = [divider, "📋 HAFTALIK HISOBOT (Buxgalteriya)", divider, ""]
+
+        lines.append(f"🎟 Promokod berish kerak: {len(promokod_items)} ta")
+        for it in promokod_items:
+            nom = it.get("restoran") or "—"
+            lines.append(f"🏪 {nom} — 🙋 {it.get('ism','—')}")
+        lines.append("")
+
+        lines.append(f"💸 Restoranga pul tashlab berish kerak: {len(pul_items)} ta")
+        for it in pul_items:
+            nom = it.get("restoran") or "—"
+            soni = it.get("boxSoni") or 1
+            summa = it.get("boxSummasi") or 20000
+            jami = soni * summa
+            lines.append(f"🏪 {nom} — 🙋 {it.get('ism','—')} — 📦 {soni} ta × {summa:,} so'm = {jami:,} so'm".replace(",", " "))
+
+        await app.bot.send_message(chat_id=BUXGALTERIYA_PROMOKOD_GROUP_ID, text="\n".join(lines))
+        log.info("Haftalik buxgalteriya hisoboti yuborildi: %d promokod, %d pul", len(promokod_items), len(pul_items))
+    except Exception as e:
+        log.error("Haftalik buxgalteriya hisoboti xatosi: %s", e)
+
+
 # ============================================================
 # KAITEN — ERTANGI DEDLAYNLAR HAQIDA KUNLIK ESLATMA (23:00)
 # ============================================================
@@ -982,6 +1020,9 @@ def main() -> None:
 
     # Kaiten — bugungi ishlar ro'yxati, har kuni 10:00 (Toshkent vaqti)
     app.job_queue.run_daily(daily_today_tasks_reminder, time=dt_time(hour=10, minute=0, tzinfo=TASHKENT_TZ))
+
+    # Buxgalteriya — haftalik hisobot (Promokod + Pul berish), faqat JUMA 10:00 (Toshkent vaqti)
+    app.job_queue.run_daily(weekly_buxgalteriya_report, time=dt_time(hour=10, minute=0, tzinfo=TASHKENT_TZ), days=(4,))
 
     # Partnership — kunlik qo'ng'iroqlar hisoboti, har kuni 23:00 (Toshkent vaqti)
     app.job_queue.run_daily(daily_calling_report, time=dt_time(hour=23, minute=0, tzinfo=TASHKENT_TZ))
