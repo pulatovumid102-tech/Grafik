@@ -1044,7 +1044,6 @@ function renderPartnershipFrame(){
   </div>
   <div class="search-wrap"><input class="search-inp" id="search-partnership-calls" placeholder="🔍 Restoran nomi..." oninput="renderPartnershipCalls()"></div>
   <div id="partnership-calls-list" class="section-list"></div>
-  <button class="add-item-btn" onclick="goTo('p-muammoli-hamkorlar')">⚠️ Muammoli hamkorlar</button>
 </div>
 
 <div class="page" id="p-muammoli-hamkorlar">
@@ -2360,7 +2359,7 @@ function muammoliTasdiqlamadiRowHtml(it){
     </div>
     <div class="fbtns" style="margin-top:6px">
       <button class="fsave" onclick="muammoliConfirmTasdiqlamadi('${it.id}')">Tasdiqlang</button>
-      <button class="fcancel" onclick="muammoliCancelTasdiqlamadiForm()">Bekor</button>
+      <button class="fcancel" style="color:#5a574f;background:#e2dfd6" onclick="muammoliCancelTasdiqlamadiForm()">Bekor</button>
     </div>
   </div>`;
 }
@@ -3724,7 +3723,7 @@ function renderMuammoliHamkorlar(){
       <textarea class="fi" id="mh-izoh-${nom.replace(/[^a-zA-Z0-9]/g,'')}" style="min-height:60px;resize:vertical;background:#fff;color:#2e2c28" placeholder="Restoran nima dedi?"></textarea>
       <div class="fbtns" style="margin-top:6px">
         <button class="fsave" onclick="muammoliHamkorSaveGaplashdim('${nomEsc}')">Saqlash</button>
-        <button class="fcancel" onclick="muammoliHamkorGaplashuvFormNom=null;renderMuammoliHamkorlar()">Bekor</button>
+        <button class="fcancel" style="color:#5a574f;background:#e2dfd6" onclick="muammoliHamkorGaplashuvFormNom=null;renderMuammoliHamkorlar()">Bekor</button>
       </div>
     </div>`:`<button class="sek-abtn" style="margin-top:8px" onclick="muammoliHamkorGaplashuvFormNom='${nomEsc}';renderMuammoliHamkorlar()">💬 Restoran bilan gaplashdim</button>`;
     return compactRow+`<div class="mm-card" style="margin-top:-6px;margin-bottom:10px;border-top-left-radius:0;border-top-right-radius:0">
