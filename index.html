@@ -3645,9 +3645,12 @@ async function muammoliHamkorlarLoad(){
 }
 async function muammoliHamkorlarSave(){
   try{
-    var resp=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.muammoli_hamkorlar',{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({data:muammoliHamkorlarDb})});
+    var resp=await fetch(SB_URL+'/rest/v1/biznes_data?on_conflict=id',{method:'POST',headers:{...SB_H,'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:'muammoli_hamkorlar',data:muammoliHamkorlarDb})});
+    if(!resp.ok){
+      console.error('muammoliHamkorlarSave xato:', resp.status, await resp.text().catch(function(){return '';}));
+    }
     return resp.ok;
-  }catch(e){ return false; }
+  }catch(e){ console.error('muammoliHamkorlarSave exception:', e); return false; }
 }
 function muammoliHamkorCutoff(nom){
   var resetIso=(muammoliHamkorlarDb.resetlar||{})[nom];
@@ -3718,7 +3721,7 @@ function renderMuammoliHamkorlar(){
     }).join(''):'<div style="color:#8b877c;font-size:12px;padding:6px 0">Hali gaplashilmagan</div>';
     var showForm=muammoliHamkorGaplashuvFormNom===nom;
     var formHtml=showForm?`<div style="margin-top:8px">
-      <textarea class="fi" id="mh-izoh-${nom.replace(/[^a-zA-Z0-9]/g,'')}" style="min-height:60px;resize:vertical" placeholder="Restoran nima dedi?"></textarea>
+      <textarea class="fi" id="mh-izoh-${nom.replace(/[^a-zA-Z0-9]/g,'')}" style="min-height:60px;resize:vertical;background:#fff;color:#2e2c28" placeholder="Restoran nima dedi?"></textarea>
       <div class="fbtns" style="margin-top:6px">
         <button class="fsave" onclick="muammoliHamkorSaveGaplashdim('${nomEsc}')">Saqlash</button>
         <button class="fcancel" onclick="muammoliHamkorGaplashuvFormNom=null;renderMuammoliHamkorlar()">Bekor</button>
