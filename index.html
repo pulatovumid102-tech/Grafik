@@ -1617,10 +1617,19 @@ async function loadAdminList(){
       btn.addEventListener('click', async function(){
         var id = this.getAttribute('data-delete');
         if(!confirm("O'chirasizmi?")) return;
+        var row = rows.find(function(r){ return r.id===id; });
         await fetch(SB_URL+'/rest/v1/applications?id=eq.'+id, {
           method:'DELETE',
           headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
         });
+        if(row && row.login){
+          try{
+            await fetch(SB_URL+'/rest/v1/telegram_sessions?app=eq.'+encodeURIComponent(row.app||CURRENT_APP)+'&login=eq.'+encodeURIComponent(row.login), {
+              method:'DELETE',
+              headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+            });
+          }catch(e){}
+        }
         loadAdminList();
       });
     });
@@ -2404,10 +2413,14 @@ function muammoliTogglePromokod(id){
   var it=muammoliDb.items.find(x=>x.id===id);
   if(!it)return;
   if(it.promokodKerak){
-    it.promokodKerak=false;
-    muammoliPromokodFormId=null;
-    muammoliSave();
-    if(muammoliCurrentRenderFn)muammoliCurrentRenderFn(); else renderMuammoli();
+    askConfirm("Demak bu mijozga promokod berish kerak emasmi?",function(){
+      var freshIt=muammoliDb.items.find(x=>x.id===id);
+      if(!freshIt)return;
+      freshIt.promokodKerak=false;
+      muammoliPromokodFormId=null;
+      muammoliSave();
+      if(muammoliCurrentRenderFn)muammoliCurrentRenderFn(); else renderMuammoli();
+    },"Ha","Yo'q");
     return;
   }
   muammoliPromokodFormId=id;
