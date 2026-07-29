@@ -43,6 +43,7 @@ GROUP_CHAT_ID = int(os.environ.get("GROUP_CHAT_ID", "-1003823489442"))
 SUPPORT_GROUP_ID = -1003823489442
 PARTNERSHIP_GROUP_ID = -5467968653
 SIRLY_STAFF_GROUP_ID = -5076135815
+HR_GROUP_ID = -5370864546
 BUXGALTERIYA_PROMOKOD_GROUP_ID = -5574268734
 MINIAPP_URL = os.environ.get("MINIAPP_URL", "https://pulatovumid102-tech.github.io/Grafik/")
 POLL_SECONDS = int(os.environ.get("POLL_SECONDS", "15"))
@@ -1054,7 +1055,7 @@ async def check_ish_boshlanish_reminder(context: ContextTypes.DEFAULT_TYPE) -> N
 
 async def handle_staff_video_note(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Sirly Staff guruhiga kelgan krujok (video note) xabarlarini kuzatib,
-    yuboruvchini ishga kelgan deb belgilaydi."""
+    yuboruvchini ishga kelgan deb belgilaydi va HR guruhiga xabar beradi."""
     if not update.effective_chat or update.effective_chat.id != SIRLY_STAFF_GROUP_ID:
         return
     user = update.effective_user
@@ -1073,13 +1074,34 @@ async def handle_staff_video_note(update: Update, context: ContextTypes.DEFAULT_
         kelganlar[username] = now.strftime("%H:%M:%S")
 
         await sb_upsert("biznes_data", ATTENDANCE_STATE_ID, {"data": state})
+
+        fio = user.full_name or f"@{username}"
         try:
-            await update.message.reply_text(f"✅ {now.strftime('%H:%M')} da ishga kelganingiz qayd etildi")
+            org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
+            org_nodes = org_rows[0]["data"] if org_rows else []
+            for n in org_nodes:
+                tgs = parse_tg_field(n)
+                if username in tgs and n.get("fio"):
+                    fio = n["fio"]
+                    break
         except Exception:
             pass
+
+        try:
+            await app_bot_send_hr(context, fio, now)
+        except Exception as e:
+            log.error("HR guruhga xabar yuborishda xato: %s", e)
         log.info("Davomat qayd etildi: %s -> %s", username, now.strftime("%H:%M:%S"))
     except Exception as e:
         log.error("Davomat qayd etish xatosi: %s", e)
+
+
+async def app_bot_send_hr(context: ContextTypes.DEFAULT_TYPE, fio: str, now: datetime) -> None:
+    app = context.application
+    await app.bot.send_message(
+        chat_id=HR_GROUP_ID,
+        text=f"✅ {fio} — {now.strftime('%H:%M')} da ishga keldi (video orqali tasdiqlandi)",
+    )
 
 
 async def check_ish_kelmagan(context: ContextTypes.DEFAULT_TYPE) -> None:
