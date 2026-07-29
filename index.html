@@ -2399,10 +2399,12 @@ function muammoliTogglePromokod(id){
     return;
   }
   askConfirm("Promokod berish kerak deb belgilaysizmi?",function(){
-    it.promokodKerak=true;
+    var freshIt=muammoliDb.items.find(x=>x.id===id);
+    if(!freshIt)return;
+    freshIt.promokodKerak=true;
     muammoliSave();
     if(muammoliCurrentRenderFn)muammoliCurrentRenderFn(); else renderMuammoli();
-    muammoliSendBuxXabar(it,'promokod');
+    muammoliSendBuxXabar(freshIt,'promokod');
   },"Ha","Yo'q");
 }
 var muammoliTasdiqlamadiFormId=null;
