@@ -916,8 +916,7 @@ def build_pul_berish_excel(items: list, today_display: str) -> io.BytesIO:
 async def weekly_buxgalteriya_report(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Har juma 10:00 (Toshkent) da, hal bo'lmagan murojaatlar orasida
     'Promokod berish kerak' va 'Restoranga pul tashlab berish kerak'
-    deb belgilanganlarning qisqa xabari va Excel fayllarini Buxgalteriya
-    guruhiga yuboradi."""
+    deb belgilanganlarning Excel fayllarini Buxgalteriya guruhiga yuboradi."""
     app = context.application
     try:
         rows = await sb_get("biznes_data", params={"id": "eq.muammoli_mijozlar"})
@@ -929,42 +928,26 @@ async def weekly_buxgalteriya_report(context: ContextTypes.DEFAULT_TYPE) -> None
         pul_items = [it for it in open_items if it.get("tasdiqlamadiLekinBekor")]
 
         today_display = datetime.now(TASHKENT_TZ).strftime("%d.%m.%Y")
+        date_tag = datetime.now(TASHKENT_TZ).strftime("%Y%m%d")
 
-        divider = "━━━━━━━━━━━━━"
-        lines = [divider, "📋 HAFTALIK HISOBOT — Promokod berish kerak", divider, ""]
-        lines.append(f"🎟 Jami: {len(promokod_items)} ta")
-        for it in promokod_items:
-            nom = it.get("restoran") or "—"
-            karta = it.get("promokodKartaRaqami") or "—"
-            lines.append(f"🏪 {nom} — 🙋 {it.get('ism','—')} — 💳 {karta}")
-        lines.append("")
-        lines.append("📎 To'liq maʼlumot va imzo varag'i — quyidagi Excel faylda")
+        text = (
+            "📋 Promokod va restoran tasdiqlamagan sifatsiz taom uchun to'lov "
+            "ro'yxati quyidagi Excel fayllarda"
+        )
+        await app.bot.send_message(chat_id=BUXGALTERIYA_PROMOKOD_GROUP_ID, text=text)
 
-        await app.bot.send_message(chat_id=BUXGALTERIYA_PROMOKOD_GROUP_ID, text="\n".join(lines))
         promokod_buf = build_promokod_excel(promokod_items, today_display)
         await app.bot.send_document(
             chat_id=BUXGALTERIYA_PROMOKOD_GROUP_ID,
             document=promokod_buf,
-            filename=f"promokod_{datetime.now(TASHKENT_TZ).strftime('%Y%m%d')}.xlsx",
+            filename=f"promokod_{date_tag}.xlsx",
         )
 
-        lines2 = [divider, "📋 HAFTALIK HISOBOT — Restoranga pul tashlab berish kerak", divider, ""]
-        lines2.append(f"💸 Jami: {len(pul_items)} ta")
-        for it in pul_items:
-            nom = it.get("restoran") or "—"
-            soni = it.get("boxSoni") or 1
-            summa = it.get("boxSummasi") or 20000
-            jami = soni * summa
-            lines2.append(f"🏪 {nom} — 🙋 {it.get('ism','—')} — 📦 {soni} ta × {summa:,} so'm = {jami:,} so'm".replace(",", " "))
-        lines2.append("")
-        lines2.append("📎 To'liq maʼlumot va imzo varag'i — quyidagi Excel faylda")
-
-        await app.bot.send_message(chat_id=BUXGALTERIYA_PROMOKOD_GROUP_ID, text="\n".join(lines2))
         pul_buf = build_pul_berish_excel(pul_items, today_display)
         await app.bot.send_document(
             chat_id=BUXGALTERIYA_PROMOKOD_GROUP_ID,
             document=pul_buf,
-            filename=f"restoranga_pul_berish_{datetime.now(TASHKENT_TZ).strftime('%Y%m%d')}.xlsx",
+            filename=f"restoranga_pul_berish_{date_tag}.xlsx",
         )
 
         log.info("Haftalik buxgalteriya hisoboti yuborildi: %d promokod, %d pul", len(promokod_items), len(pul_items))
