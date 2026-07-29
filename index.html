@@ -2366,10 +2366,18 @@ function muammoliTasdiqlamadiRowHtml(it){
 function muammoliTogglePromokod(id){
   var it=muammoliDb.items.find(x=>x.id===id);
   if(!it)return;
-  it.promokodKerak=!it.promokodKerak;
-  muammoliSave();
-  if(muammoliCurrentRenderFn)muammoliCurrentRenderFn(); else renderMuammoli();
-  if(it.promokodKerak) muammoliSendBuxXabar(it,'promokod');
+  if(it.promokodKerak){
+    it.promokodKerak=false;
+    muammoliSave();
+    if(muammoliCurrentRenderFn)muammoliCurrentRenderFn(); else renderMuammoli();
+    return;
+  }
+  askConfirm("Promokod berish kerak deb belgilaysizmi?",function(){
+    it.promokodKerak=true;
+    muammoliSave();
+    if(muammoliCurrentRenderFn)muammoliCurrentRenderFn(); else renderMuammoli();
+    muammoliSendBuxXabar(it,'promokod');
+  },"Ha","Yo'q");
 }
 var muammoliTasdiqlamadiFormId=null;
 function muammoliToggleTasdiqlamadi(id){
@@ -3747,7 +3755,7 @@ async function muammoliHamkorSaveGaplashdim(nom){
   var izoh=inp?inp.value.trim():'';
   if(!izoh){ notify('Izoh kiriting!'); return; }
   if(!muammoliHamkorlarDb.gaplashuvlar[nom])muammoliHamkorlarDb.gaplashuvlar[nom]=[];
-  var kim=kaitenMyFio()||'Xodim';
+  var kim=kaitenMyFio()||(CURRENT_USER_TG?CURRENT_USER_TG.replace(/^@/,''):'Xodim');
   var sana=new Date().toISOString();
   muammoliHamkorlarDb.gaplashuvlar[nom].push({sana:sana,izoh:izoh,kim:kim});
   muammoliHamkorlarDb.resetlar[nom]=sana;
