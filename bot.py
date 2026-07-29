@@ -1036,7 +1036,13 @@ async def check_ish_boshlanish_reminder(context: ContextTypes.DEFAULT_TYPE) -> N
                 if tgs:
                     usernames.append(tgs[0])
             tag_line = " ".join(f"@{u}" for u in usernames) if usernames else ""
-            text = f"⏰ Ish vaqti boshlanishiga 10 daqiqa qolgan xodimlar ({vaqt}):\n{tag_line}"
+            text = (
+                f"⏰ Ish vaqti boshlanishiga 10 daqiqa qolgan xodimlar ({vaqt}):\n"
+                f"{tag_line}\n\n"
+                "📹 Ishga kelganingizni video xabar (krujok) orqali tasdiqlang — "
+                "video'da ofis kompyuterining sana va soatini, hamda o'zingizni "
+                "tasdiqlaydigan biror belgi (masalan qo'l bilan ishora) ko'rsating."
+            )
             await app.bot.send_message(chat_id=SIRLY_STAFF_GROUP_ID, text=text)
             reminded.append(vaqt)
             log.info("Ish boshlanish eslatmasi yuborildi: %s (%d xodim)", vaqt, len(group))
