@@ -94,6 +94,17 @@ async def sb_patch(table: str, row_id: str, data: dict) -> None:
     resp.raise_for_status()
 
 
+async def sb_upsert(table: str, row_id: str, data: dict) -> None:
+    """PATCH bilan bir xil, lekin qator hali mavjud bo'lmasa ham ishlaydi
+    (mavjud bo'lsa yangilaydi, bo'lmasa yaratadi) — biznes_data uchun."""
+    resp = await http_client.post(
+        f"{SUPABASE_URL}/rest/v1/{table}?on_conflict=id",
+        headers={**SB_HEADERS, "Prefer": "resolution=merge-duplicates,return=minimal"},
+        json={"id": row_id, **data},
+    )
+    resp.raise_for_status()
+
+
 async def claim_row(table: str, row_id: str) -> bool:
     """Faqat hozir ham 'pending' bo'lgan qatorni 'processing'ga o'tkazadi.
     Agar boshqa bot nusxasi allaqachon shu qatorni band qilgan bo'lsa,
@@ -956,6 +967,181 @@ async def weekly_buxgalteriya_report(context: ContextTypes.DEFAULT_TYPE) -> None
 
 
 # ============================================================
+# ISH DAVOMATI — krujok (video note) orqali tasdiqlash
+# ============================================================
+ATTENDANCE_STATE_ID = "ish_davomat"
+
+
+def _org_employees_with_schedule(org_nodes: list) -> list:
+    """ishBoshlanish maydoni to'ldirilgan barcha xodimlarni qaytaradi."""
+    if not isinstance(org_nodes, list):
+        return []
+    return [n for n in org_nodes if n.get("ishBoshlanish")]
+
+
+def _today_ish_kun_key() -> str:
+    kunlar = ["dush", "sesh", "chor", "pay", "juma", "shan", "yak"]
+    return kunlar[datetime.now(TASHKENT_TZ).weekday()]
+
+
+async def check_ish_boshlanish_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Har xodimning ish boshlanish vaqtiga 10 daqiqa qolganda, Sirly Staff
+    guruhiga o'sha vaqtga to'g'ri keladigan xodimlarni tag qilib eslatma yuboradi."""
+    app = context.application
+    try:
+        org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
+        org_nodes = org_rows[0]["data"] if org_rows else []
+        employees = _org_employees_with_schedule(org_nodes)
+        if not employees:
+            return
+
+        today_kun = _today_ish_kun_key()
+        now = datetime.now(TASHKENT_TZ)
+        today_str = now.strftime("%Y-%m-%d")
+
+        state_rows = await sb_get("biznes_data", params={"id": f"eq.{ATTENDANCE_STATE_ID}"})
+        state = state_rows[0]["data"] if state_rows and isinstance(state_rows[0].get("data"), dict) else {}
+        reminded = state.setdefault("reminded", {}).setdefault(today_str, [])
+
+        due_times = set()
+        for n in employees:
+            kunlar = n.get("ishKunlari")
+            if kunlar is not None and today_kun not in kunlar:
+                continue
+            vaqt = n.get("ishBoshlanish")
+            try:
+                h, m = map(int, vaqt.split(":"))
+            except Exception:
+                continue
+            start_dt = now.replace(hour=h, minute=m, second=0, microsecond=0)
+            diff_minutes = (start_dt - now).total_seconds() / 60
+            key = vaqt
+            if 9 <= diff_minutes <= 10 and key not in reminded:
+                due_times.add(vaqt)
+
+        if not due_times:
+            return
+
+        for vaqt in due_times:
+            group = [
+                n for n in employees
+                if n.get("ishBoshlanish") == vaqt
+                and (n.get("ishKunlari") is None or today_kun in n.get("ishKunlari"))
+            ]
+            if not group:
+                continue
+            usernames = []
+            for n in group:
+                tgs = parse_tg_field(n)
+                if tgs:
+                    usernames.append(tgs[0])
+            tag_line = " ".join(f"@{u}" for u in usernames) if usernames else ""
+            text = f"⏰ Ish vaqti boshlanishiga 10 daqiqa qolgan xodimlar ({vaqt}):\n{tag_line}"
+            await app.bot.send_message(chat_id=SIRLY_STAFF_GROUP_ID, text=text)
+            reminded.append(vaqt)
+            log.info("Ish boshlanish eslatmasi yuborildi: %s (%d xodim)", vaqt, len(group))
+
+        await sb_upsert("biznes_data", ATTENDANCE_STATE_ID, {"data": state})
+    except Exception as e:
+        log.error("Ish boshlanish eslatmasi xatosi: %s", e)
+
+
+async def handle_staff_video_note(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Sirly Staff guruhiga kelgan krujok (video note) xabarlarini kuzatib,
+    yuboruvchini ishga kelgan deb belgilaydi."""
+    if not update.effective_chat or update.effective_chat.id != SIRLY_STAFF_GROUP_ID:
+        return
+    user = update.effective_user
+    if not user or not user.username:
+        return
+    try:
+        now = datetime.now(TASHKENT_TZ)
+        today_str = now.strftime("%Y-%m-%d")
+        username = user.username.lstrip("@")
+
+        state_rows = await sb_get("biznes_data", params={"id": f"eq.{ATTENDANCE_STATE_ID}"})
+        state = state_rows[0]["data"] if state_rows and isinstance(state_rows[0].get("data"), dict) else {}
+        kelganlar = state.setdefault("kelganlar", {}).setdefault(today_str, {})
+        if username in kelganlar:
+            return  # allaqachon tasdiqlangan
+        kelganlar[username] = now.strftime("%H:%M:%S")
+
+        await sb_upsert("biznes_data", ATTENDANCE_STATE_ID, {"data": state})
+        try:
+            await update.message.reply_text(f"✅ {now.strftime('%H:%M')} da ishga kelganingiz qayd etildi")
+        except Exception:
+            pass
+        log.info("Davomat qayd etildi: %s -> %s", username, now.strftime("%H:%M:%S"))
+    except Exception as e:
+        log.error("Davomat qayd etish xatosi: %s", e)
+
+
+async def check_ish_kelmagan(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Har xodimning ish boshlanishidan 30 daqiqa o'tgach, agar krujok
+    kelmagan bo'lsa, Sirly Staff guruhiga kelmaganlar ro'yxatini yuboradi."""
+    app = context.application
+    try:
+        org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
+        org_nodes = org_rows[0]["data"] if org_rows else []
+        employees = _org_employees_with_schedule(org_nodes)
+        if not employees:
+            return
+
+        today_kun = _today_ish_kun_key()
+        now = datetime.now(TASHKENT_TZ)
+        today_str = now.strftime("%Y-%m-%d")
+
+        state_rows = await sb_get("biznes_data", params={"id": f"eq.{ATTENDANCE_STATE_ID}"})
+        state = state_rows[0]["data"] if state_rows and isinstance(state_rows[0].get("data"), dict) else {}
+        kelganlar = state.get("kelganlar", {}).get(today_str, {})
+        checked = state.setdefault("kelmagan_tekshirildi", {}).setdefault(today_str, [])
+
+        due_times = set()
+        for n in employees:
+            kunlar = n.get("ishKunlari")
+            if kunlar is not None and today_kun not in kunlar:
+                continue
+            vaqt = n.get("ishBoshlanish")
+            try:
+                h, m = map(int, vaqt.split(":"))
+            except Exception:
+                continue
+            start_dt = now.replace(hour=h, minute=m, second=0, microsecond=0)
+            diff_minutes = (now - start_dt).total_seconds() / 60
+            if 29 <= diff_minutes <= 30 and vaqt not in checked:
+                due_times.add(vaqt)
+
+        if not due_times:
+            return
+
+        for vaqt in due_times:
+            group = [
+                n for n in employees
+                if n.get("ishBoshlanish") == vaqt
+                and (n.get("ishKunlari") is None or today_kun in n.get("ishKunlari"))
+            ]
+            missing = []
+            for n in group:
+                tgs = parse_tg_field(n)
+                username = tgs[0] if tgs else None
+                if not username or username not in kelganlar:
+                    missing.append(n.get("fio") or n.get("name") or "—")
+            checked.append(vaqt)
+            if missing:
+                lines = [f"❌ Ishga kelmadi ({vaqt} boshlanishi kerak edi, 30 daqiqa o'tdi):"]
+                for fio in missing:
+                    lines.append(f"👤 {fio}")
+                lines.append("")
+                lines.append("@umidpulatov")
+                await app.bot.send_message(chat_id=SIRLY_STAFF_GROUP_ID, text="\n".join(lines))
+                log.info("Kelmaganlar ro'yxati yuborildi: %s (%d kishi)", vaqt, len(missing))
+
+        await sb_upsert("biznes_data", ATTENDANCE_STATE_ID, {"data": state})
+    except Exception as e:
+        log.error("Kelmaganlar tekshiruvi xatosi: %s", e)
+
+
+# ============================================================
 # KAITEN — ERTANGI DEDLAYNLAR HAQIDA KUNLIK ESLATMA (23:00)
 # ============================================================
 def _kaiten_fmt_deadline(iso: str) -> str:
@@ -1199,6 +1385,7 @@ def main() -> None:
     app.add_handler(CommandHandler("test_dedlayn", test_deadline_cmd))
     app.add_handler(CommandHandler("test_hisobot", test_hisobot_cmd))
     app.add_handler(MessageHandler(filters.PHOTO, handle_support_photo))
+    app.add_handler(MessageHandler(filters.VIDEO_NOTE, handle_staff_video_note))
     app.job_queue.run_repeating(poll_job, interval=POLL_SECONDS, first=5)
 
     # Skrinshot so'rovi — har 30 daqiqada, 10:30 dan 23:30 gacha
@@ -1229,6 +1416,11 @@ def main() -> None:
 
     # Buxgalteriya — haftalik hisobot (Promokod + Pul berish), faqat JUMA 10:00 (Toshkent vaqti)
     app.job_queue.run_daily(weekly_buxgalteriya_report, time=dt_time(hour=10, minute=0, tzinfo=TASHKENT_TZ), days=(4,))
+
+    # Ish davomati — ish boshlanishiga 10 daqiqa qolganda eslatma, har daqiqada tekshiriladi
+    app.job_queue.run_repeating(check_ish_boshlanish_reminder, interval=60, first=15)
+    # Ish davomati — ish boshlanishidan 30 daqiqa o'tsa, kelmaganlar ro'yxati
+    app.job_queue.run_repeating(check_ish_kelmagan, interval=60, first=20)
 
     # Partnership — kunlik qo'ng'iroqlar hisoboti, har kuni 23:00 (Toshkent vaqti)
     app.job_queue.run_daily(daily_calling_report, time=dt_time(hour=23, minute=0, tzinfo=TASHKENT_TZ))
