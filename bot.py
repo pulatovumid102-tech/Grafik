@@ -44,6 +44,7 @@ SUPPORT_GROUP_ID = -1003823489442
 PARTNERSHIP_GROUP_ID = -5467968653
 SIRLY_STAFF_GROUP_ID = -5076135815
 HR_GROUP_ID = -5370864546
+TOPSHIRIQLAR_GROUP_ID = -5550614907
 BUXGALTERIYA_PROMOKOD_GROUP_ID = -5574268734
 MINIAPP_URL = os.environ.get("MINIAPP_URL", "https://pulatovumid102-tech.github.io/Grafik/")
 POLL_SECONDS = int(os.environ.get("POLL_SECONDS", "15"))
@@ -1044,7 +1045,7 @@ async def check_ish_boshlanish_reminder(context: ContextTypes.DEFAULT_TYPE) -> N
                 "video'da ofis kompyuterining sana va soatini, hamda o'zingizni "
                 "tasdiqlaydigan biror belgi (masalan qo'l bilan ishora) ko'rsating."
             )
-            await app.bot.send_message(chat_id=SIRLY_STAFF_GROUP_ID, text=text)
+            await app.bot.send_message(chat_id=HR_GROUP_ID, text=text)
             reminded.append(vaqt)
             log.info("Ish boshlanish eslatmasi yuborildi: %s (%d xodim)", vaqt, len(group))
 
@@ -1054,9 +1055,9 @@ async def check_ish_boshlanish_reminder(context: ContextTypes.DEFAULT_TYPE) -> N
 
 
 async def handle_staff_video_note(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Sirly Staff guruhiga kelgan krujok (video note) xabarlarini kuzatib,
+    """HR guruhiga kelgan krujok (video note) xabarlarini kuzatib,
     yuboruvchini ishga kelgan deb belgilaydi va HR guruhiga xabar beradi."""
-    if not update.effective_chat or update.effective_chat.id != SIRLY_STAFF_GROUP_ID:
+    if not update.effective_chat or update.effective_chat.id != HR_GROUP_ID:
         return
     user = update.effective_user
     if not user or not user.username:
@@ -1161,7 +1162,7 @@ async def check_ish_kelmagan(context: ContextTypes.DEFAULT_TYPE) -> None:
                     lines.append(f"👤 {fio}")
                 lines.append("")
                 lines.append("@umidpulatov")
-                await app.bot.send_message(chat_id=SIRLY_STAFF_GROUP_ID, text="\n".join(lines))
+                await app.bot.send_message(chat_id=HR_GROUP_ID, text="\n".join(lines))
                 log.info("Kelmaganlar ro'yxati yuborildi: %s (%d kishi)", vaqt, len(missing))
 
         await sb_upsert("biznes_data", ATTENDANCE_STATE_ID, {"data": state})
@@ -1247,7 +1248,7 @@ async def _kaiten_deadline_digest(context: ContextTypes.DEFAULT_TYPE, days_ahead
 
             lines.append(f"Jami: {len(filtered)} ta vazifa muddati ({target_display}) tugaydi.")
 
-        await app.bot.send_message(chat_id=SIRLY_STAFF_GROUP_ID, text="\n".join(lines))
+        await app.bot.send_message(chat_id=TOPSHIRIQLAR_GROUP_ID, text="\n".join(lines))
         log.info("%s yuborildi: %d ta vazifa", title, len(filtered))
     except Exception as e:
         log.error("Kaiten dedlayn digest xatosi (%s): %s", title, e)
@@ -1329,7 +1330,7 @@ async def check_deadline_2h_before(context: ContextTypes.DEFAULT_TYPE) -> None:
                     f"⏰ Muddat: {_kaiten_fmt_deadline(t.get('deadline',''))}",
                     divider,
                 ]
-                await app.bot.send_message(chat_id=SIRLY_STAFF_GROUP_ID, text="\n".join(lines))
+                await app.bot.send_message(chat_id=TOPSHIRIQLAR_GROUP_ID, text="\n".join(lines))
             log.info("2 soatlik dedlayn eslatmasi yuborildi: %d ta vazifa", len(due))
 
         if changed:
