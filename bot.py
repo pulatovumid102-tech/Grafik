@@ -19,10 +19,14 @@ Ishga tushirish:
 
 import os
 import logging
+import io
 from datetime import datetime, timezone, time as dt_time, timedelta
 from zoneinfo import ZoneInfo
 
 import httpx
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
+from openpyxl.utils import get_column_letter
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
 
@@ -725,10 +729,195 @@ async def daily_calling_report(context: ContextTypes.DEFAULT_TYPE) -> None:
         log.error("Kunlik qo'ng'iroqlar hisoboti xatosi: %s", e)
 
 
+def _fmt_date_only(iso: str) -> str:
+    if not iso:
+        return "—"
+    try:
+        dt = datetime.fromisoformat(iso.replace("Z", "+00:00")) if "T" in iso else datetime.fromisoformat(iso)
+    except Exception:
+        return iso
+    return dt.astimezone(TASHKENT_TZ).strftime("%d.%m.%Y")
+
+
+def _bux_signoff(ws, start_row: int, last_col: int) -> None:
+    bold = Font(name="Arial", bold=True, size=11)
+    normal = Font(name="Arial", size=10)
+    rows = [
+        ("Operatsion direktor:", "Umid Pulatov"),
+        ("Buxgalter:", "Zilola Maxamatjonova"),
+        ("Support bo'limi boshlig'i:", ""),
+    ]
+    for i, (label, name) in enumerate(rows):
+        r = start_row + i
+        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=3)
+        lbl_cell = ws.cell(row=r, column=1, value=label)
+        lbl_cell.font = bold
+        lbl_cell.alignment = Alignment(horizontal="left", vertical="center")
+
+        ws.merge_cells(start_row=r, start_column=4, end_row=r, end_column=6)
+        val_cell = ws.cell(row=r, column=4, value=name if name else "_______________________")
+        val_cell.font = normal
+        val_cell.alignment = Alignment(horizontal="left", vertical="center")
+
+        sign_col = max(7, last_col - 1)
+        ws.cell(row=r, column=sign_col, value="Imzo:").font = bold
+        ws.merge_cells(start_row=r, start_column=sign_col + 1, end_row=r, end_column=last_col)
+        ws.cell(row=r, column=sign_col + 1, value="_______________")
+        ws.row_dimensions[r].height = 20
+
+
+def build_promokod_excel(items: list, today_display: str) -> io.BytesIO:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Promokod"
+
+    normal = Font(name="Arial", size=10)
+    header_font = Font(name="Arial", bold=True, size=10, color="FFFFFF")
+    header_fill = PatternFill("solid", fgColor="1E7A4A")
+    thin = Side(style="thin", color="CCCCCC")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    center = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    left = Alignment(horizontal="left", vertical="center", wrap_text=True)
+
+    ws.merge_cells("A1:H1")
+    ws["A1"] = f"Sana: {today_display}"
+    ws["A1"].font = Font(name="Arial", bold=True, size=13)
+    ws.row_dimensions[1].height = 22
+
+    ws.merge_cells("A2:H2")
+    ws["A2"] = "PROMOKOD BERISH KERAK — Haftalik hisobot"
+    ws["A2"].font = Font(name="Arial", bold=True, size=12, color="1E7A4A")
+    ws.row_dimensions[2].height = 20
+
+    headers = ["№", "Murojaat sanasi", "Mijoz", "Mijoz raqami", "Restoran", "Sabab", "Support bo'limi xodimi", "Karta raqami"]
+    header_row = 4
+    ws.row_dimensions[header_row].height = 34
+    for i, h in enumerate(headers, start=1):
+        c = ws.cell(row=header_row, column=i, value=h)
+        c.font = header_font
+        c.fill = header_fill
+        c.border = border
+        c.alignment = center
+
+    for idx, it in enumerate(items, start=1):
+        r = header_row + idx
+        ws.row_dimensions[r].height = 45
+        row_vals = [
+            idx,
+            _fmt_date_only(it.get("createdAt", "")),
+            it.get("ism") or "—",
+            it.get("tel") or "—",
+            it.get("restoran") or "—",
+            it.get("turi") or "—",
+            it.get("createdByName") or "—",
+            it.get("promokodKartaRaqami") or "—",
+        ]
+        for c_idx, val in enumerate(row_vals, start=1):
+            cell = ws.cell(row=r, column=c_idx, value=val)
+            cell.font = normal
+            cell.border = border
+            cell.alignment = center if c_idx in (1, 2, 3) else left
+
+    sign_start = header_row + len(items) + 3
+    _bux_signoff(ws, sign_start, 8)
+
+    widths = [5, 14, 14, 15, 16, 36, 20, 20]
+    for i, w in enumerate(widths, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf
+
+
+def build_pul_berish_excel(items: list, today_display: str) -> io.BytesIO:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Pul berish"
+
+    normal = Font(name="Arial", size=10)
+    bold = Font(name="Arial", bold=True, size=11)
+    header_font = Font(name="Arial", bold=True, size=10, color="FFFFFF")
+    header_fill = PatternFill("solid", fgColor="E34948")
+    thin = Side(style="thin", color="CCCCCC")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    center = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    left = Alignment(horizontal="left", vertical="center", wrap_text=True)
+
+    ws.merge_cells("A1:J1")
+    ws["A1"] = f"Sana: {today_display}"
+    ws["A1"].font = Font(name="Arial", bold=True, size=13)
+    ws.row_dimensions[1].height = 22
+
+    ws.merge_cells("A2:J2")
+    ws["A2"] = "RESTORANGA PUL TASHLAB BERISH KERAK — Haftalik hisobot"
+    ws["A2"].font = Font(name="Arial", bold=True, size=12, color="B0202A")
+    ws.row_dimensions[2].height = 20
+
+    headers = ["№", "Murojaat sanasi", "Mijoz", "Mijoz raqami", "Restoran", "Sabab", "Support bo'limi xodimi", "Box soni", "Box narxi", "Jami summa"]
+    header_row = 4
+    ws.row_dimensions[header_row].height = 34
+    for i, h in enumerate(headers, start=1):
+        c = ws.cell(row=header_row, column=i, value=h)
+        c.font = header_font
+        c.fill = header_fill
+        c.border = border
+        c.alignment = center
+
+    for idx, it in enumerate(items, start=1):
+        r = header_row + idx
+        ws.row_dimensions[r].height = 45
+        soni = it.get("boxSoni") or 1
+        narx = it.get("boxSummasi") or 20000
+        row_vals = [
+            idx,
+            _fmt_date_only(it.get("createdAt", "")),
+            it.get("ism") or "—",
+            it.get("tel") or "—",
+            it.get("restoran") or "—",
+            it.get("turi") or "—",
+            it.get("createdByName") or "—",
+            soni,
+            narx,
+            soni * narx,
+        ]
+        for c_idx, val in enumerate(row_vals, start=1):
+            cell = ws.cell(row=r, column=c_idx, value=val)
+            cell.font = normal
+            cell.border = border
+            cell.alignment = center if c_idx in (1, 2, 3, 8, 9, 10) else left
+            if c_idx in (9, 10):
+                cell.number_format = '#,##0 "so\'m"'
+
+    total_row = header_row + len(items) + 1
+    ws.merge_cells(start_row=total_row, start_column=1, end_row=total_row, end_column=9)
+    tot_lbl = ws.cell(row=total_row, column=1, value="JAMI TO'LANADIGAN SUMMA:")
+    tot_lbl.font = bold
+    tot_lbl.alignment = Alignment(horizontal="right", vertical="center")
+    tot_val = ws.cell(row=total_row, column=10, value=f"=SUM(J{header_row+1}:J{header_row+len(items)})" if items else 0)
+    tot_val.font = Font(name="Arial", bold=True, size=11, color="B0202A")
+    tot_val.number_format = '#,##0 "so\'m"'
+    tot_val.border = border
+
+    sign_start = total_row + 3
+    _bux_signoff(ws, sign_start, 10)
+
+    widths = [5, 14, 13, 15, 16, 36, 20, 10, 12, 13]
+    for i, w in enumerate(widths, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf
+
+
 async def weekly_buxgalteriya_report(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Har juma 10:00 (Toshkent) da, hal bo'lmagan murojaatlar orasida
     'Promokod berish kerak' va 'Restoranga pul tashlab berish kerak'
-    deb belgilanganlarning ro'yxatini Buxgalteriya guruhiga yuboradi."""
+    deb belgilanganlarning qisqa xabari va Excel fayllarini Buxgalteriya
+    guruhiga yuboradi."""
     app = context.application
     try:
         rows = await sb_get("biznes_data", params={"id": "eq.muammoli_mijozlar"})
@@ -739,24 +928,45 @@ async def weekly_buxgalteriya_report(context: ContextTypes.DEFAULT_TYPE) -> None
         promokod_items = [it for it in open_items if it.get("promokodKerak")]
         pul_items = [it for it in open_items if it.get("tasdiqlamadiLekinBekor")]
 
-        divider = "━━━━━━━━━━━━━"
-        lines = [divider, "📋 HAFTALIK HISOBOT (Buxgalteriya)", divider, ""]
+        today_display = datetime.now(TASHKENT_TZ).strftime("%d.%m.%Y")
 
-        lines.append(f"🎟 Promokod berish kerak: {len(promokod_items)} ta")
+        divider = "━━━━━━━━━━━━━"
+        lines = [divider, "📋 HAFTALIK HISOBOT — Promokod berish kerak", divider, ""]
+        lines.append(f"🎟 Jami: {len(promokod_items)} ta")
         for it in promokod_items:
             nom = it.get("restoran") or "—"
-            lines.append(f"🏪 {nom} — 🙋 {it.get('ism','—')}")
+            karta = it.get("promokodKartaRaqami") or "—"
+            lines.append(f"🏪 {nom} — 🙋 {it.get('ism','—')} — 💳 {karta}")
         lines.append("")
+        lines.append("📎 To'liq maʼlumot va imzo varag'i — quyidagi Excel faylda")
 
-        lines.append(f"💸 Restoranga pul tashlab berish kerak: {len(pul_items)} ta")
+        await app.bot.send_message(chat_id=BUXGALTERIYA_PROMOKOD_GROUP_ID, text="\n".join(lines))
+        promokod_buf = build_promokod_excel(promokod_items, today_display)
+        await app.bot.send_document(
+            chat_id=BUXGALTERIYA_PROMOKOD_GROUP_ID,
+            document=promokod_buf,
+            filename=f"promokod_{datetime.now(TASHKENT_TZ).strftime('%Y%m%d')}.xlsx",
+        )
+
+        lines2 = [divider, "📋 HAFTALIK HISOBOT — Restoranga pul tashlab berish kerak", divider, ""]
+        lines2.append(f"💸 Jami: {len(pul_items)} ta")
         for it in pul_items:
             nom = it.get("restoran") or "—"
             soni = it.get("boxSoni") or 1
             summa = it.get("boxSummasi") or 20000
             jami = soni * summa
-            lines.append(f"🏪 {nom} — 🙋 {it.get('ism','—')} — 📦 {soni} ta × {summa:,} so'm = {jami:,} so'm".replace(",", " "))
+            lines2.append(f"🏪 {nom} — 🙋 {it.get('ism','—')} — 📦 {soni} ta × {summa:,} so'm = {jami:,} so'm".replace(",", " "))
+        lines2.append("")
+        lines2.append("📎 To'liq maʼlumot va imzo varag'i — quyidagi Excel faylda")
 
-        await app.bot.send_message(chat_id=BUXGALTERIYA_PROMOKOD_GROUP_ID, text="\n".join(lines))
+        await app.bot.send_message(chat_id=BUXGALTERIYA_PROMOKOD_GROUP_ID, text="\n".join(lines2))
+        pul_buf = build_pul_berish_excel(pul_items, today_display)
+        await app.bot.send_document(
+            chat_id=BUXGALTERIYA_PROMOKOD_GROUP_ID,
+            document=pul_buf,
+            filename=f"restoranga_pul_berish_{datetime.now(TASHKENT_TZ).strftime('%Y%m%d')}.xlsx",
+        )
+
         log.info("Haftalik buxgalteriya hisoboti yuborildi: %d promokod, %d pul", len(promokod_items), len(pul_items))
     except Exception as e:
         log.error("Haftalik buxgalteriya hisoboti xatosi: %s", e)
@@ -954,6 +1164,18 @@ async def test_deadline_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 
 # ============================================================
+# /test_hisobot BUYRUG'I — juma 10:00 ni kutmasdan, Buxgalteriya
+# hisobotini (matn + Excel fayllar) darhol yuborib ko'rish uchun
+# ============================================================
+async def test_hisobot_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("⏳ Tekshirilmoqda, biroz kuting...")
+    await weekly_buxgalteriya_report(context)
+    await update.message.reply_text(
+        "✅ Tayyor! Buxgalteriya guruhini tekshiring — matn va Excel fayllar o'sha yerga yuborildi."
+    )
+
+
+# ============================================================
 # /start BUYRUG'I — mini-appni ochish tugmasi
 # ============================================================
 async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -992,6 +1214,7 @@ def main() -> None:
     )
     app.add_handler(CommandHandler("start", start_cmd))
     app.add_handler(CommandHandler("test_dedlayn", test_deadline_cmd))
+    app.add_handler(CommandHandler("test_hisobot", test_hisobot_cmd))
     app.add_handler(MessageHandler(filters.PHOTO, handle_support_photo))
     app.job_queue.run_repeating(poll_job, interval=POLL_SECONDS, first=5)
 
