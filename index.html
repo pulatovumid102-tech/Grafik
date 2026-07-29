@@ -3055,7 +3055,7 @@ function muammoliDaysSince(iso){
   return Math.max(0,Math.floor(diff/86400000));
 }
 function muammoliRestoranMaxTuriCount31(nom){
-  var cutoff=Date.now()-31*24*60*60*1000;
+  var cutoff=muammoliHamkorCutoff(nom);
   var counts={};
   (muammoliDb.items||[]).forEach(function(it){
     if(it.restoran!==nom||!it.turi||!it.createdAt)return;
@@ -3335,8 +3335,20 @@ function muammoliShowFilteredList(filterType,value){
       </div>`;
     }).join('');
 
+    var gaplashuvlar=((muammoliHamkorlarDb.gaplashuvlar||{})[value]||[]).slice().sort(function(a,b){ return new Date(b.sana)-new Date(a.sana); });
+    var gaplashuvHtml=gaplashuvlar.length?gaplashuvlar.map(function(g){
+      return `<div style="padding:6px 0;border-bottom:1px solid var(--white-10)">
+        <div style="font-size:12px;color:var(--white-90)">${esc(g.izoh)}</div>
+        <div style="font-size:11px;color:var(--white-50);margin-top:2px">👤 ${esc(g.kim)} · 📅 ${muammoliFormatDateTime(g.sana)}</div>
+      </div>`;
+    }).join(''):'';
+
     var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:10px">${esc(value)}</div>
       <div style="background:var(--white-06);border-radius:10px;padding:10px 12px;margin-bottom:14px">${summaryHtml||'<div style="color:var(--white-50);font-size:13px">Ma\'lumot yo\'q</div>'}</div>
+      ${gaplashuvHtml?`<div style="margin-bottom:14px">
+        <div class="mm-seclbl">Gaplashuvlar tarixi</div>
+        ${gaplashuvHtml}
+      </div>`:''}
       <div style="max-height:60vh;overflow-y:auto">${groupsHtml||'<div style="text-align:center;padding:16px;color:var(--white-50);font-size:13px">Topilmadi</div>'}</div>
       <button class="fcancel" style="width:100%;margin-top:12px" onclick="orgCloseModal()">Yopish</button>`;
     orgShowModal(html);
