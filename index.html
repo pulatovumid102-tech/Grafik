@@ -2308,10 +2308,7 @@ function muammoliCard(it){
         ${it.restoran?`<div style="font-size:12px;color:#8a5c00;margin-top:2px">🏪 ${esc(it.restoran)}</div>`:''}
         <div style="font-size:12px;color:#8b877c;margin-top:2px">📅 ${muammoliFormatDateTime(it.createdAt)}${it.createdByName?' · 👤 '+esc(it.createdByName):''}</div>
         <div style="margin-top:6px;display:flex;flex-direction:column;gap:4px" onclick="event.stopPropagation()">
-          <div style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="muammoliTogglePromokod('${it.id}')">
-            <span style="width:16px;height:16px;border-radius:4px;border:1.5px solid #b8b3a3;display:flex;align-items:center;justify-content:center;background:${it.promokodKerak?'#1e7a4a':'transparent'};color:#fff;font-size:10px;flex-shrink:0">${it.promokodKerak?'✓':''}</span>
-            <span style="font-size:11px;color:#5a574f">🎟 Promokod berish kerak</span>
-          </div>
+          ${muammoliPromokodRowHtml(it)}
           ${muammoliTasdiqlamadiRowHtml(it)}
         </div>
       </div>
@@ -2335,10 +2332,7 @@ function muammoliCard(it){
     <span class="mm-badge-bolim">${esc(it.masulBolim)}</span>`:'';
 
   var buxBlock=`<div class="mm-divider"></div>
-    <div class="mm-action-row" onclick="muammoliTogglePromokod('${it.id}')">
-      <span style="width:18px;height:18px;border-radius:4px;border:1.5px solid #b8b3a3;display:flex;align-items:center;justify-content:center;background:${it.promokodKerak?'#1e7a4a':'transparent'};color:#fff;font-size:11px;flex-shrink:0">${it.promokodKerak?'✓':''}</span>
-      <span style="font-size:12px;color:#5a574f;font-weight:600">Promokod berish kerak</span>
-    </div>
+    <div style="margin-bottom:8px">${muammoliPromokodRowHtml(it)}</div>
     <div style="margin-top:8px">${muammoliTasdiqlamadiRowHtml(it)}</div>`;
 
   var resolutionBlock=isHal?`<div class="mm-divider"></div>
@@ -2389,23 +2383,56 @@ function muammoliTasdiqlamadiRowHtml(it){
     </div>
   </div>`;
 }
+var muammoliPromokodFormId=null;
+function muammoliPromokodRowHtml(it){
+  var showForm=muammoliPromokodFormId===it.id;
+  var checkboxHtml=`<div style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="muammoliTogglePromokod('${it.id}')">
+    <span style="width:16px;height:16px;border-radius:4px;border:1.5px solid #b8b3a3;display:flex;align-items:center;justify-content:center;background:${it.promokodKerak?'#1e7a4a':'transparent'};color:#fff;font-size:10px;flex-shrink:0">${it.promokodKerak?'✓':''}</span>
+    <span style="font-size:11px;color:#5a574f">🎟 Promokod berish kerak${it.promokodKerak&&it.promokodKartaRaqami?' — 💳 '+esc(it.promokodKartaRaqami):''}</span>
+  </div>`;
+  if(!showForm) return checkboxHtml;
+  return checkboxHtml+`<div style="margin-top:6px;padding-left:22px" onclick="event.stopPropagation()">
+    <div style="font-size:11px;color:#8a5c00;font-weight:600;margin-bottom:4px">Mijoz karta raqamini kiriting:</div>
+    <input class="fi" id="mm-promokod-karta-${it.id}" style="background:#fff;color:#2e2c28" placeholder="8600 1234 5678 9012" value="${esc(it.promokodKartaRaqami||'')}" maxlength="19" oninput="muammoliFormatKartaInput(this)">
+    <div class="fbtns" style="margin-top:6px">
+      <button class="fsave" onclick="muammoliConfirmPromokod('${it.id}')">Tasdiqlang</button>
+      <button class="fcancel" style="color:#5a574f;background:#e2dfd6" onclick="muammoliCancelPromokodForm()">Bekor</button>
+    </div>
+  </div>`;
+}
 function muammoliTogglePromokod(id){
   var it=muammoliDb.items.find(x=>x.id===id);
   if(!it)return;
   if(it.promokodKerak){
     it.promokodKerak=false;
+    muammoliPromokodFormId=null;
     muammoliSave();
     if(muammoliCurrentRenderFn)muammoliCurrentRenderFn(); else renderMuammoli();
     return;
   }
-  askConfirm("Promokod berish kerak deb belgilaysizmi?",function(){
-    var freshIt=muammoliDb.items.find(x=>x.id===id);
-    if(!freshIt)return;
-    freshIt.promokodKerak=true;
-    muammoliSave();
-    if(muammoliCurrentRenderFn)muammoliCurrentRenderFn(); else renderMuammoli();
-    muammoliSendBuxXabar(freshIt,'promokod');
-  },"Ha","Yo'q");
+  muammoliPromokodFormId=id;
+  if(muammoliCurrentRenderFn)muammoliCurrentRenderFn(); else renderMuammoli();
+}
+function muammoliFormatKartaInput(inp){
+  var digits=inp.value.replace(/\D/g,'').slice(0,16);
+  var groups=digits.match(/.{1,4}/g)||[];
+  inp.value=groups.join(' ');
+}
+function muammoliConfirmPromokod(id){
+  var karta=document.getElementById('mm-promokod-karta-'+id).value.trim();
+  if(!karta){ notify('Karta raqamini kiriting!'); return; }
+  var it=muammoliDb.items.find(x=>x.id===id);
+  if(!it)return;
+  it.promokodKerak=true;
+  it.promokodKartaRaqami=karta;
+  muammoliPromokodFormId=null;
+  muammoliSave();
+  if(muammoliCurrentRenderFn)muammoliCurrentRenderFn(); else renderMuammoli();
+  muammoliSendBuxXabar(it,'promokod');
+}
+function muammoliCancelPromokodForm(){
+  muammoliPromokodFormId=null;
+  if(muammoliCurrentRenderFn)muammoliCurrentRenderFn(); else renderMuammoli();
 }
 var muammoliTasdiqlamadiFormId=null;
 function muammoliToggleTasdiqlamadi(id){
@@ -2465,6 +2492,10 @@ function muammoliSendBuxXabar(it,turi){
   lines.push('🏢 Masul bo\'lim: '+(it.masulBolim||'—'));
   lines.push('👤 Qabul qildi: '+(it.createdByName||'—'));
   lines.push('📅 '+muammoliFormatDateTime(it.createdAt));
+  if(turi==='promokod'){
+    lines.push('');
+    lines.push('💳 Karta raqami: '+(it.promokodKartaRaqami||'—'));
+  }
   if(turi==='pul'){
     var soni=it.boxSoni||1, summa=it.boxSummasi||20000;
     lines.push('');
@@ -2509,10 +2540,7 @@ function muammoliArchiveCard(it){
         ${it.restoran?`<div style="font-size:12px;color:#8a5c00;margin-top:2px">🏪 ${esc(it.restoran)}</div>`:''}
         <div style="font-size:12px;color:#8b877c;margin-top:2px">📅 Arxivlandi: ${muammoliFormatDateTime(it.archivedAt)}${it.archivedBy?' · 👤 '+esc(it.archivedBy):''}</div>
         <div style="margin-top:6px;display:flex;flex-direction:column;gap:4px" onclick="event.stopPropagation()">
-          <div style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="muammoliTogglePromokod('${it.id}')">
-            <span style="width:16px;height:16px;border-radius:4px;border:1.5px solid #b8b3a3;display:flex;align-items:center;justify-content:center;background:${it.promokodKerak?'#1e7a4a':'transparent'};color:#fff;font-size:10px;flex-shrink:0">${it.promokodKerak?'✓':''}</span>
-            <span style="font-size:11px;color:#5a574f">🎟 Promokod berish kerak</span>
-          </div>
+          ${muammoliPromokodRowHtml(it)}
           ${muammoliTasdiqlamadiRowHtml(it)}
         </div>
       </div>
@@ -2537,10 +2565,7 @@ function muammoliArchiveCard(it){
     <span class="mm-badge-bolim">${esc(it.masulBolim)}</span>`:'';
 
   var buxBlock=`<div class="mm-divider"></div>
-    <div class="mm-action-row" onclick="muammoliTogglePromokod('${it.id}')">
-      <span style="width:18px;height:18px;border-radius:4px;border:1.5px solid #b8b3a3;display:flex;align-items:center;justify-content:center;background:${it.promokodKerak?'#1e7a4a':'transparent'};color:#fff;font-size:11px;flex-shrink:0">${it.promokodKerak?'✓':''}</span>
-      <span style="font-size:12px;color:#5a574f;font-weight:600">Promokod berish kerak</span>
-    </div>
+    <div style="margin-bottom:8px">${muammoliPromokodRowHtml(it)}</div>
     <div style="margin-top:8px">${muammoliTasdiqlamadiRowHtml(it)}</div>`;
 
   var resolutionBlock=`<div class="mm-divider"></div>
