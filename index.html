@@ -804,6 +804,26 @@ function renderMurojaatQollanma(){
         <div id="oem-tgs-${id}">${orgTgHtml(tgs)}</div>
         <button class="abtn" style="margin-top:6px" onclick="orgAddTg('${id}')">+ Telegram qo'shish</button>
       </div>
+      <div class="frow" id="oem-jadval-row-${id}" style="${isBolimNow?'display:none':''}">
+        <label class="flbl">Ish jadvali (ixtiyoriy)</label>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--white-50);margin-bottom:3px">Boshlanish</div>
+            <input class="fi" type="time" id="oem-ish-boshlanish" value="${esc(node.ishBoshlanish||'')}">
+          </div>
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--white-50);margin-bottom:3px">Tugash</div>
+            <input class="fi" type="time" id="oem-ish-tugash" value="${esc(node.ishTugash||'')}">
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--white-50);margin-top:10px;margin-bottom:4px">Ish kunlari</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap" id="oem-ish-kunlari-${id}">
+          ${[['dush','Dush'],['sesh','Sesh'],['chor','Chor'],['pay','Pay'],['juma','Juma'],['shan','Shan'],['yak','Yak']].map(function(d){
+            var active=!node.ishKunlari||node.ishKunlari.includes(d[0]);
+            return `<label style="display:flex;align-items:center;gap:3px;font-size:11px;color:var(--white-80);cursor:pointer;background:${active?'rgba(168,224,99,0.15)':'var(--white-06)'};padding:5px 8px;border-radius:8px"><input type="checkbox" class="oem-kun-chk" value="${d[0]}" ${active?'checked':''} style="margin:0"> ${d[1]}</label>`;
+          }).join('')}
+        </div>
+      </div>
       <div class="fbtns">
         <button class="fsave" onclick="orgSaveEditModal('${id}')">Saqlash</button>
         <button class="fcancel" onclick="orgCloseModal()">Bekor</button>
@@ -888,6 +908,13 @@ function renderMurojaatQollanma(){
     var tgs=tgWrap?Array.from(tgWrap.querySelectorAll('input')).map(function(el){return el.value.trim();}).filter(Boolean):[];
     node.tgs=tgs;
     node.tg=tgs[0]||'';
+    // Ish jadvali
+    var ishBoshlanishEl=document.getElementById('oem-ish-boshlanish');
+    var ishTugashEl=document.getElementById('oem-ish-tugash');
+    node.ishBoshlanish=ishBoshlanishEl?ishBoshlanishEl.value:'';
+    node.ishTugash=ishTugashEl?ishTugashEl.value:'';
+    var kunWrap=document.getElementById('oem-ish-kunlari-'+id);
+    node.ishKunlari=kunWrap?Array.from(kunWrap.querySelectorAll('.oem-kun-chk:checked')).map(function(el){return el.value;}):[];
     orgSave(); notify('Saqlandi ✓'); orgCloseModal(); renderOrg();
   }
   function orgAddChildModal(id){
