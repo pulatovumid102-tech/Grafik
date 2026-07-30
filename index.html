@@ -312,7 +312,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
     <div class="section-item" onclick="goTo('p-partnership-calls')">
       <div style="display:flex;align-items:center;flex:1;min-width:0">
         <div class="section-num">02</div>
-        <div class="section-name">📞 Restoranlarga qo'ng'iroq</div>
+        <div class="section-name">📞 Zvonok 1</div>
       </div>
       <span class="chevron">›</span>
     </div>
@@ -320,6 +320,13 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
       <div style="display:flex;align-items:center;flex:1;min-width:0">
         <div class="section-num">03</div>
         <div class="section-name">⚠️ Muammoli hamkorlar</div>
+      </div>
+      <span class="chevron">›</span>
+    </div>
+    <div class="section-item" onclick="goTo('p-zvonok2')">
+      <div style="display:flex;align-items:center;flex:1;min-width:0">
+        <div class="section-num">04</div>
+        <div class="section-name">📞 Zvonok 2</div>
       </div>
       <span class="chevron">›</span>
     </div>
@@ -1091,11 +1098,22 @@ function renderMurojaatQollanma(){
   <div class="page-topbar">
     <div class="page-header">
       <button class="back-btn" onclick="goBack('p-dashboard')">← Orqaga</button>
-      <span class="page-title">Restoranlarga qo'ng'iroq</span>
+      <span class="page-title">Zvonok 1</span>
     </div>
   </div>
   <div class="search-wrap"><input class="search-inp" id="search-partnership-calls" placeholder="🔍 Restoran nomi..." oninput="renderPartnershipCalls()"></div>
   <div id="partnership-calls-list" class="section-list"></div>
+</div>
+
+<div class="page" id="p-zvonok2">
+  <div class="page-topbar">
+    <div class="page-header">
+      <button class="back-btn" onclick="goTo('p-dashboard')">← Orqaga</button>
+      <span class="page-title">Zvonok 2</span>
+    </div>
+  </div>
+  <div class="search-wrap"><input class="search-inp" id="search-zvonok2" placeholder="🔍 Restoran nomi..." oninput="renderZvonok2()"></div>
+  <div id="zvonok2-list" class="section-list"></div>
 </div>
 
 <div class="page" id="p-muammoli-hamkorlar">
@@ -2092,6 +2110,7 @@ var MUAMMOLI_BUYURTMA_HOLATLARI=['Buyurtma bekor qilindi, pul qaytarildi','Promo
 var MUAMMOLI_MUDDAT_SOAT=24;
 var MUAMMOLI_TOLOV_SOM=5000;
 var MUAMMOLI_GROUP_RESTORAN=-5467968653;
+var ZVONOK2_GROUP_ID=-5450377196;
 var MUAMMOLI_GROUP_TEXNIK=-5264364602;
 var MUAMMOLI_GROUP_BUXGALTERIYA=-1003267096591;
 var MUAMMOLI_GROUP_BUXGALTERIYA_PROMOKOD=-5574268734;
@@ -3657,7 +3676,12 @@ function renderPartnershipCalls(){
     var parts=r.berishVaqtiDan.split(':');
     return parseInt(parts[0],10)*60+parseInt(parts[1],10);
   }
-  var list=(baza415Db.restoranlar||[]).slice().sort(function(a,b){
+  var list=(baza415Db.restoranlar||[]).filter(function(r){
+    if(!r.berishVaqtiDan) return false;
+    var q=r.qongiroq||{};
+    if(q.lastCalledDate===today) return false;
+    return true;
+  }).sort(function(a,b){
     return servingMinutes(a)-servingMinutes(b);
   });
   if(q2) list=list.filter(function(r){ return r.nom.toLowerCase().includes(q2); });
@@ -3981,6 +4005,140 @@ function partnershipSaveIzoh(restoranId){
   r.qongiroq.izoh=val;
   baza415Save(); orgCloseModal(); renderPartnershipCalls(); notify('Saqlandi ✓');
 }
+
+// =========================
+// ZVONOK 2 — berish vaqti boshlangan restoranlarga qo'ng'iroq
+// =========================
+var zvonok2ExpandedId=null;
+function zvonok2ToggleExpand(id){
+  zvonok2ExpandedId=(zvonok2ExpandedId===id)?null:id;
+  renderZvonok2();
+}
+function renderZvonok2(){
+  var today=partnershipTodayStr();
+  var q2=(document.getElementById('search-zvonok2')?.value||'').trim().toLowerCase();
+  var now=new Date();
+  var nowMinutes=now.getHours()*60+now.getMinutes();
+  function servingMinutes(r){
+    if(!r.berishVaqtiDan) return 999999;
+    var parts=r.berishVaqtiDan.split(':');
+    return parseInt(parts[0],10)*60+parseInt(parts[1],10);
+  }
+  var list=(baza415Db.restoranlar||[]).filter(function(r){
+    if(!r.berishVaqtiDan) return false;
+    if(servingMinutes(r)>nowMinutes) return false;
+    var q=r.qongiroq2||{};
+    if(q.lastCalledDate===today) return false;
+    return true;
+  }).sort(function(a,b){
+    return servingMinutes(a)-servingMinutes(b);
+  });
+  if(q2) list=list.filter(function(r){ return r.nom.toLowerCase().includes(q2); });
+  var h=list.map(function(r,i){
+    var q=r.qongiroq2||{};
+    var vaqt=r.berishVaqtiDan?(r.berishVaqtiGacha?(r.berishVaqtiDan+'–'+r.berishVaqtiGacha):r.berishVaqtiDan):'';
+    var isOpen=zvonok2ExpandedId===r.id;
+    var compactRow=`<div class="section-item" onclick="zvonok2ToggleExpand('${r.id}')">
+      <div style="display:flex;align-items:center;flex:1;min-width:0">
+        <div class="section-num">${String(i+1).padStart(2,'0')}</div>
+        <div style="min-width:0">
+          <div class="section-name">${esc(r.nom)}</div>
+          ${vaqt?`<div style="font-size:15px;font-weight:700;color:var(--lime);margin-top:3px">🍽 ${esc(vaqt)}</div>`:''}
+        </div>
+      </div>
+      <span class="chevron">${isOpen?'⌄':'›'}</span>
+    </div>`;
+    if(!isOpen)return compactRow;
+    var contacts=partnershipCallContacts(r.nom);
+    var detail=`<div class="mm-card" style="margin-top:-6px;margin-bottom:10px;border-top-left-radius:0;border-top-right-radius:0">
+      ${muammoliContactsRowsHtml(contacts)}
+      <div style="margin-top:6px">
+        <span class="mm-seclbl">Izoh</span>
+        <div style="font-size:13px;color:#2e2c28;margin-top:4px">${q.izoh?esc(q.izoh):'<span style="color:#9a9588">Izoh yo\'q</span>'}</div>
+      </div>
+      <div class="mm-btns" style="margin-top:8px;flex-wrap:wrap">
+        <button class="sek-abtn" onclick="zvonok2MarkCalled('${r.id}')">☎ Tel qildim</button>
+        <button class="sek-abtn" onclick="zvonok2EditIzoh('${r.id}')">✏ Izohni tahrirlash</button>
+        <button class="sek-abtn" onclick="partnershipEditContactsModal('${r.id}')">📞 Raqamlarni tahrirlash</button>
+      </div>
+    </div>`;
+    return compactRow+detail;
+  }).join('');
+  if(!list.length)h=`<div style="text-align:center;padding:24px;color:var(--white-50);font-size:13px">${q2?'Topilmadi':"Hozircha berish vaqti boshlangan restoran yo'q"}</div>`;
+  document.getElementById('zvonok2-list').innerHTML=h;
+}
+function zvonok2MarkCalled(restoranId){
+  var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">Qo'ng'iroq izohi (ixtiyoriy)</div>
+    <div class="frow"><textarea class="fi" id="zv2-izoh-inp" style="min-height:70px;resize:vertical" placeholder="Nima deyishdi..."></textarea></div>
+    <div class="fbtns">
+      <button class="fsave" id="zv2-save-btn" onclick="zvonok2SaveCalled('${restoranId}')">Saqlash</button>
+      <button class="fcancel" onclick="orgCloseModal()">Bekor</button>
+    </div>`;
+  orgShowModal(html);
+  setTimeout(function(){ var inp=document.getElementById('zv2-izoh-inp'); if(inp) inp.focus(); }, 50);
+}
+async function zvonok2SaveCalled(restoranId){
+  var btn=document.getElementById('zv2-save-btn');
+  if(btn){ if(btn.disabled)return; btn.disabled=true; btn.textContent='Saqlanmoqda...'; }
+  var izohInp=document.getElementById('zv2-izoh-inp').value.trim();
+  var lastCalledBy=kaitenMyFio()||'Xodim';
+  var lastCalledAt=new Date().toISOString();
+  var lastCalledDate=partnershipTodayStr();
+  var ok=false, savedNom='';
+  try{
+    var resp=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.baza415',{headers:SB_H});
+    var rows=await resp.json();
+    if(rows&&rows.length&&rows[0].data){
+      var freshData=rows[0].data;
+      var freshR=(freshData.restoranlar||[]).find(x=>x.id===restoranId);
+      if(freshR){
+        if(!freshR.qongiroq2)freshR.qongiroq2={};
+        freshR.qongiroq2.lastCalledDate=lastCalledDate;
+        freshR.qongiroq2.lastCalledBy=lastCalledBy;
+        freshR.qongiroq2.lastCalledAt=lastCalledAt;
+        if(izohInp) freshR.qongiroq2.izoh=izohInp;
+        savedNom=freshR.nom;
+        var patchResp=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.baza415',{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({data:freshData})});
+        if(patchResp.ok){
+          ok=true;
+          baza415Db=freshData;
+        }
+      }
+    }
+  }catch(e){ console.error('zvonok2SaveCalled error', e); }
+  orgCloseModal();
+  if(!ok){ notify("⚠️ Saqlashda xatolik! Internetni tekshirib, qayta urinib ko'ring."); renderZvonok2(); return; }
+  renderZvonok2();
+  notify('Saqlandi ✓');
+  sendGroupMessage(
+    '☎ RESTORANGA QO\'NG\'IROQ QILINDI (Zvonok 2)\n'+
+    '🏪 Restoran: '+savedNom+'\n'+
+    '👤 Qo\'ng\'iroq qildi: '+lastCalledBy+'\n'+
+    '📝 Izoh: '+(izohInp||'—'),
+    ZVONOK2_GROUP_ID
+  );
+}
+function zvonok2EditIzoh(restoranId){
+  var r=baza415Db.restoranlar.find(x=>x.id===restoranId);
+  if(!r)return;
+  var current=(r.qongiroq2&&r.qongiroq2.izoh)||'';
+  var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">Izohni tahrirlash</div>
+    <div class="frow"><textarea class="fi" id="zv2-izoh-edit" style="min-height:90px;resize:vertical">${esc(current)}</textarea></div>
+    <div class="fbtns">
+      <button class="fsave" onclick="zvonok2SaveIzoh('${restoranId}')">Saqlash</button>
+      <button class="fcancel" onclick="document.getElementById('zv2-izoh-edit').value=''">Tozalash</button>
+    </div>
+    <button class="fcancel" style="width:100%;margin-top:8px" onclick="orgCloseModal()">Yopish</button>`;
+  orgShowModal(html);
+}
+function zvonok2SaveIzoh(restoranId){
+  var r=baza415Db.restoranlar.find(x=>x.id===restoranId);
+  if(!r)return;
+  var val=document.getElementById('zv2-izoh-edit').value.trim();
+  if(!r.qongiroq2)r.qongiroq2={};
+  r.qongiroq2.izoh=val;
+  baza415Save(); orgCloseModal(); renderZvonok2(); notify('Saqlandi ✓');
+}
 function baza415AllRestoranNomlari(){
   return (baza415Db.restoranlar||[]).map(function(r){ return r.nom; }).sort((a,b)=>a.localeCompare(b,'uz'));
 }
@@ -4235,6 +4393,7 @@ function sirlyRender(p){
   else if(p==='p-baza415')renderBaza415List();
   else if(p==='p-baza415-restoran')renderBaza415Restoran();
   else if(p==='p-partnership-calls')renderPartnershipCalls();
+  else if(p==='p-zvonok2')renderZvonok2();
   else if(p==='p-muammoli-hamkorlar')renderMuammoliHamkorlar();
   else if(p==='p-muammoli-hamkorlar-arxiv')renderMuammoliHamkorlarArxiv();
   else if(p==='p-mijoz-tarixi')renderMijozTarixi();
