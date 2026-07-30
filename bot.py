@@ -47,6 +47,7 @@ SIRLY_STAFF_GROUP_ID = -5076135815
 HR_GROUP_ID = -5370864546
 TOPSHIRIQLAR_GROUP_ID = -5550614907
 BUXGALTERIYA_PROMOKOD_GROUP_ID = -5574268734
+BAZA415_REPORT_GROUP_ID = -5228403271
 MINIAPP_URL = os.environ.get("MINIAPP_URL", "https://pulatovumid102-tech.github.io/Grafik/")
 POLL_SECONDS = int(os.environ.get("POLL_SECONDS", "15"))
 BATCH_LIMIT = int(os.environ.get("BATCH_LIMIT", "20"))
@@ -1034,6 +1035,104 @@ def build_pul_berish_excel(items: list, today_display: str) -> io.BytesIO:
     return buf
 
 
+def _contact_str(kontaktlar: list, rol_keyword: str) -> str:
+    matches = [k for k in kontaktlar if rol_keyword.lower() in (k.get("rol") or "").lower()]
+    if not matches:
+        return "—"
+    parts = []
+    for k in matches:
+        tel = k.get("tel") or "—"
+        ism = k.get("ism")
+        parts.append(f"{tel} ({ism})" if ism else tel)
+    return ", ".join(parts)
+
+
+def build_baza415_excel(restoranlar: list, today_display: str) -> io.BytesIO:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "415 baza"
+
+    normal = Font(name="Arial", size=10)
+    header_font = Font(name="Arial", bold=True, size=10, color="FFFFFF")
+    header_fill = PatternFill("solid", fgColor="1E7A4A")
+    thin = Side(style="thin", color="CCCCCC")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    center = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    left = Alignment(horizontal="left", vertical="center", wrap_text=True)
+
+    ws.merge_cells("A1:F1")
+    ws["A1"] = f"Sana: {today_display}"
+    ws["A1"].font = Font(name="Arial", bold=True, size=13)
+    ws.row_dimensions[1].height = 22
+
+    ws.merge_cells("A2:F2")
+    ws["A2"] = "415 BAZA — Restoranlar ro'yxati"
+    ws["A2"].font = Font(name="Arial", bold=True, size=12, color="1E7A4A")
+    ws.row_dimensions[2].height = 20
+
+    headers = ["№", "Restoran nomi", "Berish vaqti", "Menejer", "Kassir", "Call Center"]
+    header_row = 4
+    ws.row_dimensions[header_row].height = 20
+    for i, h in enumerate(headers, start=1):
+        c = ws.cell(row=header_row, column=i, value=h)
+        c.font = header_font
+        c.fill = header_fill
+        c.border = border
+        c.alignment = center
+
+    for idx, r in enumerate(restoranlar, start=1):
+        row_n = header_row + idx
+        ws.row_dimensions[row_n].height = 20
+        kontaktlar = r.get("kontaktlar") or []
+        dan = r.get("berishVaqtiDan") or ""
+        gacha = r.get("berishVaqtiGacha") or ""
+        vaqt = f"{dan}–{gacha}" if dan and gacha else (dan or "—")
+        row_vals = [
+            idx,
+            r.get("nom") or "—",
+            vaqt,
+            _contact_str(kontaktlar, "menejer"),
+            _contact_str(kontaktlar, "kassir"),
+            _contact_str(kontaktlar, "call"),
+        ]
+        for c_idx, val in enumerate(row_vals, start=1):
+            cell = ws.cell(row=row_n, column=c_idx, value=val)
+            cell.font = normal
+            cell.border = border
+            cell.alignment = center if c_idx in (1, 3) else left
+
+    widths = [5, 22, 14, 22, 22, 22]
+    for i, w in enumerate(widths, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf
+
+
+async def daily_baza415_report(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Har kuni 10:00 (Toshkent) da, 415 baza'dagi barcha restoranlar
+    ro'yxatini Excel fayl sifatida tegishli guruhga yuboradi."""
+    app = context.application
+    try:
+        rows = await sb_get("biznes_data", params={"id": "eq.baza415"})
+        baza_data = rows[0]["data"] if rows else {}
+        restoranlar = baza_data.get("restoranlar", []) if isinstance(baza_data, dict) else []
+        today_display = datetime.now(TASHKENT_TZ).strftime("%d.%m.%Y")
+        date_tag = datetime.now(TASHKENT_TZ).strftime("%Y%m%d")
+
+        buf = build_baza415_excel(restoranlar, today_display)
+        await app.bot.send_document(
+            chat_id=BAZA415_REPORT_GROUP_ID,
+            document=buf,
+            filename=f"415_baza_{date_tag}.xlsx",
+        )
+        log.info("415 baza hisoboti yuborildi: %d ta restoran", len(restoranlar))
+    except Exception as e:
+        log.error("415 baza hisoboti xatosi: %s", e)
+
+
 async def weekly_buxgalteriya_report(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Har juma 10:00 (Toshkent) da, hal bo'lmagan murojaatlar orasida
     'Promokod berish kerak' va 'Restoranga pul tashlab berish kerak'
@@ -1540,6 +1639,14 @@ async def test_hisobot_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     )
 
 
+async def test_baza415_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("⏳ Tekshirilmoqda, biroz kuting...")
+    await daily_baza415_report(context)
+    await update.message.reply_text(
+        "✅ Tayyor! Guruhni tekshiring — 415 baza Excel fayli o'sha yerga yuborildi."
+    )
+
+
 # ============================================================
 # /start BUYRUG'I — mini-appni ochish tugmasi
 # ============================================================
@@ -1580,6 +1687,7 @@ def main() -> None:
     app.add_handler(CommandHandler("start", start_cmd))
     app.add_handler(CommandHandler("test_dedlayn", test_deadline_cmd))
     app.add_handler(CommandHandler("test_hisobot", test_hisobot_cmd))
+    app.add_handler(CommandHandler("test_baza415", test_baza415_cmd))
     app.add_handler(MessageHandler(filters.PHOTO, handle_support_photo))
     app.add_handler(MessageHandler(filters.VIDEO_NOTE, handle_staff_video_note))
     app.job_queue.run_repeating(poll_job, interval=POLL_SECONDS, first=5)
@@ -1613,6 +1721,7 @@ def main() -> None:
 
     # Buxgalteriya — haftalik hisobot (Promokod + Pul berish), faqat JUMA 10:00 (Toshkent vaqti)
     app.job_queue.run_daily(weekly_buxgalteriya_report, time=dt_time(hour=10, minute=0, tzinfo=TASHKENT_TZ), days=(5,))
+    app.job_queue.run_daily(daily_baza415_report, time=dt_time(hour=10, minute=0, tzinfo=TASHKENT_TZ))
 
     # Ish davomati — ish boshlanishiga 10 daqiqa qolganda eslatma, har daqiqada tekshiriladi
     app.job_queue.run_repeating(check_ish_boshlanish_reminder, interval=60, first=15)
