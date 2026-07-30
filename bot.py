@@ -1297,6 +1297,43 @@ def _group_employees_by_dept(employees: list, org_nodes: list) -> dict:
     return by_dept
 
 
+async def daily_tomorrow_schedule_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Har kuni 22:00 (Toshkent) da, ertaga ishga chiqishi kerak bo'lgan
+    xodimlar ro'yxatini (bo'limlar bo'yicha, boshlanish-tugash vaqti bilan)
+    HR guruhiga yuboradi. Dam olish kunidagi xodimlar ro'yxatga kirmaydi."""
+    app = context.application
+    try:
+        org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
+        org_nodes = org_rows[0]["data"] if org_rows else []
+        employees = _org_employees_with_schedule(org_nodes)
+        if not employees:
+            return
+
+        tomorrow = datetime.now(TASHKENT_TZ) + timedelta(days=1)
+        tomorrow_kun = ISH_KUN_KEYLARI[tomorrow.weekday()]
+        tomorrow_display = tomorrow.strftime("%d.%m.%Y") + f" ({KUN_NOMLARI_UZ[tomorrow.weekday()]})"
+
+        active_tomorrow = [n for n in employees if n.get("ishKunlari") is None or tomorrow_kun in n.get("ishKunlari")]
+        if not active_tomorrow:
+            return
+
+        by_dept = _group_employees_by_dept(active_tomorrow, org_nodes)
+        lines = [f"📅 {tomorrow_display} — Ertangi ish jadvali", ""]
+        for dept, members in sorted(by_dept.items()):
+            lines.append(f"🏢 {dept}")
+            for n in members:
+                fio = n.get("fio") or n.get("name") or "—"
+                boshlanish = n.get("ishBoshlanish") or "—"
+                tugash = n.get("ishTugash") or "—"
+                lines.append(f"👤 {fio} — {boshlanish}–{tugash}")
+            lines.append("")
+
+        await app.bot.send_message(chat_id=HR_GROUP_ID, text="\n".join(lines))
+        log.info("Ertangi ish jadvali yuborildi: %d xodim", len(active_tomorrow))
+    except Exception as e:
+        log.error("Ertangi ish jadvali xatosi: %s", e)
+
+
 async def check_ish_boshlanish_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Kunning eng erta ish boshlanish vaqtiga 10 daqiqa qolganda — HR guruhiga
     BUGUNGI TO'LIQ jadval (barcha bo'lim, barcha xodim, dam olish kuni bilan)
@@ -1794,6 +1831,7 @@ def main() -> None:
 
     # Ish davomati — ish boshlanishiga 10 daqiqa qolganda eslatma, har daqiqada tekshiriladi
     app.job_queue.run_repeating(check_ish_boshlanish_reminder, interval=60, first=15)
+    app.job_queue.run_daily(daily_tomorrow_schedule_reminder, time=dt_time(hour=22, minute=0, tzinfo=TASHKENT_TZ))
     # Ish davomati — ish boshlanishidan 30 daqiqa o'tsa, kelmaganlar ro'yxati
     app.job_queue.run_repeating(check_ish_kelmagan, interval=60, first=20)
 
