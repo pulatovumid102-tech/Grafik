@@ -4046,7 +4046,10 @@ function renderZvonok2(){
           ${vaqt?`<div style="font-size:15px;font-weight:700;color:var(--lime);margin-top:3px">🍽 ${esc(vaqt)}</div>`:''}
         </div>
       </div>
-      <span class="chevron">${isOpen?'⌄':'›'}</span>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span class="mm-badge mm-badge-ochiq">—</span>
+        <span class="chevron">${isOpen?'⌄':'›'}</span>
+      </div>
     </div>`;
     if(!isOpen)return compactRow;
     var contacts=partnershipCallContacts(r.nom);
@@ -4629,7 +4632,7 @@ function delAcadItem(secId,itemId){
 function toggleMsg(id){var wrap=document.getElementById('nm-wrap-'+id);var btn=document.getElementById('nm-btn-'+id);if(!wrap)return;var collapsed=wrap.classList.contains('node-msg-collapsed');if(collapsed){wrap.classList.remove('node-msg-collapsed');btn.textContent='▲';}else{wrap.classList.add('node-msg-collapsed');btn.textContent='▼';}}
 
 // =================== KAITEN ===================
-var KAITEN_DEPTS = ["Sotuv bo'limi","Partnership bo'limi","Support bo'limi","IT bo'limi","Buxgalteriya bo'limi","Yuridik bo'limi"];
+var KAITEN_DEPTS = ["Sotuv bo'limi","Partnership bo'limi","Support bo'limi","IT bo'limi","Buxgalteriya bo'limi","Yuridik bo'limi","Task Management"];
 var KAITEN_ROLE_LABELS = {ijrochi:'Ijrochi', nazoratchi:'Nazoratchi', yaratuvchi:'Yaratuvchi', other:'Boshqa'};
 var kaitenChatOpen = null;
 var kaitenAlarmFormOpen=null;
@@ -5197,10 +5200,24 @@ function kaitenFormatDateOnly(dl){
 function kaitenSaveEdit(id){
   var t = kaitenTasks.find(function(x){return x.id===id;});
   if(!t) return;
+  var oldDeadline = t.deadline;
   var f = kaitenReadFields('ke');
   if(!f.text){ notify('Vazifa nomini kiriting!'); return; }
   Object.assign(t, f);
   kaitenSave(); notify('Saqlandi ✓'); orgCloseModal(); renderKaiten();
+  if(f.deadline && f.deadline!==oldDeadline){
+    var who = kaitenCreatorNameNow();
+    var lines=[
+      '📅 DEDLAYN O\'ZGARTIRILDI',
+      '',
+      '👤 '+who,
+      '🏢 '+t.dept+'dagi 📌 "'+t.text+'" vazifasi uchun',
+      '',
+      '⏰ Eski: '+(oldDeadline?kaitenFormatDeadline(oldDeadline):'—'),
+      '⏰ Yangi: '+kaitenFormatDeadline(f.deadline)
+    ];
+    sendGroupMessage(lines.join('\n'), TOPSHIRIQLAR_GROUP_ID);
+  }
 }
 function kaitenDelTask(id){
   var t = kaitenTasks.find(x=>x.id===id);
