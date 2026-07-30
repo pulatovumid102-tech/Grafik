@@ -970,8 +970,20 @@ async def weekly_buxgalteriya_report(context: ContextTypes.DEFAULT_TYPE) -> None
 
 # ============================================================
 # ISH DAVOMATI — krujok (video note) orqali tasdiqlash
+#
+# Race condition oldini olish uchun har bir jarayon O'ZINING
+# alohida Supabase qatoriga yozadi (bir-birining ustidan
+# yozib yubormasligi uchun):
+#   - ATTENDANCE_KELGANLAR_ID   -> handle_staff_video_note yozadi
+#   - ATTENDANCE_REMINDED_ID    -> check_ish_boshlanish_reminder yozadi
+#   - ATTENDANCE_KELMAGAN_ID    -> check_ish_kelmagan yozadi
 # ============================================================
-ATTENDANCE_STATE_ID = "ish_davomat"
+ATTENDANCE_KELGANLAR_ID = "ish_davomat_kelganlar"
+ATTENDANCE_REMINDED_ID = "ish_davomat_reminded"
+ATTENDANCE_KELMAGAN_ID = "ish_davomat_kelmagan"
+
+KUN_NOMLARI_UZ = ["Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba", "Yakshanba"]
+ISH_KUN_KEYLARI = ["dush", "sesh", "chor", "pay", "juma", "shan", "yak"]
 
 
 def _org_employees_with_schedule(org_nodes: list) -> list:
@@ -982,13 +994,38 @@ def _org_employees_with_schedule(org_nodes: list) -> list:
 
 
 def _today_ish_kun_key() -> str:
-    kunlar = ["dush", "sesh", "chor", "pay", "juma", "shan", "yak"]
-    return kunlar[datetime.now(TASHKENT_TZ).weekday()]
+    return ISH_KUN_KEYLARI[datetime.now(TASHKENT_TZ).weekday()]
+
+
+def _find_dept_name(node: dict, nodes_by_id: dict) -> str:
+    """Xodim tugunidan yuqoriga qarab, birinchi 'bolim' turidagi ota tugunni topadi."""
+    parent_id = node.get("parentId")
+    seen = set()
+    while parent_id and parent_id not in seen:
+        seen.add(parent_id)
+        parent = nodes_by_id.get(parent_id)
+        if not parent:
+            break
+        if parent.get("cardType") == "bolim":
+            return parent.get("name") or "Boshqa bo'lim"
+        parent_id = parent.get("parentId")
+    return "Boshqa bo'lim"
+
+
+def _group_employees_by_dept(employees: list, org_nodes: list) -> dict:
+    nodes_by_id = {n.get("id"): n for n in org_nodes if n.get("id")}
+    by_dept: dict = {}
+    for n in employees:
+        dept = _find_dept_name(n, nodes_by_id)
+        by_dept.setdefault(dept, []).append(n)
+    return by_dept
 
 
 async def check_ish_boshlanish_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Har xodimning ish boshlanish vaqtiga 10 daqiqa qolganda, Sirly Staff
-    guruhiga o'sha vaqtga to'g'ri keladigan xodimlarni tag qilib eslatma yuboradi."""
+    """Kunning eng erta ish boshlanish vaqtiga 10 daqiqa qolganda — HR guruhiga
+    BUGUNGI TO'LIQ jadval (barcha bo'lim, barcha xodim, dam olish kuni bilan)
+    yuboriladi. Boshqa (keyinroq) vaqtlar uchun esa faqat o'sha vaqtga to'g'ri
+    keladigan xodimlar, o'z bo'limi bilan, qisqa xabar sifatida yuboriladi."""
     app = context.application
     try:
         org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
@@ -1000,63 +1037,85 @@ async def check_ish_boshlanish_reminder(context: ContextTypes.DEFAULT_TYPE) -> N
         today_kun = _today_ish_kun_key()
         now = datetime.now(TASHKENT_TZ)
         today_str = now.strftime("%Y-%m-%d")
+        today_display = now.strftime("%d.%m.%Y") + f" ({KUN_NOMLARI_UZ[now.weekday()]})"
 
-        state_rows = await sb_get("biznes_data", params={"id": f"eq.{ATTENDANCE_STATE_ID}"})
+        state_rows = await sb_get("biznes_data", params={"id": f"eq.{ATTENDANCE_REMINDED_ID}"})
         state = state_rows[0]["data"] if state_rows and isinstance(state_rows[0].get("data"), dict) else {}
-        reminded = state.setdefault("reminded", {}).setdefault(today_str, [])
+        reminded = state.setdefault(today_str, [])
 
-        due_times = set()
-        for n in employees:
-            kunlar = n.get("ishKunlari")
-            if kunlar is not None and today_kun not in kunlar:
-                continue
-            vaqt = n.get("ishBoshlanish")
+        active_today = [n for n in employees if n.get("ishKunlari") is None or today_kun in n.get("ishKunlari")]
+        if not active_today:
+            return
+
+        times_today = sorted(set(n.get("ishBoshlanish") for n in active_today if n.get("ishBoshlanish")))
+        if not times_today:
+            return
+        earliest = times_today[0]
+
+        due_times = []
+        for vaqt in times_today:
             try:
                 h, m = map(int, vaqt.split(":"))
             except Exception:
                 continue
             start_dt = now.replace(hour=h, minute=m, second=0, microsecond=0)
             diff_minutes = (start_dt - now).total_seconds() / 60
-            key = vaqt
-            if 9 <= diff_minutes <= 10 and key not in reminded:
-                due_times.add(vaqt)
+            if 9 <= diff_minutes <= 10 and vaqt not in reminded:
+                due_times.append(vaqt)
 
         if not due_times:
             return
 
+        instruction = (
+            "📹 Ishga kelganingizni video xabar (krujok) orqali tasdiqlang — "
+            "video'da ofis kompyuterining sana va soatini, hamda o'zingizni "
+            "tasdiqlaydigan biror belgi (masalan qo'l bilan ishora) ko'rsating."
+        )
+
         for vaqt in due_times:
-            group = [
-                n for n in employees
-                if n.get("ishBoshlanish") == vaqt
-                and (n.get("ishKunlari") is None or today_kun in n.get("ishKunlari"))
-            ]
-            if not group:
-                continue
-            usernames = []
-            for n in group:
-                tgs = parse_tg_field(n)
-                if tgs:
-                    usernames.append(tgs[0])
-            tag_line = " ".join(f"@{u}" for u in usernames) if usernames else ""
-            text = (
-                f"⏰ Ish vaqti boshlanishiga 10 daqiqa qolgan xodimlar ({vaqt}):\n"
-                f"{tag_line}\n\n"
-                "📹 Ishga kelganingizni video xabar (krujok) orqali tasdiqlang — "
-                "video'da ofis kompyuterining sana va soatini, hamda o'zingizni "
-                "tasdiqlaydigan biror belgi (masalan qo'l bilan ishora) ko'rsating."
-            )
+            if vaqt == earliest:
+                # Bugungi TO'LIQ jadval, bo'limlar bo'yicha guruhlangan
+                by_dept = _group_employees_by_dept(employees, org_nodes)
+                lines = [f"📅 {today_display} — Bugungi ish jadvali", ""]
+                for dept, members in sorted(by_dept.items()):
+                    lines.append(f"🏢 {dept}")
+                    for n in members:
+                        fio = n.get("fio") or n.get("name") or "—"
+                        kunlar = n.get("ishKunlari")
+                        if kunlar is not None and today_kun not in kunlar:
+                            lines.append(f"👤 {fio} — Dam olish kuni")
+                        else:
+                            lines.append(f"👤 {fio} — {n.get('ishBoshlanish','—')}")
+                    lines.append("")
+                lines.append(instruction)
+                text = "\n".join(lines)
+            else:
+                group = [n for n in active_today if n.get("ishBoshlanish") == vaqt]
+                by_dept = _group_employees_by_dept(group, org_nodes)
+                lines = [f"⏰ Ish vaqti boshlanishiga 10 daqiqa qolgan xodimlar ({vaqt}):", ""]
+                for dept, members in sorted(by_dept.items()):
+                    lines.append(f"🏢 {dept}")
+                    for n in members:
+                        fio = n.get("fio") or n.get("name") or "—"
+                        tgs = parse_tg_field(n)
+                        tag = f" (@{tgs[0]})" if tgs else ""
+                        lines.append(f"👤 {fio}{tag}")
+                    lines.append("")
+                lines.append(instruction)
+                text = "\n".join(lines)
+
             await app.bot.send_message(chat_id=HR_GROUP_ID, text=text)
             reminded.append(vaqt)
-            log.info("Ish boshlanish eslatmasi yuborildi: %s (%d xodim)", vaqt, len(group))
+            log.info("Ish boshlanish eslatmasi yuborildi: %s", vaqt)
 
-        await sb_upsert("biznes_data", ATTENDANCE_STATE_ID, {"data": state})
+        await sb_upsert("biznes_data", ATTENDANCE_REMINDED_ID, {"data": state})
     except Exception as e:
         log.error("Ish boshlanish eslatmasi xatosi: %s", e)
 
 
 async def handle_staff_video_note(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """HR guruhiga kelgan krujok (video note) xabarlarini kuzatib,
-    yuboruvchini ishga kelgan deb belgilaydi va HR guruhiga xabar beradi."""
+    yuboruvchini ishga kelgan deb belgilaydi."""
     if not update.effective_chat or update.effective_chat.id != HR_GROUP_ID:
         return
     user = update.effective_user
@@ -1067,14 +1126,14 @@ async def handle_staff_video_note(update: Update, context: ContextTypes.DEFAULT_
         today_str = now.strftime("%Y-%m-%d")
         username = user.username.lstrip("@")
 
-        state_rows = await sb_get("biznes_data", params={"id": f"eq.{ATTENDANCE_STATE_ID}"})
+        state_rows = await sb_get("biznes_data", params={"id": f"eq.{ATTENDANCE_KELGANLAR_ID}"})
         state = state_rows[0]["data"] if state_rows and isinstance(state_rows[0].get("data"), dict) else {}
-        kelganlar = state.setdefault("kelganlar", {}).setdefault(today_str, {})
+        kelganlar = state.setdefault(today_str, {})
         if username in kelganlar:
             return  # allaqachon tasdiqlangan
         kelganlar[username] = now.strftime("%H:%M:%S")
 
-        await sb_upsert("biznes_data", ATTENDANCE_STATE_ID, {"data": state})
+        await sb_upsert("biznes_data", ATTENDANCE_KELGANLAR_ID, {"data": state})
 
         fio = user.full_name or f"@{username}"
         try:
@@ -1089,7 +1148,10 @@ async def handle_staff_video_note(update: Update, context: ContextTypes.DEFAULT_
             pass
 
         try:
-            await app_bot_send_hr(context, fio, now)
+            await context.application.bot.send_message(
+                chat_id=HR_GROUP_ID,
+                text=f"✅ {fio} — {now.strftime('%H:%M')} da ishga keldi (video orqali tasdiqlandi)",
+            )
         except Exception as e:
             log.error("HR guruhga xabar yuborishda xato: %s", e)
         log.info("Davomat qayd etildi: %s -> %s", username, now.strftime("%H:%M:%S"))
@@ -1097,17 +1159,9 @@ async def handle_staff_video_note(update: Update, context: ContextTypes.DEFAULT_
         log.error("Davomat qayd etish xatosi: %s", e)
 
 
-async def app_bot_send_hr(context: ContextTypes.DEFAULT_TYPE, fio: str, now: datetime) -> None:
-    app = context.application
-    await app.bot.send_message(
-        chat_id=HR_GROUP_ID,
-        text=f"✅ {fio} — {now.strftime('%H:%M')} da ishga keldi (video orqali tasdiqlandi)",
-    )
-
-
 async def check_ish_kelmagan(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Har xodimning ish boshlanishidan 30 daqiqa o'tgach, agar krujok
-    kelmagan bo'lsa, Sirly Staff guruhiga kelmaganlar ro'yxatini yuboradi."""
+    kelmagan bo'lsa, HR guruhiga kelmaganlar ro'yxatini yuboradi."""
     app = context.application
     try:
         org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
@@ -1120,10 +1174,13 @@ async def check_ish_kelmagan(context: ContextTypes.DEFAULT_TYPE) -> None:
         now = datetime.now(TASHKENT_TZ)
         today_str = now.strftime("%Y-%m-%d")
 
-        state_rows = await sb_get("biznes_data", params={"id": f"eq.{ATTENDANCE_STATE_ID}"})
+        kelganlar_rows = await sb_get("biznes_data", params={"id": f"eq.{ATTENDANCE_KELGANLAR_ID}"})
+        kelganlar_state = kelganlar_rows[0]["data"] if kelganlar_rows and isinstance(kelganlar_rows[0].get("data"), dict) else {}
+        kelganlar = kelganlar_state.get(today_str, {})
+
+        state_rows = await sb_get("biznes_data", params={"id": f"eq.{ATTENDANCE_KELMAGAN_ID}"})
         state = state_rows[0]["data"] if state_rows and isinstance(state_rows[0].get("data"), dict) else {}
-        kelganlar = state.get("kelganlar", {}).get(today_str, {})
-        checked = state.setdefault("kelmagan_tekshirildi", {}).setdefault(today_str, [])
+        checked = state.setdefault(today_str, [])
 
         due_times = set()
         for n in employees:
@@ -1165,9 +1222,11 @@ async def check_ish_kelmagan(context: ContextTypes.DEFAULT_TYPE) -> None:
                 await app.bot.send_message(chat_id=HR_GROUP_ID, text="\n".join(lines))
                 log.info("Kelmaganlar ro'yxati yuborildi: %s (%d kishi)", vaqt, len(missing))
 
-        await sb_upsert("biznes_data", ATTENDANCE_STATE_ID, {"data": state})
+        await sb_upsert("biznes_data", ATTENDANCE_KELMAGAN_ID, {"data": state})
     except Exception as e:
         log.error("Kelmaganlar tekshiruvi xatosi: %s", e)
+
+
 
 
 # ============================================================
@@ -1444,7 +1503,7 @@ def main() -> None:
     app.job_queue.run_daily(daily_today_tasks_reminder, time=dt_time(hour=10, minute=0, tzinfo=TASHKENT_TZ))
 
     # Buxgalteriya — haftalik hisobot (Promokod + Pul berish), faqat JUMA 10:00 (Toshkent vaqti)
-    app.job_queue.run_daily(weekly_buxgalteriya_report, time=dt_time(hour=10, minute=0, tzinfo=TASHKENT_TZ), days=(4,))
+    app.job_queue.run_daily(weekly_buxgalteriya_report, time=dt_time(hour=10, minute=0, tzinfo=TASHKENT_TZ), days=(5,))
 
     # Ish davomati — ish boshlanishiga 10 daqiqa qolganda eslatma, har daqiqada tekshiriladi
     app.job_queue.run_repeating(check_ish_boshlanish_reminder, interval=60, first=15)
