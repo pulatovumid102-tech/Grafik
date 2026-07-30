@@ -59,6 +59,7 @@ KAITEN_DEPTS = [
     "IT bo'limi",
     "Buxgalteriya bo'limi",
     "Yuridik bo'limi",
+    "Task Management",
 ]
 
 logging.basicConfig(
