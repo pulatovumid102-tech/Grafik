@@ -42,6 +42,7 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV
 GROUP_CHAT_ID = int(os.environ.get("GROUP_CHAT_ID", "-1003823489442"))
 SUPPORT_GROUP_ID = -1003823489442
 PARTNERSHIP_GROUP_ID = -5467968653
+ZVONOK2_GROUP_ID = -5450377196
 SIRLY_STAFF_GROUP_ID = -5076135815
 HR_GROUP_ID = -5370864546
 TOPSHIRIQLAR_GROUP_ID = -5550614907
@@ -685,7 +686,7 @@ async def check_calling_status_before_serving(context: ContextTypes.DEFAULT_TYPE
             called = [r for r in group if (r.get("qongiroq") or {}).get("lastCalledDate") == today_str]
             not_called = [r for r in group if (r.get("qongiroq") or {}).get("lastCalledDate") != today_str]
 
-            lines = [f"📋 {dan} uchun qo'ng'iroqlar holati", ""]
+            lines = [f"📋 {dan} da berish vaqti boshlangan restoranlarni qaysi biriga telefon qilingan va qilinmaganlari ro'yxati", ""]
             lines.append(f"✅ Tel qilingan: {len(called)} ta")
             for r in called:
                 lines.append(f"🏪 {r.get('nom','—')}")
@@ -693,6 +694,16 @@ async def check_calling_status_before_serving(context: ContextTypes.DEFAULT_TYPE
             lines.append(f"⏳ Tel qilinmagan: {len(not_called)} ta")
             for r in not_called:
                 lines.append(f"🏪 {r.get('nom','—')}")
+
+            try:
+                org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
+                org_nodes = org_rows[0]["data"] if org_rows else []
+                usernames = collect_dept_usernames(org_nodes, "partnership")
+                if usernames:
+                    lines.append("")
+                    lines.append(" ".join(f"@{u}" for u in usernames))
+            except Exception as e:
+                log.error("Org struktura tag xatosi (zvonok1 holati): %s", e)
 
             await app.bot.send_message(chat_id=PARTNERSHIP_GROUP_ID, text="\n".join(lines))
             log.info("Qo'ng'iroq holati yuborildi: %s", dan)
@@ -740,6 +751,102 @@ async def daily_calling_report(context: ContextTypes.DEFAULT_TYPE) -> None:
         log.info("Kunlik qo'ng'iroqlar hisoboti yuborildi: %d/%d", len(called), len(restoranlar))
     except Exception as e:
         log.error("Kunlik qo'ng'iroqlar hisoboti xatosi: %s", e)
+
+
+async def check_zvonok2_call_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Ovqat berish vaqti boshlanganidan 30 daqiqa o'tgach, o'sha vaqtga
+    to'g'ri kelgan restoranlarga qo'ng'iroq qilish kerakligini Zvonok 2
+    guruhiga yuboradi (Partnership xodimlarini tag qilib)."""
+    app = context.application
+    try:
+        rows = await sb_get("biznes_data", params={"id": "eq.baza415"})
+        if not rows:
+            return
+        baza_data = rows[0]["data"]
+        if not isinstance(baza_data, dict):
+            return
+        restoranlar = baza_data.get("restoranlar", [])
+        now = datetime.now(TASHKENT_TZ)
+        today_str = now.strftime("%Y-%m-%d")
+        changed = False
+
+        due_times = set()
+        for r in restoranlar:
+            dan = r.get("berishVaqtiDan")
+            if not dan:
+                continue
+            try:
+                h, m = map(int, dan.split(":"))
+            except Exception:
+                continue
+            serving_dt = now.replace(hour=h, minute=m, second=0, microsecond=0)
+            diff_minutes = (now - serving_dt).total_seconds() / 60
+            if 29 <= diff_minutes <= 30 and r.get("zvonok2XabarSanasi_" + dan) != today_str:
+                due_times.add(dan)
+
+        for dan in due_times:
+            group = [r for r in restoranlar if r.get("berishVaqtiDan") == dan]
+
+            lines = [f"📋 {dan}da berish vaqti boshlangan restoranlar ro'yxatiga qo'ng'iroq qiling", ""]
+            for r in group:
+                lines.append(f"🏪 {r.get('nom','—')}")
+
+            try:
+                org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
+                org_nodes = org_rows[0]["data"] if org_rows else []
+                usernames = collect_dept_usernames(org_nodes, "partnership")
+                if usernames:
+                    lines.append("")
+                    lines.append(" ".join(f"@{u}" for u in usernames))
+            except Exception as e:
+                log.error("Org struktura tag xatosi (zvonok2): %s", e)
+
+            await app.bot.send_message(chat_id=ZVONOK2_GROUP_ID, text="\n".join(lines))
+            log.info("Zvonok 2 qo'ng'iroq eslatmasi yuborildi: %s", dan)
+
+            for r in group:
+                r["zvonok2XabarSanasi_" + dan] = today_str
+            changed = True
+
+        if changed:
+            await sb_patch("biznes_data", "baza415", {"data": baza_data})
+    except Exception as e:
+        log.error("Zvonok 2 qo'ng'iroq eslatmasi xatosi: %s", e)
+
+
+async def daily_zvonok2_report(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Har kuni 23:00 (Toshkent) da, Zvonok 2 bo'yicha bugun kim tel
+    qilingan, kim qilinmaganini Zvonok 2 guruhiga umumiy hisobot
+    sifatida yuboradi."""
+    app = context.application
+    try:
+        rows = await sb_get("biznes_data", params={"id": "eq.baza415"})
+        if not rows:
+            return
+        baza_data = rows[0]["data"]
+        if not isinstance(baza_data, dict):
+            return
+        restoranlar = [r for r in baza_data.get("restoranlar", []) if r.get("berishVaqtiDan")]
+        today = datetime.now(TASHKENT_TZ)
+        today_str = today.strftime("%Y-%m-%d")
+        today_display = today.strftime("%d.%m.%Y")
+
+        called = [r for r in restoranlar if (r.get("qongiroq2") or {}).get("lastCalledDate") == today_str]
+        not_called = [r for r in restoranlar if (r.get("qongiroq2") or {}).get("lastCalledDate") != today_str]
+
+        lines = [f"📊 KUNLIK QO'NG'IROQLAR HISOBOTI (Zvonok 2) — {today_display}", ""]
+        lines.append(f"✅ Tel qilingan: {len(called)} ta")
+        for r in called:
+            lines.append(f"🏪 {r.get('nom','—')}")
+        lines.append("")
+        lines.append(f"❌ Tel qilinmagan: {len(not_called)} ta")
+        for r in not_called:
+            lines.append(f"🏪 {r.get('nom','—')}")
+
+        await app.bot.send_message(chat_id=ZVONOK2_GROUP_ID, text="\n".join(lines))
+        log.info("Zvonok 2 kunlik hisoboti yuborildi: %d/%d", len(called), len(restoranlar))
+    except Exception as e:
+        log.error("Zvonok 2 kunlik hisoboti xatosi: %s", e)
 
 
 def _fmt_date_only(iso: str) -> str:
@@ -1495,6 +1602,7 @@ def main() -> None:
     # 415 baza — ovqat berish vaqtiga 1 soat qolganda Partnership guruhiga eslatma
     app.job_queue.run_repeating(check_serving_time_reminders, interval=60, first=30)
     app.job_queue.run_repeating(check_calling_status_before_serving, interval=60, first=45)
+    app.job_queue.run_repeating(check_zvonok2_call_reminder, interval=60, first=50)
 
     # Kaiten — ertangi dedlaynlar haqida kunlik eslatma, har kuni 23:00 (Toshkent vaqti)
     app.job_queue.run_daily(daily_deadline_reminder, time=dt_time(hour=23, minute=0, tzinfo=TASHKENT_TZ))
@@ -1512,6 +1620,7 @@ def main() -> None:
 
     # Partnership — kunlik qo'ng'iroqlar hisoboti, har kuni 23:00 (Toshkent vaqti)
     app.job_queue.run_daily(daily_calling_report, time=dt_time(hour=23, minute=0, tzinfo=TASHKENT_TZ))
+    app.job_queue.run_daily(daily_zvonok2_report, time=dt_time(hour=23, minute=0, tzinfo=TASHKENT_TZ))
 
     # Kaiten — dedlaynga 2 soat qolganda eslatma, har daqiqada tekshiriladi
     app.job_queue.run_repeating(check_deadline_2h_before, interval=60, first=50)
