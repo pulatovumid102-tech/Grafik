@@ -811,8 +811,8 @@ function renderMurojaatQollanma(){
         <div id="oem-tgs-${id}">${orgTgHtml(tgs)}</div>
         <button class="abtn" style="margin-top:6px" onclick="orgAddTg('${id}')">+ Telegram qo'shish</button>
       </div>
-      <div class="frow" id="oem-jadval-row-${id}" style="${isBolimNow?'display:none':''}">
-        <label class="flbl">Ish jadvali (ixtiyoriy)</label>
+      <div class="frow" id="oem-jadval-row-${id}">
+        <label class="flbl">${isBolimNow?"Bo'lim ish jadvali (talab qilinadigan)":'Ish jadvali (ixtiyoriy)'}</label>
         <div style="display:flex;gap:8px;margin-top:6px">
           <div style="flex:1">
             <div style="font-size:11px;color:var(--white-50);margin-bottom:3px">Boshlanish</div>
