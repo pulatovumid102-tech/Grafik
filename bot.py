@@ -851,6 +851,70 @@ async def daily_zvonok2_report(context: ContextTypes.DEFAULT_TYPE) -> None:
         log.error("Zvonok 2 kunlik hisoboti xatosi: %s", e)
 
 
+async def daily_muammoli_hamkorlar_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Har kuni 23:00 (Toshkent) da, hali 'Restoran bilan gaplashdim'
+    bosilmagan (ya'ni faol) Muammoli hamkorlar ro'yxatini Sirly Staff
+    guruhiga @kh_nosirov'ni tag qilib yuboradi."""
+    app = context.application
+    try:
+        muammoli_rows = await sb_get("biznes_data", params={"id": "eq.muammoli_mijozlar"})
+        muammoli_data = muammoli_rows[0]["data"] if muammoli_rows else {}
+        items = muammoli_data.get("items", []) if isinstance(muammoli_data, dict) else []
+
+        hamkor_rows = await sb_get("biznes_data", params={"id": "eq.muammoli_hamkorlar"})
+        hamkor_data = hamkor_rows[0]["data"] if hamkor_rows and isinstance(hamkor_rows[0].get("data"), dict) else {}
+        resetlar = hamkor_data.get("resetlar", {})
+
+        now = datetime.now(timezone.utc)
+        d31_cutoff = now - timedelta(days=31)
+
+        restoranlar_set = sorted(set(it.get("restoran") for it in items if it.get("restoran")))
+
+        qualifying = []
+        for nom in restoranlar_set:
+            reset_iso = resetlar.get(nom)
+            reset_dt = None
+            if reset_iso:
+                try:
+                    reset_dt = datetime.fromisoformat(reset_iso.replace("Z", "+00:00"))
+                except Exception:
+                    reset_dt = None
+            cutoff = max(d31_cutoff, reset_dt) if reset_dt else d31_cutoff
+
+            counts: dict = {}
+            for it in items:
+                if it.get("restoran") != nom or not it.get("turi") or not it.get("createdAt"):
+                    continue
+                try:
+                    created = datetime.fromisoformat(it["createdAt"].replace("Z", "+00:00"))
+                except Exception:
+                    continue
+                if created < cutoff:
+                    continue
+                counts[it["turi"]] = counts.get(it["turi"], 0) + 1
+
+            max_turi, max_count = None, 0
+            for turi, c in counts.items():
+                if c > max_count:
+                    max_count, max_turi = c, turi
+            if max_count >= 3:
+                qualifying.append((nom, max_turi, max_count))
+
+        if not qualifying:
+            return
+
+        lines = ["⚠️ MUAMMOLI HAMKORLAR — hali gaplashilmagan", ""]
+        for nom, turi, count in qualifying:
+            lines.append(f"🏪 {nom} — {turi} ({count} marta)")
+        lines.append("")
+        lines.append("@kh_nosirov")
+
+        await app.bot.send_message(chat_id=SIRLY_STAFF_GROUP_ID, text="\n".join(lines))
+        log.info("Muammoli hamkorlar eslatmasi yuborildi: %d ta restoran", len(qualifying))
+    except Exception as e:
+        log.error("Muammoli hamkorlar eslatmasi xatosi: %s", e)
+
+
 def _fmt_date_only(iso: str) -> str:
     if not iso:
         return "—"
@@ -1736,6 +1800,7 @@ def main() -> None:
     # Partnership — kunlik qo'ng'iroqlar hisoboti, har kuni 23:00 (Toshkent vaqti)
     app.job_queue.run_daily(daily_calling_report, time=dt_time(hour=23, minute=0, tzinfo=TASHKENT_TZ))
     app.job_queue.run_daily(daily_zvonok2_report, time=dt_time(hour=23, minute=0, tzinfo=TASHKENT_TZ))
+    app.job_queue.run_daily(daily_muammoli_hamkorlar_reminder, time=dt_time(hour=23, minute=0, tzinfo=TASHKENT_TZ))
 
     # Kaiten — dedlaynga 2 soat qolganda eslatma, har daqiqada tekshiriladi
     app.job_queue.run_repeating(check_deadline_2h_before, interval=60, first=50)
