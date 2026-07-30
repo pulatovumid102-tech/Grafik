@@ -1123,6 +1123,7 @@ async def daily_baza415_report(context: ContextTypes.DEFAULT_TYPE) -> None:
         rows = await sb_get("biznes_data", params={"id": "eq.baza415"})
         baza_data = rows[0]["data"] if rows else {}
         restoranlar = baza_data.get("restoranlar", []) if isinstance(baza_data, dict) else []
+        restoranlar = sorted(restoranlar, key=lambda r: (r.get("nom") or "").lower())
         today_display = datetime.now(TASHKENT_TZ).strftime("%d.%m.%Y")
         date_tag = datetime.now(TASHKENT_TZ).strftime("%Y%m%d")
 
