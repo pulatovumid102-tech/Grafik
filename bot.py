@@ -1035,18 +1035,6 @@ def build_pul_berish_excel(items: list, today_display: str) -> io.BytesIO:
     return buf
 
 
-def _contact_str(kontaktlar: list, rol_keyword: str) -> str:
-    matches = [k for k in kontaktlar if rol_keyword.lower() in (k.get("rol") or "").lower()]
-    if not matches:
-        return "—"
-    parts = []
-    for k in matches:
-        tel = k.get("tel") or "—"
-        ism = k.get("ism")
-        parts.append(f"{tel} ({ism})" if ism else tel)
-    return ", ".join(parts)
-
-
 def build_baza415_excel(restoranlar: list, today_display: str) -> io.BytesIO:
     wb = Workbook()
     ws = wb.active
@@ -1060,17 +1048,30 @@ def build_baza415_excel(restoranlar: list, today_display: str) -> io.BytesIO:
     center = Alignment(horizontal="center", vertical="center", wrap_text=True)
     left = Alignment(horizontal="left", vertical="center", wrap_text=True)
 
-    ws.merge_cells("A1:F1")
+    # Ma'lumotdagi barcha noyob kontakt rollarini (Menejer, Kassir 1, Kassir 2,
+    # Call Center, Buxgalter va h.k.) uchraash tartibida yig'ib olamiz —
+    # har bir rol o'z ustuniga ega bo'ladi.
+    roles_seen = []
+    for r in restoranlar:
+        for k in (r.get("kontaktlar") or []):
+            rol = (k.get("rol") or "Kontakt").strip()
+            if rol not in roles_seen:
+                roles_seen.append(rol)
+
+    last_col = 3 + len(roles_seen)
+    last_col_letter = get_column_letter(max(last_col, 6))
+
+    ws.merge_cells(f"A1:{last_col_letter}1")
     ws["A1"] = f"Sana: {today_display}"
     ws["A1"].font = Font(name="Arial", bold=True, size=13)
     ws.row_dimensions[1].height = 22
 
-    ws.merge_cells("A2:F2")
+    ws.merge_cells(f"A2:{last_col_letter}2")
     ws["A2"] = "415 BAZA — Restoranlar ro'yxati"
     ws["A2"].font = Font(name="Arial", bold=True, size=12, color="1E7A4A")
     ws.row_dimensions[2].height = 20
 
-    headers = ["№", "Restoran nomi", "Berish vaqti", "Menejer", "Kassir", "Call Center"]
+    headers = ["№", "Restoran nomi", "Berish vaqti"] + roles_seen
     header_row = 4
     ws.row_dimensions[header_row].height = 20
     for i, h in enumerate(headers, start=1):
@@ -1084,24 +1085,27 @@ def build_baza415_excel(restoranlar: list, today_display: str) -> io.BytesIO:
         row_n = header_row + idx
         ws.row_dimensions[row_n].height = 20
         kontaktlar = r.get("kontaktlar") or []
+        role_map: dict = {}
+        for k in kontaktlar:
+            rol = (k.get("rol") or "Kontakt").strip()
+            tel = k.get("tel") or "—"
+            ism = k.get("ism")
+            val = f"{tel} ({ism})" if ism else tel
+            if rol in role_map:
+                role_map[rol] = role_map[rol] + ", " + val
+            else:
+                role_map[rol] = val
         dan = r.get("berishVaqtiDan") or ""
         gacha = r.get("berishVaqtiGacha") or ""
         vaqt = f"{dan}–{gacha}" if dan and gacha else (dan or "—")
-        row_vals = [
-            idx,
-            r.get("nom") or "—",
-            vaqt,
-            _contact_str(kontaktlar, "menejer"),
-            _contact_str(kontaktlar, "kassir"),
-            _contact_str(kontaktlar, "call"),
-        ]
+        row_vals = [idx, r.get("nom") or "—", vaqt] + [role_map.get(rol, "—") for rol in roles_seen]
         for c_idx, val in enumerate(row_vals, start=1):
             cell = ws.cell(row=row_n, column=c_idx, value=val)
             cell.font = normal
             cell.border = border
             cell.alignment = center if c_idx in (1, 3) else left
 
-    widths = [5, 22, 14, 22, 22, 22]
+    widths = [5, 22, 14] + [20] * len(roles_seen)
     for i, w in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(i)].width = w
 
