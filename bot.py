@@ -1263,10 +1263,10 @@ ISH_KUN_KEYLARI = ["dush", "sesh", "chor", "pay", "juma", "shan", "yak"]
 
 
 def _org_employees_with_schedule(org_nodes: list) -> list:
-    """ishBoshlanish maydoni to'ldirilgan barcha xodimlarni qaytaradi."""
+    """ishBoshlanish maydoni to'ldirilgan barcha XODIM (bo'lim emas) tugunlarini qaytaradi."""
     if not isinstance(org_nodes, list):
         return []
-    return [n for n in org_nodes if n.get("ishBoshlanish")]
+    return [n for n in org_nodes if n.get("ishBoshlanish") and n.get("cardType") != "bolim"]
 
 
 def _today_ish_kun_key() -> str:
@@ -1332,6 +1332,116 @@ async def daily_tomorrow_schedule_reminder(context: ContextTypes.DEFAULT_TYPE) -
         log.info("Ertangi ish jadvali yuborildi: %d xodim", len(active_tomorrow))
     except Exception as e:
         log.error("Ertangi ish jadvali xatosi: %s", e)
+
+
+def _minutes(t: str) -> int:
+    h, m = map(int, t.split(":"))
+    return h * 60 + m
+
+
+def _fmt_minutes(m: int) -> str:
+    return f"{m // 60:02d}:{m % 60:02d}"
+
+
+def _find_department_employees(dept_id: str, org_nodes: list) -> list:
+    """Bo'lim tuguni ostidagi barcha XODIM avlodlarini (rekursiv) topadi."""
+    by_parent: dict = {}
+    for n in org_nodes:
+        by_parent.setdefault(n.get("parentId"), []).append(n)
+    result = []
+    def walk(node_id):
+        for child in by_parent.get(node_id, []):
+            if child.get("cardType") != "bolim":
+                result.append(child)
+            walk(child.get("id"))
+    walk(dept_id)
+    return result
+
+
+def _find_coverage_gaps(dept_start: int, dept_end: int, employees: list, kun_key: str) -> list:
+    """Bo'lim talab qilgan [dept_start, dept_end) oralig'ida, xodimlar
+    jadvali orqali QOPLANMAGAN (tuynuk) segmentlarni topadi."""
+    if dept_end <= dept_start:
+        return []
+    covered = [False] * (dept_end - dept_start)
+    for emp in employees:
+        kunlar = emp.get("ishKunlari")
+        if kunlar is not None and kun_key not in kunlar:
+            continue
+        if not emp.get("ishBoshlanish") or not emp.get("ishTugash"):
+            continue
+        try:
+            es = _minutes(emp["ishBoshlanish"])
+            ee = _minutes(emp["ishTugash"])
+        except Exception:
+            continue
+        for i in range(max(es, dept_start), min(ee, dept_end)):
+            covered[i - dept_start] = True
+
+    gaps = []
+    i = 0
+    n = len(covered)
+    while i < n:
+        if not covered[i]:
+            start = i
+            while i < n and not covered[i]:
+                i += 1
+            gaps.append((dept_start + start, dept_start + i))
+        else:
+            i += 1
+    return gaps
+
+
+async def daily_department_coverage_check(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Har kuni 22:00 (Toshkent) da, ertaga har bir bo'limning talab
+    qilingan ish soatlari xodimlar jadvali bilan to'liq qoplanganini
+    tekshiradi. Agar tuynuk (xodimsiz vaqt) topilsa, HR guruhiga
+    @umidpulatov'ni tag qilib xabar beradi."""
+    app = context.application
+    try:
+        org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
+        org_nodes = org_rows[0]["data"] if org_rows else []
+        if not isinstance(org_nodes, list):
+            return
+
+        depts = [n for n in org_nodes if n.get("cardType") == "bolim" and n.get("ishBoshlanish") and n.get("ishTugash")]
+        if not depts:
+            return
+
+        tomorrow = datetime.now(TASHKENT_TZ) + timedelta(days=1)
+        tomorrow_kun = ISH_KUN_KEYLARI[tomorrow.weekday()]
+        tomorrow_display = tomorrow.strftime("%d.%m.%Y") + f" ({KUN_NOMLARI_UZ[tomorrow.weekday()]})"
+
+        problem_lines = []
+        for dept in depts:
+            dept_kunlar = dept.get("ishKunlari")
+            if dept_kunlar is not None and tomorrow_kun not in dept_kunlar:
+                continue  # bo'lim ertaga umuman ishlamaydi
+            try:
+                dept_start = _minutes(dept["ishBoshlanish"])
+                dept_end = _minutes(dept["ishTugash"])
+            except Exception:
+                continue
+
+            employees = _find_department_employees(dept.get("id"), org_nodes)
+            gaps = _find_coverage_gaps(dept_start, dept_end, employees, tomorrow_kun)
+            if gaps:
+                dept_name = dept.get("name") or "Bo'lim"
+                gap_str = ", ".join(f"{_fmt_minutes(s)}–{_fmt_minutes(e)}" for s, e in gaps)
+                problem_lines.append(f"🏢 {dept_name} — xodimsiz qolgan vaqt: {gap_str}")
+
+        if not problem_lines:
+            return
+
+        lines = [f"⚠️ ERTAGA ({tomorrow_display}) XODIMSIZ QOLADIGAN BO'LIMLAR", ""]
+        lines.extend(problem_lines)
+        lines.append("")
+        lines.append("@umidpulatov")
+
+        await app.bot.send_message(chat_id=HR_GROUP_ID, text="\n".join(lines))
+        log.info("Bo'lim qoplanish tekshiruvi: %d ta muammo topildi", len(problem_lines))
+    except Exception as e:
+        log.error("Bo'lim qoplanish tekshiruvi xatosi: %s", e)
 
 
 async def check_ish_boshlanish_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1832,6 +1942,7 @@ def main() -> None:
     # Ish davomati — ish boshlanishiga 10 daqiqa qolganda eslatma, har daqiqada tekshiriladi
     app.job_queue.run_repeating(check_ish_boshlanish_reminder, interval=60, first=15)
     app.job_queue.run_daily(daily_tomorrow_schedule_reminder, time=dt_time(hour=22, minute=0, tzinfo=TASHKENT_TZ))
+    app.job_queue.run_daily(daily_department_coverage_check, time=dt_time(hour=22, minute=0, tzinfo=TASHKENT_TZ))
     # Ish davomati — ish boshlanishidan 30 daqiqa o'tsa, kelmaganlar ro'yxati
     app.job_queue.run_repeating(check_ish_kelmagan, interval=60, first=20)
 
