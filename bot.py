@@ -1631,6 +1631,7 @@ async def check_ish_kelmagan(context: ContextTypes.DEFAULT_TYPE) -> None:
         kelganlar_rows = await sb_get("biznes_data", params={"id": f"eq.{ATTENDANCE_KELGANLAR_ID}"})
         kelganlar_state = kelganlar_rows[0]["data"] if kelganlar_rows and isinstance(kelganlar_rows[0].get("data"), dict) else {}
         kelganlar = kelganlar_state.get(today_str, {})
+        kelganlar_lower = {u.lower() for u in kelganlar.keys()}
 
         state_rows = await sb_get("biznes_data", params={"id": f"eq.{ATTENDANCE_KELMAGAN_ID}"})
         state = state_rows[0]["data"] if state_rows and isinstance(state_rows[0].get("data"), dict) else {}
@@ -1663,8 +1664,7 @@ async def check_ish_kelmagan(context: ContextTypes.DEFAULT_TYPE) -> None:
             missing = []
             for n in group:
                 tgs = parse_tg_field(n)
-                username = tgs[0] if tgs else None
-                if not username or username not in kelganlar:
+                if not tgs or not any(u.lower() in kelganlar_lower for u in tgs):
                     missing.append(n.get("fio") or n.get("name") or "—")
             checked.append(vaqt)
             if missing:
