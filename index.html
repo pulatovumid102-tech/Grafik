@@ -2111,6 +2111,7 @@ var MUAMMOLI_MUDDAT_SOAT=24;
 var MUAMMOLI_TOLOV_SOM=5000;
 var MUAMMOLI_GROUP_RESTORAN=-5467968653;
 var ZVONOK2_GROUP_ID=-5450377196;
+var BAZA415_REPORT_GROUP_ID=-5228403271;
 var MUAMMOLI_GROUP_TEXNIK=-5264364602;
 var MUAMMOLI_GROUP_BUXGALTERIYA=-1003267096591;
 var MUAMMOLI_GROUP_BUXGALTERIYA_PROMOKOD=-5574268734;
@@ -3049,6 +3050,17 @@ function saveMuammoliForm(){
           '🙋 Oxirgi mijoz: '+muammoliDraft.ism+(muammoliDraft.tel?' ('+muammoliDraft.tel+')':'')
         ];
         sendGroupMessage(qizilLines.join('\n'),MUAMMOLI_GROUP_RESTORAN);
+
+        var yashilR=(baza415Db.restoranlar||[]).find(function(x){ return x.nom===muammoliDraft.restoran; });
+        if(yashilR && yashilR.yashilHamkor){
+          yashilR.yashilHamkor=false;
+          yashilR.faollashtirilganSana=new Date().toISOString();
+          baza415Save();
+          sendGroupMessage(
+            '🔴 YASHIL STATUSDAN CHIQARILDI\n\n🏪 '+muammoliDraft.restoran+'\n❗ Sababi: Muammoli hamkor bo\'lib qoldi ('+turi+' — '+sameTuriCount+' marta)\n📅 '+new Date().toLocaleDateString('uz-UZ'),
+            BAZA415_REPORT_GROUP_ID
+          );
+        }
       }
     }
   }
@@ -3455,6 +3467,26 @@ function baza415MigrateFilial(){
 }
 
 // ---- Restoranlar ro'yxati ----
+function baza415Status(r){
+  if(r.yashilHamkor) return 'yashil';
+  if(!r.berishVaqtiDan) return 'noaktiv';
+  return 'sariq';
+}
+function baza415StatusColor(status){
+  if(status==='yashil') return '#639922';
+  if(status==='noaktiv') return '#888780';
+  return '#ef9f27';
+}
+function baza415StatusLabel(r){
+  var status=baza415Status(r);
+  if(status==='yashil') return '🟢 Yashil hamkor';
+  if(status==='noaktiv') return '⚪ No-aktiv';
+  if(r.faollashtirilganSana){
+    var kun=Math.floor((Date.now()-new Date(r.faollashtirilganSana).getTime())/(24*60*60*1000));
+    return '🟡 Sariq (kuzatuvda, '+Math.min(kun,15)+'/15 kun)';
+  }
+  return '🟡 Sariq';
+}
 function renderBaza415List(){
   var q=(document.getElementById('search-baza415')?.value||'').trim().toLowerCase();
   var list=(baza415Db.restoranlar||[]).slice().sort((a,b)=>a.nom.localeCompare(b.nom,'uz'));
@@ -3465,11 +3497,13 @@ function renderBaza415List(){
     if(kontaktSoni) hintParts.push(kontaktSoni+' ta kontakt');
     if(r.berishVaqtiDan) hintParts.push('🍽 '+r.berishVaqtiDan+(r.berishVaqtiGacha?'–'+r.berishVaqtiGacha:''));
     var hint=hintParts.join(' · ');
-    return `<div class="section-item" onclick="openBaza415Rest('${r.id}')">
+    var statusColor=baza415StatusColor(baza415Status(r));
+    return `<div class="section-item" style="border-color:${statusColor}" onclick="openBaza415Rest('${r.id}')">
       <div style="display:flex;align-items:center;flex:1;min-width:0">
         <div class="section-num">${String(i+1).padStart(2,'0')}</div>
         <div style="min-width:0">
           <div class="section-name">${esc(r.nom)}</div>
+          <div style="font-size:11px;color:${statusColor};margin-top:2px;font-weight:600">${baza415StatusLabel(r)}</div>
           ${hint?`<div style="font-size:11px;color:var(--white-50);margin-top:2px">${hint}</div>`:''}
         </div>
       </div>
@@ -3545,7 +3579,12 @@ function saveBaza415Rest(id){
   var berishGacha=document.getElementById('bz-rest-berish-gacha').value;
   if(id){
     var r=baza415Db.restoranlar.find(x=>x.id===id);
-    if(r){ r.nom=nom; r.berishVaqtiDan=berishDan; r.berishVaqtiGacha=berishGacha; }
+    if(r){
+      r.nom=nom;
+      r.berishVaqtiDan=berishDan;
+      r.berishVaqtiGacha=berishGacha;
+      if(berishDan && !r.faollashtirilganSana) r.faollashtirilganSana=new Date().toISOString();
+    }
   }else{
     var callcenterTel=document.getElementById('bz-rest-callcenter-tel').value.trim();
     var direktorIsm=document.getElementById('bz-rest-direktor-ism').value.trim();
@@ -3571,7 +3610,7 @@ function saveBaza415Rest(id){
       if(rol||ism||tel)kontaktlar.push({id:'kt'+Date.now()+'_x'+idx, rol:rol||'Boshqa', ism:ism, tel:tel});
     });
     if(buxIsm||(buxTel&&buxTel!=='+998'))kontaktlar.push({id:'kt'+Date.now()+'_bux', rol:'Buxgalter', ism:buxIsm, tel:buxTel});
-    baza415Db.restoranlar.push({id:'bz'+Date.now(), nom, berishVaqtiDan:berishDan, berishVaqtiGacha:berishGacha, kontaktlar:kontaktlar});
+    baza415Db.restoranlar.push({id:'bz'+Date.now(), nom, berishVaqtiDan:berishDan, berishVaqtiGacha:berishGacha, kontaktlar:kontaktlar, faollashtirilganSana:berishDan?new Date().toISOString():null});
     var lines=['🏪 YANGI RESTORAN QO\'SHILDI (415 baza)','Nomi: '+nom,'👤 Kim qo\'shdi: '+kaitenCreatorNameNow()];
     if(berishDan) lines.push('🍽 Ishlash vaqti: '+berishDan+(berishGacha?'–'+berishGacha:''));
     if(callcenterTel&&callcenterTel!=='+998')lines.push('📞 Call center: '+callcenterTel);
@@ -3617,9 +3656,48 @@ function renderBaza415Restoran(){
     </div>`;
   }).join('');
   if(!kontaktlar.length)h='<div style="text-align:center;padding:24px;color:var(--white-50);font-size:13px">Kontaktlar yo\'q</div>';
-  document.getElementById('baza415-buxgalter-box').innerHTML='';
+  var statusColor=baza415StatusColor(baza415Status(r));
+  document.getElementById('baza415-buxgalter-box').innerHTML=`
+    <div style="background:var(--white-06);border-radius:10px;padding:12px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;color:${statusColor}">${baza415StatusLabel(r)}</div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:10px">
+        <span style="width:20px;height:20px;border-radius:5px;border:1.5px solid #b8b3a3;display:flex;align-items:center;justify-content:center;background:${r.yashilHamkor?'#639922':'transparent'};color:#fff;font-size:12px;flex-shrink:0" onclick="event.stopPropagation();baza415ToggleYashil('${r.id}')">${r.yashilHamkor?'✓':''}</span>
+        <span style="font-size:13px;color:var(--white);font-weight:600" onclick="baza415ToggleYashil('${r.id}')">Yashil hamkor</span>
+      </label>
+    </div>`;
   document.getElementById('baza415-filial-list').innerHTML=h;
   document.getElementById('baza415-filial-form').innerHTML='';
+}
+function baza415ToggleYashil(id){
+  var r=baza415Db.restoranlar.find(x=>x.id===id);
+  if(!r)return;
+  if(r.yashilHamkor){
+    askConfirm("Yashil hamkor statusini olib tashlaysizmi? (Yangi 15 kunlik kuzatuv boshlanadi)",function(){
+      var freshR=baza415Db.restoranlar.find(x=>x.id===id);
+      if(!freshR)return;
+      freshR.yashilHamkor=false;
+      freshR.faollashtirilganSana=new Date().toISOString();
+      baza415Save();
+      renderBaza415Restoran();
+      notify('Saqlandi ✓');
+      sendGroupMessage('🟡 '+freshR.nom+' — Yashil status olib tashlandi, yangi 15 kunlik kuzatuv boshlandi.\nKim o\'zgartirdi: '+(kaitenMyFio()||'Xodim'), BAZA415_REPORT_GROUP_ID);
+    },"Ha","Yo'q");
+    return;
+  }
+  askConfirm("Yashil hamkor deb belgilaysizmi?",function(){
+    var freshR=baza415Db.restoranlar.find(x=>x.id===id);
+    if(!freshR)return;
+    freshR.yashilHamkor=true;
+    freshR.yashilBelgilaganSana=new Date().toISOString();
+    baza415Save();
+    renderBaza415Restoran();
+    notify('Saqlandi ✓');
+    var kim=kaitenMyFio()||'Xodim';
+    sendGroupMessage(
+      '🟢 YASHIL HAMKOR\n\n🏪 '+freshR.nom+' restorani "Yashil hamkor" statusini oldi\n👤 Belgiladi: '+kim+'\n📅 '+new Date().toLocaleDateString('uz-UZ'),
+      BAZA415_REPORT_GROUP_ID
+    );
+  },"Ha","Yo'q");
 }
 function showBaza415ContactForm(id){
   var r=getBaza415Rest(); if(!r)return;
@@ -3678,6 +3756,7 @@ function renderPartnershipCalls(){
   }
   var list=(baza415Db.restoranlar||[]).filter(function(r){
     if(!r.berishVaqtiDan) return false;
+    if(r.yashilHamkor) return false;
     var q=r.qongiroq||{};
     if(q.lastCalledDate===today) return false;
     return true;
@@ -4026,6 +4105,7 @@ function renderZvonok2(){
   }
   var list=(baza415Db.restoranlar||[]).filter(function(r){
     if(!r.berishVaqtiDan) return false;
+    if(r.yashilHamkor) return false;
     if(servingMinutes(r)>nowMinutes) return false;
     var q=r.qongiroq2||{};
     if(q.lastCalledDate===today) return false;
