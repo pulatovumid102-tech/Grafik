@@ -660,6 +660,8 @@ async def check_serving_time_reminders(context: ContextTypes.DEFAULT_TYPE) -> No
         matched = []
         changed = False
         for r in restoranlar:
+            if r.get("yashilHamkor"):
+                continue
             dan = r.get("berishVaqtiDan")
             if not dan:
                 continue
@@ -720,6 +722,8 @@ async def check_calling_status_before_serving(context: ContextTypes.DEFAULT_TYPE
         # Vaqti 1-2 daqiqa qolgan (bugun hali yuborilmagan) guruhlarni topamiz
         due_times = set()
         for r in restoranlar:
+            if r.get("yashilHamkor"):
+                continue
             dan = r.get("berishVaqtiDan")
             if not dan:
                 continue
@@ -733,7 +737,7 @@ async def check_calling_status_before_serving(context: ContextTypes.DEFAULT_TYPE
                 due_times.add(dan)
 
         for dan in due_times:
-            group = [r for r in restoranlar if r.get("berishVaqtiDan") == dan]
+            group = [r for r in restoranlar if r.get("berishVaqtiDan") == dan and not r.get("yashilHamkor")]
             called = [r for r in group if (r.get("qongiroq") or {}).get("lastCalledDate") == today_str]
             not_called = [r for r in group if (r.get("qongiroq") or {}).get("lastCalledDate") != today_str]
 
@@ -781,7 +785,7 @@ async def daily_calling_report(context: ContextTypes.DEFAULT_TYPE) -> None:
         baza_data = rows[0]["data"]
         if not isinstance(baza_data, dict):
             return
-        restoranlar = [r for r in baza_data.get("restoranlar", []) if r.get("berishVaqtiDan")]
+        restoranlar = [r for r in baza_data.get("restoranlar", []) if r.get("berishVaqtiDan") and not r.get("yashilHamkor")]
         today = datetime.now(TASHKENT_TZ)
         today_str = today.strftime("%Y-%m-%d")
         today_display = today.strftime("%d.%m.%Y")
@@ -823,6 +827,8 @@ async def check_zvonok2_call_reminder(context: ContextTypes.DEFAULT_TYPE) -> Non
 
         due_times = set()
         for r in restoranlar:
+            if r.get("yashilHamkor"):
+                continue
             dan = r.get("berishVaqtiDan")
             if not dan:
                 continue
@@ -836,7 +842,7 @@ async def check_zvonok2_call_reminder(context: ContextTypes.DEFAULT_TYPE) -> Non
                 due_times.add(dan)
 
         for dan in due_times:
-            group = [r for r in restoranlar if r.get("berishVaqtiDan") == dan]
+            group = [r for r in restoranlar if r.get("berishVaqtiDan") == dan and not r.get("yashilHamkor")]
 
             lines = [f"📋 {dan}da berish vaqti boshlangan restoranlar ro'yxatiga qo'ng'iroq qiling", ""]
             for r in group:
@@ -877,7 +883,7 @@ async def daily_zvonok2_report(context: ContextTypes.DEFAULT_TYPE) -> None:
         baza_data = rows[0]["data"]
         if not isinstance(baza_data, dict):
             return
-        restoranlar = [r for r in baza_data.get("restoranlar", []) if r.get("berishVaqtiDan")]
+        restoranlar = [r for r in baza_data.get("restoranlar", []) if r.get("berishVaqtiDan") and not r.get("yashilHamkor")]
         today = datetime.now(TASHKENT_TZ)
         today_str = today.strftime("%Y-%m-%d")
         today_display = today.strftime("%d.%m.%Y")
@@ -1250,6 +1256,106 @@ async def daily_baza415_report(context: ContextTypes.DEFAULT_TYPE) -> None:
         log.info("415 baza hisoboti yuborildi: %d ta restoran", len(restoranlar))
     except Exception as e:
         log.error("415 baza hisoboti xatosi: %s", e)
+
+
+async def check_yashil_hamkor_auto(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Har kuni tekshiradi: faollashtirilgan sanasidan 15 kun o'tgan, hali
+    Yashil hamkor bo'lmagan restoranlarni. Agar shu 15 kun ichida bitta
+    muammo turi 3 martaga yetmagan bo'lsa — avtomatik Yashil hamkor qiladi
+    va 415 baza guruhiga xabar beradi."""
+    app = context.application
+    try:
+        baza_rows = await sb_get("biznes_data", params={"id": "eq.baza415"})
+        baza_data = baza_rows[0]["data"] if baza_rows else {}
+        restoranlar = baza_data.get("restoranlar", []) if isinstance(baza_data, dict) else []
+
+        muammoli_rows = await sb_get("biznes_data", params={"id": "eq.muammoli_mijozlar"})
+        muammoli_data = muammoli_rows[0]["data"] if muammoli_rows else {}
+        items = muammoli_data.get("items", []) if isinstance(muammoli_data, dict) else []
+
+        now = datetime.now(timezone.utc)
+        changed = False
+
+        for r in restoranlar:
+            if r.get("yashilHamkor"):
+                continue
+            faol_iso = r.get("faollashtirilganSana")
+            if not faol_iso:
+                continue
+            try:
+                faol_dt = datetime.fromisoformat(faol_iso.replace("Z", "+00:00"))
+            except Exception:
+                continue
+            kun_otgan = (now - faol_dt).days
+            if kun_otgan < 15:
+                continue
+
+            window_end = faol_dt + timedelta(days=15)
+            counts: dict = {}
+            for it in items:
+                if it.get("restoran") != r.get("nom") or not it.get("turi") or not it.get("createdAt"):
+                    continue
+                try:
+                    created = datetime.fromisoformat(it["createdAt"].replace("Z", "+00:00"))
+                except Exception:
+                    continue
+                if not (faol_dt <= created <= window_end):
+                    continue
+                counts[it["turi"]] = counts.get(it["turi"], 0) + 1
+
+            max_count = max(counts.values()) if counts else 0
+            if max_count >= 3:
+                continue  # muammoli hamkor bo'lgan, yashil bo'lolmaydi
+
+            r["yashilHamkor"] = True
+            r["yashilBelgilaganSana"] = now.isoformat()
+            changed = True
+
+            lines = ["🟢 YASHIL HAMKOR STATUSIGA O'TDI", "", f"🏪 {r.get('nom','—')}", "📅 15 kunlik kuzatuv davomida yashil hamkor statusini oldi", ""]
+            if counts:
+                lines.append("Kuzatuv davrida uchragan muammolar:")
+                for turi, c in counts.items():
+                    lines.append(f"• {turi} — {c} marta")
+            else:
+                lines.append("Kuzatuv davrida hech qanday muammo bo'lmadi.")
+            lines.append("")
+            lines.append(datetime.now(TASHKENT_TZ).strftime("%d.%m.%Y"))
+
+            await app.bot.send_message(chat_id=BAZA415_REPORT_GROUP_ID, text="\n".join(lines))
+            log.info("Avtomatik yashil hamkor: %s", r.get("nom"))
+
+        if changed:
+            await sb_patch("biznes_data", "baza415", {"data": baza_data})
+    except Exception as e:
+        log.error("Yashil hamkor avtomatik tekshiruvi xatosi: %s", e)
+
+
+async def noaktiv_hamkorlar_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/noaktiv_hamkorlar buyrug'i — 'Ovqat berish vaqti' kiritilmagan
+    (hali aktiv bo'lmagan) restoranlar ro'yxatini 415 baza guruhiga yuboradi."""
+    try:
+        rows = await sb_get("biznes_data", params={"id": "eq.baza415"})
+        baza_data = rows[0]["data"] if rows else {}
+        restoranlar = baza_data.get("restoranlar", []) if isinstance(baza_data, dict) else []
+        noaktiv = sorted(
+            [r for r in restoranlar if not r.get("berishVaqtiDan")],
+            key=lambda r: (r.get("nom") or "").lower(),
+        )
+
+        lines = ["⚪️ NOAKTIV HAMKORLAR — \"Ovqat berish vaqti\" kiritilmagan", ""]
+        if noaktiv:
+            for r in noaktiv:
+                lines.append(f"🏪 {r.get('nom','—')}")
+            lines.append("")
+            lines.append(f"Jami: {len(noaktiv)} ta")
+        else:
+            lines.append("Barcha restoranlarda berish vaqti kiritilgan. 🎉")
+
+        await context.application.bot.send_message(chat_id=BAZA415_REPORT_GROUP_ID, text="\n".join(lines))
+        await update.message.reply_text("✅ Tayyor! 415 baza guruhini tekshiring.")
+    except Exception as e:
+        log.error("Noaktiv hamkorlar buyrug'i xatosi: %s", e)
+        await update.message.reply_text("⚠️ Xatolik yuz berdi.")
 
 
 async def weekly_buxgalteriya_report(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1935,6 +2041,7 @@ def main() -> None:
     app.add_handler(CommandHandler("test_dedlayn", test_deadline_cmd))
     app.add_handler(CommandHandler("test_hisobot", test_hisobot_cmd))
     app.add_handler(CommandHandler("test_baza415", test_baza415_cmd))
+    app.add_handler(CommandHandler("noaktiv_hamkorlar", noaktiv_hamkorlar_cmd))
     app.add_handler(MessageHandler(filters.PHOTO, handle_support_photo))
     app.add_handler(MessageHandler(filters.VIDEO_NOTE, handle_staff_video_note))
     app.job_queue.run_repeating(poll_job, interval=POLL_SECONDS, first=5)
@@ -1969,6 +2076,7 @@ def main() -> None:
     # Buxgalteriya — haftalik hisobot (Promokod + Pul berish), faqat JUMA 10:00 (Toshkent vaqti)
     app.job_queue.run_daily(weekly_buxgalteriya_report, time=dt_time(hour=10, minute=0, tzinfo=TASHKENT_TZ), days=(5,))
     app.job_queue.run_daily(daily_baza415_report, time=dt_time(hour=10, minute=0, tzinfo=TASHKENT_TZ))
+    app.job_queue.run_daily(check_yashil_hamkor_auto, time=dt_time(hour=9, minute=0, tzinfo=TASHKENT_TZ))
 
     # Ish davomati — ish boshlanishiga 10 daqiqa qolganda eslatma, har daqiqada tekshiriladi
     app.job_queue.run_repeating(check_ish_boshlanish_reminder, interval=60, first=15)
