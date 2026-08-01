@@ -473,8 +473,9 @@ function renderMurojaatQollanma(){
     </div>
   </div>
   <div class="search-wrap"><input class="search-inp" id="search-baza415" placeholder="🔍 Restoran nomi..." oninput="renderBaza415List()"></div>
+  <div id="baza415-status-filter" style="display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 10px"></div>
   <div id="baza415-form"></div>
-  <button class="add-item-btn" onclick="showBaza415RestForm()" style="margin-bottom:14px">＋ Restoran qo'shish</button>
+  <button class="add-item-btn" id="baza415-add-btn" onclick="showBaza415RestForm()" style="margin-bottom:14px">＋ Restoran qo'shish</button>
   <div id="baza415-list" class="section-list"></div>
 </div>
 
@@ -3487,9 +3488,22 @@ function baza415StatusLabel(r){
   }
   return '🟡 Sariq';
 }
+var baza415StatusFilter='umumiy';
+function baza415SetStatusFilter(f){ baza415StatusFilter=f; renderBaza415List(); }
 function renderBaza415List(){
   var q=(document.getElementById('search-baza415')?.value||'').trim().toLowerCase();
-  var list=(baza415Db.restoranlar||[]).slice().sort((a,b)=>a.nom.localeCompare(b.nom,'uz'));
+  var all=(baza415Db.restoranlar||[]).slice().sort((a,b)=>a.nom.localeCompare(b.nom,'uz'));
+
+  var counts={umumiy:all.length,yashil:0,sariq:0,noaktiv:0};
+  all.forEach(function(r){ counts[baza415Status(r)]++; });
+  var chips=[['umumiy','Umumiy'],['yashil','🟢 Yashil'],['sariq','🟡 Sariq'],['noaktiv','⚪ No-aktiv']];
+  document.getElementById('baza415-status-filter').innerHTML=chips.map(function(c){
+    return `<button class="mm-filter-chip${baza415StatusFilter===c[0]?' active':''}" onclick="baza415SetStatusFilter('${c[0]}')">${c[1]} (${counts[c[0]]})</button>`;
+  }).join('');
+  var addBtn=document.getElementById('baza415-add-btn');
+  if(addBtn) addBtn.style.display=baza415StatusFilter==='umumiy'?'':'none';
+
+  var list=baza415StatusFilter==='umumiy'?all:all.filter(function(r){ return baza415Status(r)===baza415StatusFilter; });
   var filtered=q?list.filter(r=>r.nom.toLowerCase().includes(q)):list;
   var h=filtered.map(function(r,i){
     var kontaktSoni=(r.kontaktlar||[]).length;
