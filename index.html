@@ -3431,18 +3431,32 @@ async function baza415Load(){
     if(rows&&rows.length&&rows[0].data){
       baza415Db=rows[0].data;
       if(!baza415Db.restoranlar)baza415Db.restoranlar=[];
-      if(baza415MigrateFilial())baza415Save();
+      var changed1=baza415MigrateFilial();
+      var changed2=baza415MigrateFaollik();
+      if(changed1||changed2)baza415Save();
     }else{
       var d=localStorage.getItem('baza415');
       baza415Db=d?JSON.parse(d):{restoranlar:[]};
       baza415MigrateFilial();
+      baza415MigrateFaollik();
       try{await fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'baza415',data:baza415Db})});}catch(e2){}
     }
   }catch(e){
     var d=localStorage.getItem('baza415');
     baza415Db=d?JSON.parse(d):{restoranlar:[]};
     baza415MigrateFilial();
+    baza415MigrateFaollik();
   }
+}
+function baza415MigrateFaollik(){
+  var changed=false;
+  (baza415Db.restoranlar||[]).forEach(function(r){
+    if(r.berishVaqtiDan && !r.faollashtirilganSana && !r.yashilHamkor){
+      r.faollashtirilganSana=new Date().toISOString();
+      changed=true;
+    }
+  });
+  return changed;
 }
 function baza415MigrateFilial(){
   var changed=false;
