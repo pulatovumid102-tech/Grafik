@@ -1453,6 +1453,35 @@ def _group_employees_by_dept(employees: list, org_nodes: list) -> dict:
     return by_dept
 
 
+IT_BOLIMI_GROUP_ID = -5264364602
+
+
+async def daily_it_report_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Har kuni (Yakshanbadan tashqari) 22:30 (Toshkent) da, IT bo'limi
+    guruhiga, Org strukturadagi IT bo'limi xodimlarini tag qilib,
+    kunlik hisobot so'raydi."""
+    app = context.application
+    try:
+        org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
+        org_nodes = org_rows[0]["data"] if org_rows else []
+        usernames = collect_dept_usernames(org_nodes, "it bo'limi")
+        tag_line = " ".join(f"@{u}" for u in usernames) if usernames else ""
+
+        lines = [
+            "📋 Kunlik hisobot",
+            "",
+            tag_line,
+            "",
+            "Kunlik bag va tasklar ro'yxatini shakillantirganingizni skrinshoti va shu faylga kirish uchun link yuboring.",
+            "",
+            "Hech qaysi bag va task qolib ketmaganini tasdiqlang.",
+        ]
+        await app.bot.send_message(chat_id=IT_BOLIMI_GROUP_ID, text="\n".join(lines))
+        log.info("IT bo'limi kunlik hisobot so'rovi yuborildi")
+    except Exception as e:
+        log.error("IT bo'limi kunlik hisobot xatosi: %s", e)
+
+
 async def daily_tomorrow_schedule_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Har kuni 22:00 (Toshkent) da, ertaga ishga chiqishi kerak bo'lgan
     xodimlar ro'yxatini (bo'limlar bo'yicha, boshlanish-tugash vaqti bilan)
@@ -2081,6 +2110,7 @@ def main() -> None:
     # Ish davomati — ish boshlanishiga 10 daqiqa qolganda eslatma, har daqiqada tekshiriladi
     app.job_queue.run_repeating(check_ish_boshlanish_reminder, interval=60, first=15)
     app.job_queue.run_daily(daily_tomorrow_schedule_reminder, time=dt_time(hour=22, minute=0, tzinfo=TASHKENT_TZ))
+    app.job_queue.run_daily(daily_it_report_reminder, time=dt_time(hour=22, minute=30, tzinfo=TASHKENT_TZ), days=(1, 2, 3, 4, 5, 6))
     # Ish davomati — ish boshlanishidan 30 daqiqa o'tsa, kelmaganlar ro'yxati
     app.job_queue.run_repeating(check_ish_kelmagan, interval=60, first=20)
 
