@@ -2393,8 +2393,7 @@ function muammoliCard(it){
     <div style="margin-top:8px">${muammoliTasdiqlamadiRowHtml(it)}</div>`;
 
   var resolutionBlock=isHal?`<div class="mm-divider"></div>
-    <div class="mm-row" style="font-size:12px;color:#1e7a4a;font-weight:600">✓ Hal qildi: ${esc(it.halQildiBy||'—')} · ${muammoliFormatDateTime(it.halQildiAt)}${it.yordamchi?' · Yordamchi: '+esc(it.yordamchi):''}</div>
-    <div class="mm-row" style="font-size:12px;color:#8a5c00">💰 To'lov: ${it.yordamchi?(it.toLovResolver||0)+' so\'m (+ '+esc(it.yordamchi)+"ga "+(it.toLovYordamchi||0)+" so'm)":(it.toLovResolver||MUAMMOLI_TOLOV_SOM)+" so'm"}</div>
+    <div class="mm-row" style="font-size:12px;color:#1e7a4a;font-weight:600">✓ Hal qildi: ${esc(it.halQildiBy||'—')} · ${muammoliFormatDateTime(it.halQildiAt)}</div>
     ${it.yechimIzohi?`<div class="mm-izoh" style="background:rgba(30,122,74,0.08);padding:8px 10px;border-radius:8px"><b>Yechim:</b> ${esc(it.yechimIzohi)}</div>`:''}`:'';
 
   var footerHtml=`<div class="mm-divider"></div>
@@ -2630,8 +2629,7 @@ function muammoliArchiveCard(it){
     <div style="margin-top:8px">${muammoliTasdiqlamadiRowHtml(it)}</div>`;
 
   var resolutionBlock=`<div class="mm-divider"></div>
-    <div class="mm-row" style="font-size:12px;color:#1e7a4a;font-weight:600">✓ Hal qildi: ${esc(it.halQildiBy||'—')} · ${muammoliFormatDateTime(it.halQildiAt)}${it.yordamchi?' · Yordamchi: '+esc(it.yordamchi):''}</div>
-    <div class="mm-row" style="font-size:12px;color:#8a5c00">💰 To'lov: ${it.yordamchi?(it.toLovResolver||0)+' so\'m (+ '+esc(it.yordamchi)+"ga "+(it.toLovYordamchi||0)+" so'm)":(it.toLovResolver||MUAMMOLI_TOLOV_SOM)+" so'm"}</div>
+    <div class="mm-row" style="font-size:12px;color:#1e7a4a;font-weight:600">✓ Hal qildi: ${esc(it.halQildiBy||'—')} · ${muammoliFormatDateTime(it.halQildiAt)}</div>
     ${it.yechimIzohi?`<div class="mm-izoh" style="background:rgba(30,122,74,0.08);padding:8px 10px;border-radius:8px"><b>Yechim:</b> ${esc(it.yechimIzohi)}</div>`:''}`;
 
   var footerHtml=`<div class="mm-divider"></div>
@@ -2794,19 +2792,8 @@ function muammoliToggleStatus(id){
     muammoliSave(); renderMuammoli(); notify('Qayta ochildi');
     return;
   }
-  var employees=kaitenGetAllEmployees();
-  var empOptions=employees.map(e=>`<option value="${esc(e.fio)}">${esc(e.fio)}${e.role?' ('+esc(e.role)+')':''}</option>`).join('');
   var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">Qanday hal qilindi?</div>
     <div class="frow"><textarea class="fi" id="mm-yechim-inp" style="min-height:70px;resize:vertical" placeholder="Yechim izohi (majburiy)..."></textarea></div>
-    <div style="display:flex;align-items:center;gap:8px;margin:10px 0;cursor:pointer" onclick="mmToggleYordam()">
-      <span id="mm-yordam-check" style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--white-50);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0"></span>
-      <span style="font-size:13px;color:var(--white-80)">Yordam oldingizmi?</span>
-    </div>
-    <div class="frow" id="mm-yordam-wrap" style="display:none">
-      <label class="flbl">Kimdan yordam oldingiz?</label>
-      <select class="fi" id="mm-yordam-sel"><option value="">— tanlang —</option>${empOptions}</select>
-      <div style="font-size:11px;color:var(--white-50);margin-top:4px">To'lov (${MUAMMOLI_TOLOV_SOM} so'm) ikkovingizga teng bo'linadi.</div>
-    </div>
     <div class="fbtns">
       <button class="fsave" onclick="muammoliConfirmHal('${id}')">Hal qilindi ✓</button>
       <button class="fcancel" onclick="orgCloseModal()">Bekor</button>
@@ -2814,39 +2801,15 @@ function muammoliToggleStatus(id){
   orgShowModal(html);
   setTimeout(function(){ var inp=document.getElementById('mm-yechim-inp'); if(inp) inp.focus(); }, 50);
 }
-var mmYordamChecked=false;
-function mmToggleYordam(){
-  mmYordamChecked=!mmYordamChecked;
-  var chk=document.getElementById('mm-yordam-check');
-  var wrap=document.getElementById('mm-yordam-wrap');
-  if(chk) chk.innerHTML=mmYordamChecked?'✓':'';
-  if(chk) chk.style.background=mmYordamChecked?'var(--lime)':'transparent';
-  if(wrap) wrap.style.display=mmYordamChecked?'':'none';
-}
 function muammoliConfirmHal(id){
   var it=muammoliDb.items.find(x=>x.id===id);
   if(!it)return;
   var yechim=document.getElementById('mm-yechim-inp').value.trim();
   if(!yechim){notify('Yechim izohini yozing!');return;}
-  var yordamchi='';
-  if(mmYordamChecked){
-    yordamchi=document.getElementById('mm-yordam-sel').value;
-    if(!yordamchi){notify('Yordamchini tanlang, yoki "Yordam oldingizmi?" belgisini olib tashlang!');return;}
-  }
   it.holati='hal_qilindi';
   it.halQildiBy=kaitenCreatorNameNow();
   it.halQildiAt=new Date().toISOString();
   it.yechimIzohi=yechim;
-  if(yordamchi){
-    it.yordamchi=yordamchi;
-    it.toLovResolver=Math.round(MUAMMOLI_TOLOV_SOM/2);
-    it.toLovYordamchi=Math.round(MUAMMOLI_TOLOV_SOM/2);
-  }else{
-    delete it.yordamchi;
-    it.toLovResolver=MUAMMOLI_TOLOV_SOM;
-    delete it.toLovYordamchi;
-  }
-  mmYordamChecked=false;
   muammoliSave(); orgCloseModal(); renderMuammoli(); notify('Hal qilindi ✓');
   sendGroupMessage(
     '✅ MUROJAAT HAL QILINDI\n\n'+
