@@ -1359,7 +1359,7 @@ async def noaktiv_hamkorlar_cmd(update: Update, context: ContextTypes.DEFAULT_TY
 
 
 async def weekly_buxgalteriya_report(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Har juma 10:00 (Toshkent) da, hal bo'lmagan murojaatlar orasida
+    """Har kuni 18:00 (Toshkent) da, hal bo'lmagan murojaatlar orasida
     'Promokod berish kerak' va 'Restoranga pul tashlab berish kerak'
     deb belgilanganlarning Excel fayllarini Buxgalteriya guruhiga yuboradi."""
     app = context.application
@@ -2103,7 +2103,7 @@ def main() -> None:
     app.job_queue.run_daily(daily_today_tasks_reminder, time=dt_time(hour=10, minute=0, tzinfo=TASHKENT_TZ))
 
     # Buxgalteriya — haftalik hisobot (Promokod + Pul berish), faqat JUMA 10:00 (Toshkent vaqti)
-    app.job_queue.run_daily(weekly_buxgalteriya_report, time=dt_time(hour=10, minute=0, tzinfo=TASHKENT_TZ), days=(5,))
+    app.job_queue.run_daily(weekly_buxgalteriya_report, time=dt_time(hour=18, minute=0, tzinfo=TASHKENT_TZ))
     app.job_queue.run_daily(daily_baza415_report, time=dt_time(hour=10, minute=0, tzinfo=TASHKENT_TZ))
     app.job_queue.run_daily(check_yashil_hamkor_auto, time=dt_time(hour=9, minute=0, tzinfo=TASHKENT_TZ))
 
