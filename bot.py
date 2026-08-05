@@ -1026,7 +1026,7 @@ def build_promokod_excel(items: list, today_display: str) -> io.BytesIO:
     ws.row_dimensions[1].height = 22
 
     ws.merge_cells("A2:H2")
-    ws["A2"] = "PROMOKOD BERISH KERAK — Haftalik hisobot"
+    ws["A2"] = "PROMOKOD BERISH KERAK — Kunlik hisobot"
     ws["A2"].font = Font(name="Arial", bold=True, size=12, color="1E7A4A")
     ws.row_dimensions[2].height = 20
 
@@ -1358,10 +1358,10 @@ async def noaktiv_hamkorlar_cmd(update: Update, context: ContextTypes.DEFAULT_TY
         await update.message.reply_text("⚠️ Xatolik yuz berdi.")
 
 
-async def weekly_buxgalteriya_report(context: ContextTypes.DEFAULT_TYPE) -> None:
+async def daily_promokod_report(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Har kuni 18:00 (Toshkent) da, hal bo'lmagan murojaatlar orasida
-    'Promokod berish kerak' va 'Restoranga pul tashlab berish kerak'
-    deb belgilanganlarning Excel fayllarini Buxgalteriya guruhiga yuboradi."""
+    'Promokod berish kerak' deb belgilanganlarning Excel faylini
+    Buxgalteriya guruhiga yuboradi."""
     app = context.application
     try:
         rows = await sb_get("biznes_data", params={"id": "eq.muammoli_mijozlar"})
@@ -1370,15 +1370,11 @@ async def weekly_buxgalteriya_report(context: ContextTypes.DEFAULT_TYPE) -> None
         open_items = [it for it in items if not it.get("archived") and it.get("holati") != "hal_qilindi"]
 
         promokod_items = [it for it in open_items if it.get("promokodKerak")]
-        pul_items = [it for it in open_items if it.get("tasdiqlamadiLekinBekor")]
 
         today_display = datetime.now(TASHKENT_TZ).strftime("%d.%m.%Y")
         date_tag = datetime.now(TASHKENT_TZ).strftime("%Y%m%d")
 
-        text = (
-            "📋 Promokod va restoran tasdiqlamagan sifatsiz taom uchun to'lov "
-            "ro'yxati quyidagi Excel fayllarda"
-        )
+        text = "📋 Promokod berish kerak bo'lgan mijozlar ro'yxati quyidagi Excel faylda"
         await app.bot.send_message(chat_id=BUXGALTERIYA_PROMOKOD_GROUP_ID, text=text)
 
         promokod_buf = build_promokod_excel(promokod_items, today_display)
@@ -1388,6 +1384,30 @@ async def weekly_buxgalteriya_report(context: ContextTypes.DEFAULT_TYPE) -> None
             filename=f"promokod_{date_tag}.xlsx",
         )
 
+        log.info("Kunlik promokod hisoboti yuborildi: %d ta", len(promokod_items))
+    except Exception as e:
+        log.error("Kunlik promokod hisoboti xatosi: %s", e)
+
+
+async def weekly_pul_berish_report(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Har juma 18:00 (Toshkent) da, hal bo'lmagan murojaatlar orasida
+    'Restoranga pul tashlab berish kerak' deb belgilanganlarning Excel
+    faylini Buxgalteriya guruhiga yuboradi."""
+    app = context.application
+    try:
+        rows = await sb_get("biznes_data", params={"id": "eq.muammoli_mijozlar"})
+        muammoli_data = rows[0]["data"] if rows else {}
+        items = muammoli_data.get("items", []) if isinstance(muammoli_data, dict) else []
+        open_items = [it for it in items if not it.get("archived") and it.get("holati") != "hal_qilindi"]
+
+        pul_items = [it for it in open_items if it.get("tasdiqlamadiLekinBekor")]
+
+        today_display = datetime.now(TASHKENT_TZ).strftime("%d.%m.%Y")
+        date_tag = datetime.now(TASHKENT_TZ).strftime("%Y%m%d")
+
+        text = "📋 Restoran tasdiqlamagan sifatsiz taom uchun to'lov ro'yxati quyidagi Excel faylda"
+        await app.bot.send_message(chat_id=BUXGALTERIYA_PROMOKOD_GROUP_ID, text=text)
+
         pul_buf = build_pul_berish_excel(pul_items, today_display)
         await app.bot.send_document(
             chat_id=BUXGALTERIYA_PROMOKOD_GROUP_ID,
@@ -1395,9 +1415,9 @@ async def weekly_buxgalteriya_report(context: ContextTypes.DEFAULT_TYPE) -> None
             filename=f"restoranga_pul_berish_{date_tag}.xlsx",
         )
 
-        log.info("Haftalik buxgalteriya hisoboti yuborildi: %d promokod, %d pul", len(promokod_items), len(pul_items))
+        log.info("Haftalik pul berish hisoboti yuborildi: %d ta", len(pul_items))
     except Exception as e:
-        log.error("Haftalik buxgalteriya hisoboti xatosi: %s", e)
+        log.error("Haftalik pul berish hisoboti xatosi: %s", e)
 
 
 # ============================================================
@@ -2010,12 +2030,14 @@ async def test_deadline_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 
 # ============================================================
-# /test_hisobot BUYRUG'I — juma 10:00 ni kutmasdan, Buxgalteriya
-# hisobotini (matn + Excel fayllar) darhol yuborib ko'rish uchun
+# /test_hisobot BUYRUG'I — 18:00 ni kutmasdan, Buxgalteriya
+# hisobotlarini (Promokod + Pul berish, matn + Excel fayllar) darhol
+# yuborib ko'rish uchun
 # ============================================================
 async def test_hisobot_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("⏳ Tekshirilmoqda, biroz kuting...")
-    await weekly_buxgalteriya_report(context)
+    await daily_promokod_report(context)
+    await weekly_pul_berish_report(context)
     await update.message.reply_text(
         "✅ Tayyor! Buxgalteriya guruhini tekshiring — matn va Excel fayllar o'sha yerga yuborildi."
     )
@@ -2103,7 +2125,8 @@ def main() -> None:
     app.job_queue.run_daily(daily_today_tasks_reminder, time=dt_time(hour=10, minute=0, tzinfo=TASHKENT_TZ))
 
     # Buxgalteriya — haftalik hisobot (Promokod + Pul berish), faqat JUMA 10:00 (Toshkent vaqti)
-    app.job_queue.run_daily(weekly_buxgalteriya_report, time=dt_time(hour=18, minute=0, tzinfo=TASHKENT_TZ))
+    app.job_queue.run_daily(daily_promokod_report, time=dt_time(hour=18, minute=0, tzinfo=TASHKENT_TZ))
+    app.job_queue.run_daily(weekly_pul_berish_report, time=dt_time(hour=18, minute=0, tzinfo=TASHKENT_TZ), days=(5,))
     app.job_queue.run_daily(daily_baza415_report, time=dt_time(hour=10, minute=0, tzinfo=TASHKENT_TZ))
     app.job_queue.run_daily(check_yashil_hamkor_auto, time=dt_time(hour=9, minute=0, tzinfo=TASHKENT_TZ))
 
