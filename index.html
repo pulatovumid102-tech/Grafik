@@ -5164,15 +5164,31 @@ function kaitenAddTask(){
   var f = kaitenReadFields('kt');
   if(!f.text){ notify('Vazifa nomini kiriting!'); return; }
   if(!f.empFio){ notify('Xodimni tanlang!'); return; }
-  askConfirm("Vazifani aniq tushunarli qilib berdingizmi? Esdan chiqmadimi hech narsa?",()=>{
+  askConfirm("Vazifani aniq tushunarli qilib berdingizmi? Esdan chiqmadimi hech narsa?",async ()=>{
     f.id='kt'+Date.now(); f.status='todo';
     f.createdBy = kaitenMyId();
     f.createdByName = kaitenCreatorNameNow();
     f.createdByTg = (CURRENT_USER_TG||'').replace(/^@/,'');
     f.createdAt = new Date().toISOString();
-    kaitenTasks.push(f);
     kaitenUploadedFiles['kt']=[];
-    kaitenSave(); notify('Saqlandi ✓');
+    var ok=false;
+    try{
+      var resp=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.kaiten',{headers:SB_H});
+      var rows=await resp.json();
+      if(rows&&rows.length&&rows[0].data){
+        var freshData=rows[0].data;
+        var freshTasks=(freshData.tasks||[]).slice();
+        freshTasks.push(f);
+        var patchResp=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.kaiten',{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({data:{tasks:freshTasks, columns:freshData.columns||kaitenColumns}})});
+        if(patchResp.ok){
+          ok=true;
+          kaitenTasks=freshTasks;
+          kaitenColumns=freshData.columns||kaitenColumns;
+        }
+      }
+    }catch(e){ console.error('kaitenAddTask error', e); }
+    if(!ok){ notify("⚠️ Saqlashda xatolik! Qayta urinib ko'ring."); return; }
+    notify('Saqlandi ✓');
     kaitenNotifyGroup(f);
     document.getElementById('kaiten-add-form').innerHTML='';
     renderKaiten();
@@ -5528,7 +5544,7 @@ function kaitenDeptUrgency(dept){
     if(t.status==='done'||t.status==='accepted') return;
     if(!t.deadline) return;
     var dPart = String(t.deadline).split('T')[0];
-    if(dPart===todayStr) hasToday=true;
+    if(dPart<=todayStr) hasToday=true;
     else if(dPart===tomorrowStr) hasTomorrow=true;
   });
   if(hasToday) return 'urgent-today';
