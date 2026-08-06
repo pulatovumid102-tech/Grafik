@@ -2598,8 +2598,7 @@ function muammoliSendBuxXabar(it,turi){
     lines.push('📦 Box soni: '+soni+' ta × '+summa.toLocaleString()+' so\'m');
     lines.push('💰 Jami: '+(soni*summa).toLocaleString()+' so\'m');
   }
-  var tagLine=muammoliBolimTagLine("Buxgalteriya bo'limi");
-  sendGroupMessage(lines.join('\n')+tagLine, MUAMMOLI_GROUP_BUXGALTERIYA_PROMOKOD);
+  sendGroupMessage(lines.join('\n'), MUAMMOLI_GROUP_BUXGALTERIYA_PROMOKOD);
 }
 var muammoliExpandedIds=new Set();
 var muammoliCurrentRenderFn=null;
