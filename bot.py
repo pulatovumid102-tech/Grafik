@@ -44,6 +44,7 @@ SUPPORT_GROUP_ID = -1003823489442
 PARTNERSHIP_GROUP_ID = -5467968653
 ZVONOK2_GROUP_ID = -5450377196
 SIRLY_STAFF_GROUP_ID = -5076135815
+MUAMMOLI_HAMKORLAR_REPORT_GROUP_ID = -1004336078331
 HR_GROUP_ID = -5370864546
 TOPSHIRIQLAR_GROUP_ID = -5550614907
 BUXGALTERIYA_PROMOKOD_GROUP_ID = -5574268734
@@ -995,7 +996,7 @@ async def daily_muammoli_hamkorlar_reminder(context: ContextTypes.DEFAULT_TYPE) 
         lines.append("")
         lines.append("@kh_nosirov")
 
-        await app.bot.send_message(chat_id=SIRLY_STAFF_GROUP_ID, text="\n".join(lines))
+        await app.bot.send_message(chat_id=MUAMMOLI_HAMKORLAR_REPORT_GROUP_ID, text="\n".join(lines))
         log.info("Muammoli hamkorlar eslatmasi yuborildi: %d ta restoran", len(qualifying))
     except Exception as e:
         log.error("Muammoli hamkorlar eslatmasi xatosi: %s", e)
