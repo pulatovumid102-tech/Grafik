@@ -110,6 +110,22 @@ async def sb_upsert(table: str, row_id: str, data: dict) -> None:
     resp.raise_for_status()
 
 
+async def sb_mutate_and_save(row_id: str, mutator_fn) -> bool:
+    """Xavfsiz (race-condition'dan himoyalangan) saqlash: biznes_data
+    jadvalidan eng so'nggi ma'lumotni qayta o'qib, shu ustida
+    (mutator_fn orqali) o'zgartirish kiritib, keyin saqlaydi — shunda
+    shu payt mini app'да xodim kiritgan o'zgarish yo'qolib ketmaydi."""
+    try:
+        rows = await sb_get("biznes_data", params={"id": f"eq.{row_id}"})
+        fresh_data = rows[0]["data"] if rows and isinstance(rows[0].get("data"), dict) else {}
+        mutator_fn(fresh_data)
+        await sb_upsert("biznes_data", row_id, {"data": fresh_data})
+        return True
+    except Exception as e:
+        log.error("sb_mutate_and_save xatosi (%s): %s", row_id, e)
+        return False
+
+
 async def claim_row(table: str, row_id: str) -> bool:
     """Faqat hozir ham 'pending' bo'lgan qatorni 'processing'ga o'tkazadi.
     Agar boshqa bot nusxasi allaqachon shu qatorni band qilgan bo'lsa,
@@ -521,7 +537,6 @@ async def check_overdue_muammoli(context: ContextTypes.DEFAULT_TYPE) -> None:
         if not isinstance(muammoli_data, dict):
             return
         items = muammoli_data.get("items", [])
-        changed = False
 
         org_nodes = []
         try:
@@ -530,6 +545,7 @@ async def check_overdue_muammoli(context: ContextTypes.DEFAULT_TYPE) -> None:
         except Exception as e:
             log.error("Org struktura tekshirish xatosi (overdue): %s", e)
 
+        notified_ids = []
         for it in items:
             if it.get("archived") or it.get("holati") == "hal_qilindi":
                 continue
@@ -557,11 +573,17 @@ async def check_overdue_muammoli(context: ContextTypes.DEFAULT_TYPE) -> None:
                 if tags:
                     text += " " + tags
                 await app.bot.send_message(chat_id=SUPPORT_GROUP_ID, text=text)
-                it["overdueNotified"] = True
-                changed = True
-        if changed:
-            await sb_patch("biznes_data", "muammoli_mijozlar", {"data": muammoli_data})
-            log.info("Muddati o'tgan murojaat(lar) uchun ogohlantirish yuborildi")
+                notified_ids.append(it.get("id"))
+        if notified_ids:
+            def _mark(fresh_data):
+                for fit in fresh_data.get("items", []):
+                    if fit.get("id") in notified_ids:
+                        fit["overdueNotified"] = True
+            ok = await sb_mutate_and_save("muammoli_mijozlar", _mark)
+            if ok:
+                log.info("Muddati o'tgan murojaat(lar) uchun ogohlantirish yuborildi")
+            else:
+                log.error("Muddati o'tgan murojaat belgisi saqlanmadi")
     except Exception as e:
         log.error("Muddat tekshirish xatosi: %s", e)
 
@@ -658,7 +680,7 @@ async def check_serving_time_reminders(context: ContextTypes.DEFAULT_TYPE) -> No
         now = datetime.now(TASHKENT_TZ)
         today_str = now.strftime("%Y-%m-%d")
         matched = []
-        changed = False
+        matched_ids = []
         for r in restoranlar:
             if r.get("yashilHamkor"):
                 continue
@@ -673,8 +695,7 @@ async def check_serving_time_reminders(context: ContextTypes.DEFAULT_TYPE) -> No
             diff_minutes = (serving_dt - now).total_seconds() / 60
             if 89 <= diff_minutes <= 90 and r.get("oxirgiEslatmaSanasi") != today_str:
                 matched.append(r)
-                r["oxirgiEslatmaSanasi"] = today_str
-                changed = True
+                matched_ids.append(r.get("id"))
         if matched:
             lines = [
                 f"⏰ Berish vaqti boshlanishiga 1 soat 30 daqiqa qolgan {len(matched)} ta restoran bor",
@@ -696,8 +717,12 @@ async def check_serving_time_reminders(context: ContextTypes.DEFAULT_TYPE) -> No
                 log.error("Org struktura tag xatosi: %s", e)
             await app.bot.send_message(chat_id=PARTNERSHIP_GROUP_ID, text="\n".join(lines))
             log.info("Berish vaqti eslatmasi yuborildi: %d ta restoran", len(matched))
-        if changed:
-            await sb_patch("biznes_data", "baza415", {"data": baza_data})
+        if matched_ids:
+            def _mark(fresh_data):
+                for fr in fresh_data.get("restoranlar", []):
+                    if fr.get("id") in matched_ids:
+                        fr["oxirgiEslatmaSanasi"] = today_str
+            await sb_mutate_and_save("baza415", _mark)
     except Exception as e:
         log.error("Berish vaqti eslatmasi xatosi: %s", e)
 
@@ -717,7 +742,6 @@ async def check_calling_status_before_serving(context: ContextTypes.DEFAULT_TYPE
         restoranlar = baza_data.get("restoranlar", [])
         now = datetime.now(TASHKENT_TZ)
         today_str = now.strftime("%Y-%m-%d")
-        changed = False
 
         # Vaqti 1-2 daqiqa qolgan (bugun hali yuborilmagan) guruhlarni topamiz
         due_times = set()
@@ -736,6 +760,7 @@ async def check_calling_status_before_serving(context: ContextTypes.DEFAULT_TYPE
             if 1 <= diff_minutes <= 2 and r.get("holatXabarSanasi_" + dan) != today_str:
                 due_times.add(dan)
 
+        dan_to_ids: dict = {}
         for dan in due_times:
             group = [r for r in restoranlar if r.get("berishVaqtiDan") == dan and not r.get("yashilHamkor")]
             called = [r for r in group if (r.get("qongiroq") or {}).get("lastCalledDate") == today_str]
@@ -763,12 +788,15 @@ async def check_calling_status_before_serving(context: ContextTypes.DEFAULT_TYPE
             await app.bot.send_message(chat_id=PARTNERSHIP_GROUP_ID, text="\n".join(lines))
             log.info("Qo'ng'iroq holati yuborildi: %s", dan)
 
-            for r in group:
-                r["holatXabarSanasi_" + dan] = today_str
-            changed = True
+            dan_to_ids[dan] = [r.get("id") for r in group]
 
-        if changed:
-            await sb_patch("biznes_data", "baza415", {"data": baza_data})
+        if dan_to_ids:
+            def _mark(fresh_data):
+                for fr in fresh_data.get("restoranlar", []):
+                    for dan, ids in dan_to_ids.items():
+                        if fr.get("id") in ids:
+                            fr["holatXabarSanasi_" + dan] = today_str
+            await sb_mutate_and_save("baza415", _mark)
     except Exception as e:
         log.error("Qo'ng'iroq holati xatosi: %s", e)
 
@@ -823,7 +851,6 @@ async def check_zvonok2_call_reminder(context: ContextTypes.DEFAULT_TYPE) -> Non
         restoranlar = baza_data.get("restoranlar", [])
         now = datetime.now(TASHKENT_TZ)
         today_str = now.strftime("%Y-%m-%d")
-        changed = False
 
         due_times = set()
         for r in restoranlar:
@@ -841,6 +868,7 @@ async def check_zvonok2_call_reminder(context: ContextTypes.DEFAULT_TYPE) -> Non
             if 29 <= diff_minutes <= 30 and r.get("zvonok2XabarSanasi_" + dan) != today_str:
                 due_times.add(dan)
 
+        dan_to_ids: dict = {}
         for dan in due_times:
             group = [r for r in restoranlar if r.get("berishVaqtiDan") == dan and not r.get("yashilHamkor")]
 
@@ -861,12 +889,15 @@ async def check_zvonok2_call_reminder(context: ContextTypes.DEFAULT_TYPE) -> Non
             await app.bot.send_message(chat_id=ZVONOK2_GROUP_ID, text="\n".join(lines))
             log.info("Zvonok 2 qo'ng'iroq eslatmasi yuborildi: %s", dan)
 
-            for r in group:
-                r["zvonok2XabarSanasi_" + dan] = today_str
-            changed = True
+            dan_to_ids[dan] = [r.get("id") for r in group]
 
-        if changed:
-            await sb_patch("biznes_data", "baza415", {"data": baza_data})
+        if dan_to_ids:
+            def _mark(fresh_data):
+                for fr in fresh_data.get("restoranlar", []):
+                    for dan, ids in dan_to_ids.items():
+                        if fr.get("id") in ids:
+                            fr["zvonok2XabarSanasi_" + dan] = today_str
+            await sb_mutate_and_save("baza415", _mark)
     except Exception as e:
         log.error("Zvonok 2 qo'ng'iroq eslatmasi xatosi: %s", e)
 
@@ -1274,7 +1305,7 @@ async def check_yashil_hamkor_auto(context: ContextTypes.DEFAULT_TYPE) -> None:
         items = muammoli_data.get("items", []) if isinstance(muammoli_data, dict) else []
 
         now = datetime.now(timezone.utc)
-        changed = False
+        newly_green_ids = []
 
         for r in restoranlar:
             if r.get("yashilHamkor"):
@@ -1307,9 +1338,7 @@ async def check_yashil_hamkor_auto(context: ContextTypes.DEFAULT_TYPE) -> None:
             if max_count >= 3:
                 continue  # muammoli hamkor bo'lgan, yashil bo'lolmaydi
 
-            r["yashilHamkor"] = True
-            r["yashilBelgilaganSana"] = now.isoformat()
-            changed = True
+            newly_green_ids.append(r.get("id"))
 
             lines = ["🟢 YASHIL HAMKOR STATUSIGA O'TDI", "", f"🏪 {r.get('nom','—')}", "📅 15 kunlik kuzatuv davomida yashil hamkor statusini oldi", ""]
             if counts:
@@ -1324,8 +1353,14 @@ async def check_yashil_hamkor_auto(context: ContextTypes.DEFAULT_TYPE) -> None:
             await app.bot.send_message(chat_id=BAZA415_REPORT_GROUP_ID, text="\n".join(lines))
             log.info("Avtomatik yashil hamkor: %s", r.get("nom"))
 
-        if changed:
-            await sb_patch("biznes_data", "baza415", {"data": baza_data})
+        if newly_green_ids:
+            yashil_sana = now.isoformat()
+            def _mark(fresh_data):
+                for fr in fresh_data.get("restoranlar", []):
+                    if fr.get("id") in newly_green_ids:
+                        fr["yashilHamkor"] = True
+                        fr["yashilBelgilaganSana"] = yashil_sana
+            await sb_mutate_and_save("baza415", _mark)
     except Exception as e:
         log.error("Yashil hamkor avtomatik tekshiruvi xatosi: %s", e)
 
@@ -1947,7 +1982,7 @@ async def check_deadline_2h_before(context: ContextTypes.DEFAULT_TYPE) -> None:
 
         now = datetime.now(TASHKENT_TZ)
         due = []
-        changed = False
+        due_ids = []
         for t in tasks:
             if t.get("archived") or t.get("status") not in ("todo", "progress"):
                 continue
@@ -1965,8 +2000,7 @@ async def check_deadline_2h_before(context: ContextTypes.DEFAULT_TYPE) -> None:
             diff_minutes = (dl - now).total_seconds() / 60
             if 119 <= diff_minutes <= 121:
                 due.append(t)
-                t["deadline2hNotified"] = True
-                changed = True
+                due_ids.append(t.get("id"))
 
         if due:
             org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
@@ -2001,8 +2035,12 @@ async def check_deadline_2h_before(context: ContextTypes.DEFAULT_TYPE) -> None:
                 await app.bot.send_message(chat_id=TOPSHIRIQLAR_GROUP_ID, text="\n".join(lines))
             log.info("2 soatlik dedlayn eslatmasi yuborildi: %d ta vazifa", len(due))
 
-        if changed:
-            await sb_patch("biznes_data", "kaiten", {"data": kaiten_data})
+        if due_ids:
+            def _mark(fresh_data):
+                for ft in fresh_data.get("tasks", []):
+                    if ft.get("id") in due_ids:
+                        ft["deadline2hNotified"] = True
+            await sb_mutate_and_save("kaiten", _mark)
     except Exception as e:
         log.error("2 soatlik dedlayn eslatmasi xatosi: %s", e)
 
