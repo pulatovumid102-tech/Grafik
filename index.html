@@ -3918,6 +3918,7 @@ function renderPartnershipCalls(){
       <div style="margin-top:6px">
         <span class="mm-seclbl">Izoh</span>
         <div style="font-size:13px;color:#2e2c28;margin-top:4px">${q.izoh?esc(q.izoh):'<span style="color:#9a9588">Izoh yo\'q</span>'}</div>
+        ${q.izoh&&q.izohAt?`<div style="font-size:11px;color:#9a9588;margin-top:2px">👤 ${esc(q.izohBy||'—')} · 📅 ${muammoliFormatDateTime(q.izohAt)}</div>`:''}
       </div>
       <div class="mm-btns" style="margin-top:8px;flex-wrap:wrap">
         ${calledToday?`<button class="sek-abtn" onclick="partnershipUnmarkCalled('${r.id}')">↩ Bekor qilish</button>`:`<button class="sek-abtn" onclick="partnershipMarkCalled('${r.id}')">☎ Tel qildim</button>`}
@@ -4166,7 +4167,7 @@ async function partnershipSaveCalled(restoranId){
         freshR.qongiroq.lastCalledDate=lastCalledDate;
         freshR.qongiroq.lastCalledBy=lastCalledBy;
         freshR.qongiroq.lastCalledAt=lastCalledAt;
-        if(izohInp) freshR.qongiroq.izoh=izohInp;
+        if(izohInp){ freshR.qongiroq.izoh=izohInp; freshR.qongiroq.izohBy=lastCalledBy; freshR.qongiroq.izohAt=lastCalledAt; }
         savedNom=freshR.nom;
         var patchResp=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.baza415',{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({data:freshData})});
         if(patchResp.ok){
@@ -4217,9 +4218,11 @@ function partnershipEditIzoh(restoranId){
 }
 async function partnershipSaveIzoh(restoranId){
   var val=document.getElementById('pc-izoh-edit').value.trim();
+  var kim=kaitenMyFio()||(CURRENT_USER_TG?CURRENT_USER_TG.replace(/^@/,''):'Xodim');
+  var sana=new Date().toISOString();
   var ok=await baza415MutateAndSave(function(db){
     var r=(db.restoranlar||[]).find(x=>x.id===restoranId);
-    if(r){ if(!r.qongiroq)r.qongiroq={}; r.qongiroq.izoh=val; }
+    if(r){ if(!r.qongiroq)r.qongiroq={}; r.qongiroq.izoh=val; r.qongiroq.izohBy=kim; r.qongiroq.izohAt=sana; }
   });
   if(!ok){ notify("⚠️ Saqlashda xatolik!"); return; }
   orgCloseModal(); renderPartnershipCalls(); notify('Saqlandi ✓');
@@ -4278,6 +4281,7 @@ function renderZvonok2(){
       <div style="margin-top:6px">
         <span class="mm-seclbl">Izoh</span>
         <div style="font-size:13px;color:#2e2c28;margin-top:4px">${q.izoh?esc(q.izoh):'<span style="color:#9a9588">Izoh yo\'q</span>'}</div>
+        ${q.izoh&&q.izohAt?`<div style="font-size:11px;color:#9a9588;margin-top:2px">👤 ${esc(q.izohBy||'—')} · 📅 ${muammoliFormatDateTime(q.izohAt)}</div>`:''}
       </div>
       <div class="mm-btns" style="margin-top:8px;flex-wrap:wrap">
         <button class="sek-abtn" onclick="zvonok2MarkCalled('${r.id}')">☎ Tel qildim</button>
@@ -4319,7 +4323,7 @@ async function zvonok2SaveCalled(restoranId){
         freshR.qongiroq2.lastCalledDate=lastCalledDate;
         freshR.qongiroq2.lastCalledBy=lastCalledBy;
         freshR.qongiroq2.lastCalledAt=lastCalledAt;
-        if(izohInp) freshR.qongiroq2.izoh=izohInp;
+        if(izohInp){ freshR.qongiroq2.izoh=izohInp; freshR.qongiroq2.izohBy=lastCalledBy; freshR.qongiroq2.izohAt=lastCalledAt; }
         savedNom=freshR.nom;
         var patchResp=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.baza415',{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({data:freshData})});
         if(patchResp.ok){
@@ -4356,9 +4360,11 @@ function zvonok2EditIzoh(restoranId){
 }
 async function zvonok2SaveIzoh(restoranId){
   var val=document.getElementById('zv2-izoh-edit').value.trim();
+  var kim=kaitenMyFio()||(CURRENT_USER_TG?CURRENT_USER_TG.replace(/^@/,''):'Xodim');
+  var sana=new Date().toISOString();
   var ok=await baza415MutateAndSave(function(db){
     var r=(db.restoranlar||[]).find(x=>x.id===restoranId);
-    if(r){ if(!r.qongiroq2)r.qongiroq2={}; r.qongiroq2.izoh=val; }
+    if(r){ if(!r.qongiroq2)r.qongiroq2={}; r.qongiroq2.izoh=val; r.qongiroq2.izohBy=kim; r.qongiroq2.izohAt=sana; }
   });
   if(!ok){ notify("⚠️ Saqlashda xatolik!"); return; }
   orgCloseModal(); renderZvonok2(); notify('Saqlandi ✓');
