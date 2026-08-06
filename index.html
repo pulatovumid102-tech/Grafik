@@ -2199,20 +2199,6 @@ function muammoliGetTurlarMijoz(){
 function muammoliGetTurlarHamkor(){
   return (muammoliDb.turlarHamkor&&muammoliDb.turlarHamkor.length?muammoliDb.turlarHamkor:MUAMMOLI_TURLARI_HAMKOR).slice().sort((a,b)=>a.localeCompare(b,'uz'));
 }
-function muammoliGetSababchiIchki(){
-  var list=muammoliGetOrgTopBolimlar();
-  list.push('Boshqa');
-  return list;
-}
-function muammoliGetOrgTopBolimlar(){
-  if(typeof orgData==='undefined'||!orgData||!orgData.length)return [];
-  var root=orgData.find(n=>!n.parentId);
-  var direct=root?orgData.filter(function(n){ return n.parentId===root.id && n.cardType==='bolim'; }):[];
-  if(!direct.length){
-    direct=orgData.filter(function(n){ return n.cardType==='bolim'; });
-  }
-  return direct.map(function(n){ return n.name; }).sort((a,b)=>a.localeCompare(b,'uz'));
-}
 function muammoliParseTgField(n){
   if(n.tgs&&n.tgs.length) return n.tgs.map(function(t){ return (t||'').replace(/^@/,''); }).filter(Boolean);
   if(n.tg) return [n.tg.replace(/^@/,'')];
@@ -2225,20 +2211,6 @@ function kaitenTgForFio(fio){
   if(!node)return '';
   var tgs=muammoliParseTgField(node);
   return tgs.length?tgs[0]:'';
-}
-function muammoliGetOrgEmployeeUsernames(bolimNom){
-  if(typeof orgData==='undefined'||!orgData||!orgData.length||!bolimNom)return [];
-  var bolimNode=orgData.find(function(n){ return n.name===bolimNom && n.cardType==='bolim'; });
-  if(!bolimNode)return [];
-  var usernames=[];
-  function walk(pid){
-    orgData.filter(function(n){ return n.parentId===pid; }).forEach(function(n){
-      if(n.fio) usernames=usernames.concat(muammoliParseTgField(n));
-      walk(n.id);
-    });
-  }
-  walk(bolimNode.id);
-  return usernames;
 }
 function muammoliGetBuyurtmaHolatlari(){
   return (muammoliDb.buyurtmaHolatlari&&muammoliDb.buyurtmaHolatlari.length?muammoliDb.buyurtmaHolatlari:MUAMMOLI_BUYURTMA_HOLATLARI).slice().sort((a,b)=>a.localeCompare(b,'uz'));
@@ -2408,10 +2380,6 @@ function muammoliCard(it){
     <div class="mm-seclbl">Restoran — ${esc(it.restoran)}</div>
     ${muammoliContactsRowsHtml(restoranContacts)}`:'';
 
-  var masulBlock=it.masulBolim?`<div class="mm-divider"></div>
-    <div class="mm-seclbl">Masul bo'lim</div>
-    <span class="mm-badge-bolim">${esc(it.masulBolim)}</span>`:'';
-
   var buxBlock=`<div class="mm-divider"></div>
     <div style="margin-bottom:8px">${muammoliPromokodRowHtml(it)}</div>
     <div style="margin-top:8px">${muammoliTasdiqlamadiRowHtml(it)}</div>`;
@@ -2435,7 +2403,6 @@ function muammoliCard(it){
     ${hamkorContactsHtml}
     ${muammoBlock}
     ${restoranBlock}
-    ${masulBlock}
     ${buxBlock}
     ${resolutionBlock}
     ${footerHtml}
@@ -2585,7 +2552,6 @@ function muammoliSendBuxXabar(it,turi){
   lines.push('📝 Izoh: '+(it.izoh||'—'));
   lines.push('');
   if(it.restoran) lines.push('🏪 Restoran: '+it.restoran);
-  lines.push('🏢 Masul bo\'lim: '+(it.masulBolim||'—'));
   lines.push('👤 Qabul qildi: '+(it.createdByName||'—'));
   lines.push('📅 '+muammoliFormatDateTime(it.createdAt));
   if(turi==='promokod'){
@@ -2655,10 +2621,6 @@ function muammoliArchiveCard(it){
     <div class="mm-seclbl">Restoran — ${esc(it.restoran)}</div>
     ${muammoliContactsRowsHtml(restoranContacts)}`:'';
 
-  var masulBlock=it.masulBolim?`<div class="mm-divider"></div>
-    <div class="mm-seclbl">Masul bo'lim</div>
-    <span class="mm-badge-bolim">${esc(it.masulBolim)}</span>`:'';
-
   var buxBlock=`<div class="mm-divider"></div>
     <div style="margin-bottom:8px">${muammoliPromokodRowHtml(it)}</div>
     <div style="margin-top:8px">${muammoliTasdiqlamadiRowHtml(it)}</div>`;
@@ -2679,7 +2641,6 @@ function muammoliArchiveCard(it){
     ${hamkorContactsHtml}
     ${muammoBlock}
     ${restoranBlock}
-    ${masulBlock}
     ${buxBlock}
     ${resolutionBlock}
     ${footerHtml}
@@ -2812,36 +2773,6 @@ async function muammoliSaveXabar(id){
   if(!ok){ notify("⚠️ Saqlashda xatolik!"); return; }
   orgCloseModal(); renderMuammoli(); notify('Saqlandi ✓');
 }
-async function muammoliToggleBolimXabar(id){
-  var it=muammoliDb.items.find(x=>x.id===id);
-  if(!it)return;
-  if(it.bolimXabarBerildi){
-    var ok=await muammoliMutateAndSave(function(db){
-      var freshIt=db.items.find(x=>x.id===id);
-      if(freshIt){ freshIt.bolimXabarBerildi=false; freshIt.bolimJavobi=''; }
-    });
-    if(!ok){ notify("⚠️ Saqlashda xatolik!"); return; }
-    renderMuammoli();
-    return;
-  }
-  var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">${esc(it.masulBolim||"Bo'lim")} nima dedi?</div>
-    <div class="frow"><textarea class="fi" id="mm-bolim-javobi-inp" style="min-height:70px;resize:vertical" placeholder="Bo'lim javobi (ixtiyoriy)..."></textarea></div>
-    <div class="fbtns">
-      <button class="fsave" onclick="muammoliSaveBolimXabar('${id}')">Saqlash</button>
-      <button class="fcancel" onclick="orgCloseModal()">Bekor</button>
-    </div>`;
-  orgShowModal(html);
-  setTimeout(function(){ var inp=document.getElementById('mm-bolim-javobi-inp'); if(inp) inp.focus(); }, 50);
-}
-async function muammoliSaveBolimXabar(id){
-  var javobi=document.getElementById('mm-bolim-javobi-inp').value.trim();
-  var ok=await muammoliMutateAndSave(function(db){
-    var it=db.items.find(x=>x.id===id);
-    if(it){ it.bolimXabarBerildi=true; it.bolimJavobi=javobi; }
-  });
-  if(!ok){ notify("⚠️ Saqlashda xatolik!"); return; }
-  orgCloseModal(); renderMuammoli(); notify('Saqlandi ✓');
-}
 async function muammoliToggleStatus(id){
   var it=muammoliDb.items.find(x=>x.id===id);
   if(!it)return;
@@ -2889,7 +2820,6 @@ async function muammoliConfirmHal(id){
     '🙋 Mijoz: '+(it.ism||'—')+(it.tel?' ('+it.tel+')':'')+'\n\n'+
     '📝 Yechim: '+yechim+'\n\n'+
     (it.restoran?'🏪 Restoran: '+it.restoran+'\n':'')+
-    '🏢 Masul bo\'lim: '+(it.masulBolim||'—')+'\n'+
     '👤 Kim hal qildi: '+halQildiBy,
     MUAMMOLI_GROUP_SUPPORT
   );
@@ -2947,19 +2877,10 @@ function muammoliRefreshForm(){
       <div id="mm-restoran-dropdown" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:20;background:var(--green-card);border:1px solid var(--white-10);border-radius:10px;margin-top:4px;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.3)"></div>
     </div>`;
 
-  var masulList=muammoliGetSababchiIchki();
-  var masulOptions=`<option value="" ${!d.masulBolim?'selected':''}>— tanlang —</option>`
-    +masulList.map(t=>`<option value="${esc(t)}" ${d.masulBolim===t?'selected':''}>${esc(t)}</option>`).join('');
-  var masulBlock=`<div class="frow">
-    <label class="flbl">Masul bo'lim <span style="color:#ff7070">*</span></label>
-    <select class="fi" id="mm-masul-bolim">${masulOptions}</select>
-  </div>`;
-
   var bodyBlock=`<div class="frow"><label class="flbl">Mijoz ismi <span style="color:#ff7070">*</span></label><input class="fi" id="mm-ism" value="${esc(d.ism||'')}" placeholder="Mijozning ismi"></div>
        <div class="frow"><label class="flbl">Mijoz raqami</label><input class="fi" id="mm-tel" value="${esc(d.tel||'+998')}" placeholder="+998..."></div>
        ${turiBlock}
-       ${restoranBlock}
-       ${masulBlock}`;
+       ${restoranBlock}`;
 
   document.getElementById('muammoli-form').innerHTML=`<div class="form-box fade">
     ${bodyBlock}
@@ -2976,7 +2897,6 @@ function muammoliSyncCommon(){
   if(g('mm-ism')!==undefined) d.ism=g('mm-ism');
   if(g('mm-tel')!==undefined) d.tel=g('mm-tel');
   if(g('mm-restoran')!==undefined) d.restoran=g('mm-restoran');
-  if(g('mm-masul-bolim')!==undefined) d.masulBolim=g('mm-masul-bolim');
 }
 function mmRestoranOutsideClick(e){
   var wrap=document.getElementById('mm-restoran-dropdown');
@@ -3012,8 +2932,6 @@ async function saveMuammoliForm(){
   var turi=document.getElementById('mm-turi').value;
   if(!turi){notify('Murojaat turini tanlang!');return;}
   var izoh=document.getElementById('mm-izoh').value.trim();
-  var masulBolim=document.getElementById('mm-masul-bolim').value;
-  if(!masulBolim){notify("Masul bo'limni tanlang!");return;}
 
   var ism=document.getElementById('mm-ism').value.trim();
   if(!ism){notify('Mijoz ismini kiriting!');return;}
@@ -3024,7 +2942,6 @@ async function saveMuammoliForm(){
   muammoliDraft.ism=ism;
   muammoliDraft.tel=tel;
   muammoliDraft.manba='mijoz';
-  muammoliDraft.masulBolim=masulBolim;
   muammoliDraft.turi=turi;
   muammoliDraft.izoh=izoh;
 
@@ -3052,20 +2969,17 @@ async function saveMuammoliForm(){
     sendGroupMessage(
       '✏️ MUROJAAT TAHRIRLANDI\n'+
       '👤 Kim: '+kaitenCreatorNameNow()+'\n'+
-      '🙋 Mijoz: '+draftCopy.ism+'\n🏢 Masul: '+masulBolim
+      '🙋 Mijoz: '+draftCopy.ism
     );
     return;
   }
 
-  var groupIdForBolim=muammoliGroupForBolim(masulBolim);
   var mainMsg='⚠️ YANGI MUROJAAT\n\n'+
     '🙋 Mijoz: '+draftCopy.ism+(draftCopy.tel?' ('+draftCopy.tel+')':'')+'\n\n'+
     '📋 Turi: '+turi+'\n'+
     '📝 Izoh: '+(izoh||'—')+'\n\n'+
     (draftCopy.restoran?'🏪 Restoran: '+draftCopy.restoran+'\n':'')+
-    '🏢 Masul bo\'lim: '+masulBolim+'\n'+
     '👤 Qabul qildi: '+draftCopy.createdByName;
-  sendGroupMessage(mainMsg);
   if(draftCopy.restoran){
     var shikoyatSoni=muammoliDb.items.filter(function(x){ return x.restoran===draftCopy.restoran; }).length;
     var kontaktlarRo=muammoliMenejerKassirContacts(draftCopy.restoran);
@@ -3086,10 +3000,10 @@ async function saveMuammoliForm(){
     ogohlantirishLines.push('');
     ogohlantirishLines.push('📝 Tafsilot: '+(izoh||'—'));
     ogohlantirishLines.push('👤 Qabul qildi: '+draftCopy.createdByName);
-    ogohlantirishLines.push('🏢 Masul bo\'lim: '+masulBolim);
     sendGroupMessage(ogohlantirishLines.join('\n'),MUAMMOLI_GROUP_RESTORAN);
-  }else if(groupIdForBolim){
-    sendGroupMessage(mainMsg+muammoliBolimTagLine(masulBolim),groupIdForBolim);
+    sendGroupMessage(mainMsg);
+  }else{
+    sendGroupMessage(mainMsg);
   }
   if(draftCopy.restoran){
     var sameTuriCount=muammoliRestoranMaxTuriCount31(draftCopy.restoran);
@@ -3120,18 +3034,6 @@ async function saveMuammoliForm(){
     }
   }
 }
-function muammoliGroupForBolim(bolimNom){
-  if(bolimNom==="IT bo'limi") return MUAMMOLI_GROUP_TEXNIK;
-  if(bolimNom==="Buxgalteriya bo'limi") return MUAMMOLI_GROUP_BUXGALTERIYA;
-  if(bolimNom==="Partnership bo'limi") return MUAMMOLI_GROUP_RESTORAN;
-  return null;
-}
-function muammoliBolimTagLine(bolimNom){
-  var usernames=muammoliGetOrgEmployeeUsernames(bolimNom);
-  if(!usernames.length)return '';
-  return '\n\n👥 '+usernames.map(function(u){ return '@'+u; }).join(' ');
-}
-
 var MM_BAR_COLORS=['#a8e063','#eda100','#2a78d6','#e34948','#8b6914','#5a4a8b'];
 function muammoliDaysSince(iso){
   if(!iso)return 0;
