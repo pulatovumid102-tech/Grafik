@@ -1410,6 +1410,14 @@ async def daily_promokod_report(context: ContextTypes.DEFAULT_TYPE) -> None:
         date_tag = datetime.now(TASHKENT_TZ).strftime("%Y%m%d")
 
         text = "📋 Promokod berish kerak bo'lgan mijozlar ro'yxati quyidagi Excel faylda"
+        try:
+            org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
+            org_nodes = org_rows[0]["data"] if org_rows else []
+            usernames = collect_support_usernames(org_nodes)
+            if usernames:
+                text += "\n\n" + " ".join(f"@{u}" for u in usernames)
+        except Exception as e:
+            log.error("Org struktura tag xatosi (promokod): %s", e)
         await app.bot.send_message(chat_id=BUXGALTERIYA_PROMOKOD_GROUP_ID, text=text)
 
         promokod_buf = build_promokod_excel(promokod_items, today_display)
