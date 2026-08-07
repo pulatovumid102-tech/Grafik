@@ -2249,6 +2249,13 @@ function muammoliHoursSince(iso){
 function muammoliIsOverdue(it){
   return !it.archived && it.holati!=='hal_qilindi' && muammoliHoursSince(it.createdAt)>=MUAMMOLI_MUDDAT_SOAT;
 }
+function muammoliCancelForm(){
+  muammoliDraft=null;
+  muammoliEditId=null;
+  var formEl=document.getElementById('muammoli-form');
+  if(formEl) formEl.innerHTML='';
+  renderMuammoli();
+}
 function renderMuammoli(){
   muammoliCurrentRenderFn=renderMuammoli;
   renderMuammoliFilter();
@@ -2887,7 +2894,7 @@ function muammoliRefreshForm(){
   document.getElementById('muammoli-form').innerHTML=`<div class="form-box fade">
     ${bodyBlock}
     <div class="frow"><label class="flbl">Batafsil</label><textarea class="fi" id="mm-izoh" style="min-height:70px;resize:vertical" placeholder="Nima bo'lganini batafsil yozing...">${esc(d.izoh||'')}</textarea></div>
-    <div class="fbtns"><button class="fsave" onclick="saveMuammoliForm()">Saqlash</button><button class="fcancel" onclick="renderMuammoli()">Bekor</button></div>
+    <div class="fbtns"><button class="fsave" onclick="saveMuammoliForm()">Saqlash</button><button class="fcancel" onclick="muammoliCancelForm()">Bekor</button></div>
   </div>`;
   document.removeEventListener('click', mmRestoranOutsideClick);
   document.addEventListener('click', mmRestoranOutsideClick);
