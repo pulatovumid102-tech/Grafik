@@ -736,6 +736,32 @@ function renderMurojaatQollanma(){
         +'</div>';
     }).join('');
   }
+  function orgIstisnoHtml(arr){
+    var kunOptions=[['dush','Dush'],['sesh','Sesh'],['chor','Chor'],['pay','Pay'],['juma','Juma'],['shan','Shan'],['yak','Yak']];
+    if(!arr.length)return '';
+    return arr.map(function(exc,i){
+      var opts=kunOptions.map(function(k){ return '<option value="'+k[0]+'" '+(exc.kun===k[0]?'selected':'')+'>'+k[1]+'</option>'; }).join('');
+      return '<div style="display:flex;gap:6px;margin-top:6px;align-items:center">'
+        +'<select class="fi" id="oem-istisno-kun-'+i+'" style="margin-top:0;flex:1">'+opts+'</select>'
+        +'<input class="fi" type="time" id="oem-istisno-boshlanish-'+i+'" value="'+esc(exc.boshlanish||'')+'" style="margin-top:0;flex:1">'
+        +'<input class="fi" type="time" id="oem-istisno-tugash-'+i+'" value="'+esc(exc.tugash||'')+'" style="margin-top:0;flex:1">'
+        +'<button class="abtn abtn-red" onclick="this.parentNode.remove()" style="margin-top:0">✕</button>'
+        +'</div>';
+    }).join('');
+  }
+  function orgAddIstisno(id){
+    var wrap=document.getElementById('oem-istisno-'+id);
+    var count=wrap.querySelectorAll('select').length;
+    var div=document.createElement('div');
+    div.style.cssText='display:flex;gap:6px;margin-top:6px;align-items:center';
+    var kunOptions=[['dush','Dush'],['sesh','Sesh'],['chor','Chor'],['pay','Pay'],['juma','Juma'],['shan','Shan'],['yak','Yak']];
+    var opts=kunOptions.map(function(k){ return '<option value="'+k[0]+'">'+k[1]+'</option>'; }).join('');
+    div.innerHTML='<select class="fi" id="oem-istisno-kun-'+count+'" style="margin-top:0;flex:1">'+opts+'</select>'
+      +'<input class="fi" type="time" id="oem-istisno-boshlanish-'+count+'" style="margin-top:0;flex:1">'
+      +'<input class="fi" type="time" id="oem-istisno-tugash-'+count+'" style="margin-top:0;flex:1">'
+      +'<button class="abtn abtn-red" onclick="this.parentNode.remove()" style="margin-top:0">✕</button>';
+    wrap.appendChild(div);
+  }
   function orgAddTel(id){
     var wrap=document.getElementById('oem-tels-'+id);
     var count=wrap.querySelectorAll('input').length;
@@ -831,6 +857,10 @@ function renderMurojaatQollanma(){
             return `<label style="display:flex;align-items:center;gap:3px;font-size:11px;color:var(--white-80);cursor:pointer;background:${active?'rgba(168,224,99,0.15)':'var(--white-06)'};padding:5px 8px;border-radius:8px"><input type="checkbox" class="oem-kun-chk" value="${d[0]}" ${active?'checked':''} style="margin:0"> ${d[1]}</label>`;
           }).join('')}
         </div>
+        ${isBolimNow?'':`<div style="border-top:1px solid var(--white-10);margin:12px 0 10px"></div>
+        <div style="font-size:11px;color:var(--white-50);margin-bottom:6px">Istisno kunlar (boshqa vaqt kerak bo'lgan kunlar uchun)</div>
+        <div id="oem-istisno-${id}">${orgIstisnoHtml(node.istisnoKunlar||[])}</div>
+        <button class="abtn" style="margin-top:6px" onclick="orgAddIstisno('${id}')">+ Istisno kun qo'shish</button>`}
       </div>
       <div class="fbtns">
         <button class="fsave" onclick="orgSaveEditModal('${id}')">Saqlash</button>
@@ -923,6 +953,20 @@ function renderMurojaatQollanma(){
     node.ishTugash=ishTugashEl?ishTugashEl.value:'';
     var kunWrap=document.getElementById('oem-ish-kunlari-'+id);
     node.ishKunlari=kunWrap?Array.from(kunWrap.querySelectorAll('.oem-kun-chk:checked')).map(function(el){return el.value;}):[];
+    var istisnoWrap=document.getElementById('oem-istisno-'+id);
+    if(istisnoWrap){
+      var rows=istisnoWrap.querySelectorAll('select');
+      var istisnoArr=[];
+      rows.forEach(function(sel){
+        var i=sel.id.replace('oem-istisno-kun-','');
+        var bEl=document.getElementById('oem-istisno-boshlanish-'+i);
+        var tEl=document.getElementById('oem-istisno-tugash-'+i);
+        if(bEl&&bEl.value&&tEl&&tEl.value){
+          istisnoArr.push({kun:sel.value, boshlanish:bEl.value, tugash:tEl.value});
+        }
+      });
+      node.istisnoKunlar=istisnoArr;
+    }
     orgSave(); notify('Saqlandi ✓'); orgCloseModal(); renderOrg();
   }
   function orgAddChildModal(id){
@@ -2181,14 +2225,12 @@ async function muammoliLoad(){
       if(!muammoliDb.items)muammoliDb.items=[];
       muammoliEnsureLists();
       muammoliMigratePhones();
-      muammoliMigrateDuplicateIds();
       muammoliSave();
     }else{
       var d=localStorage.getItem('muammoli_mijozlar');
       muammoliDb=d?JSON.parse(d):{items:[]};
       muammoliEnsureLists();
       muammoliMigratePhones();
-      muammoliMigrateDuplicateIds();
       try{await fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'muammoli_mijozlar',data:muammoliDb})});}catch(e2){}
     }
   }catch(e){
@@ -2196,7 +2238,6 @@ async function muammoliLoad(){
     muammoliDb=d?JSON.parse(d):{items:[]};
     muammoliEnsureLists();
     muammoliMigratePhones();
-    muammoliMigrateDuplicateIds();
   }
 }
 function muammoliMigratePhones(){
@@ -2204,19 +2245,6 @@ function muammoliMigratePhones(){
   (muammoliDb.items||[]).forEach(function(it){
     var norm=normalizePhone(it.tel);
     if(norm!==it.tel){ it.tel=norm; changed=true; }
-  });
-  return changed;
-}
-function muammoliMigrateDuplicateIds(){
-  var changed=false;
-  var seen={};
-  (muammoliDb.items||[]).forEach(function(it){
-    if(!it.id){ it.id='mm'+Date.now()+'_'+Math.random().toString(36).slice(2,7); changed=true; return; }
-    if(seen[it.id]){
-      it.id='mm'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
-      changed=true;
-    }
-    seen[it.id]=true;
   });
   return changed;
 }
@@ -2889,7 +2917,7 @@ function showMuammoliForm(id){
     muammoliDraft=JSON.parse(JSON.stringify(it));
     muammoliEditId=id;
   }else{
-    muammoliDraft={id:'mm'+Date.now()+'_'+Math.random().toString(36).slice(2,7), manba:'mijoz', holati:'ochiq'};
+    muammoliDraft={id:'mm'+Date.now(), manba:'mijoz', holati:'ochiq'};
     muammoliEditId=null;
   }
   if(!muammoliDraft.manba) muammoliDraft.manba='mijoz';
@@ -2999,10 +3027,6 @@ async function saveMuammoliForm(){
     }
   });
   if(!ok){ notify("⚠️ Saqlashda xatolik! Qayta urinib ko'ring."); return; }
-  muammoliDraft=null;
-  muammoliEditId=null;
-  var formEl=document.getElementById('muammoli-form');
-  if(formEl) formEl.innerHTML='';
   notify('Saqlandi ✓'); renderMuammoli();
 
   if(isEdit){
