@@ -3100,17 +3100,21 @@ function renderMuammoliDashboard(){
   var restoranCounts={};
   items.forEach(function(it){ if(it.restoran){ restoranCounts[it.restoran]=(restoranCounts[it.restoran]||0)+1; } });
   var restoranSortedAll=Object.entries(restoranCounts).sort(function(a,b){return b[1]-a[1];});
-  var restoranMulti=restoranSortedAll.filter(function(e){ return e[1]>1; });
+  var restoran3plus=restoranSortedAll.filter(function(e){ return e[1]>=3; });
+  var restoranTwo=restoranSortedAll.filter(function(e){ return e[1]===2; });
   var restoranSingle=restoranSortedAll.filter(function(e){ return e[1]===1; });
-  var restoranSorted=restoranMulti.slice();
+  var restoranSorted=restoran3plus.slice();
+  if(restoranTwo.length){
+    restoranSorted.push(['__ikkita__', restoranTwo.length]);
+  }
   if(restoranSingle.length){
-    restoranSorted.push(['__boshqalar__', restoranSingle.length]);
+    restoranSorted.push(['__bitta__', restoranSingle.length]);
   }
   var restoranMax=restoranSorted.length?Math.max.apply(null,restoranSorted.map(function(e){return e[1];})):0;
   window.muammoliRestoranSingle=restoranSingle;
-
-  // Hal qilinmagan muammolar, kutish vaqti bo'yicha (eng uzoq kutgani birinchi)
-  var pendingSorted=ochiqList.slice().sort(function(a,b){ return muammoliDaysSince(b.createdAt)-muammoliDaysSince(a.createdAt); });
+  window.muammoliRestoranTwo=restoranTwo;
+  window.muammoliRestoranAll=restoranSortedAll;
+  window.muammoliRestoranGroupedEntries=restoranSorted;
 
   // Kunlik murojaatlar soni
   function muammoliDateKey(d){
@@ -3125,7 +3129,7 @@ function renderMuammoliDashboard(){
   });
   var kunlikKeys=Object.keys(kunlikCounts).sort();
   var kunlikOrtacha=kunlikKeys.length?(items.length/kunlikKeys.length):0;
-  var kunlikRecentKeys=kunlikKeys.slice(-7);
+  var kunlikRecentKeys=kunlikKeys.slice(-7).reverse();
   var kunlikRestKeys=kunlikKeys.slice(0,-7);
   var OY_NOMLARI=['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
   var oylikCounts={};
@@ -3138,12 +3142,12 @@ function renderMuammoliDashboard(){
 
   var barsHtml=function(sorted,max,filterType){
     return sorted.map(function(entry,i){
-      var isBoshqalar=entry[0]==='__boshqalar__';
-      var label=isBoshqalar?'Boshqalar':entry[0];
+      var isGroup=entry[0]==='__boshqalar__'||entry[0]==='__ikkita__'||entry[0]==='__bitta__';
+      var label=entry[0]==='__boshqalar__'?'Boshqalar':(entry[0]==='__ikkita__'?"2 ta shikoyat tushgan restoranlar":(entry[0]==='__bitta__'?"1 ta shikoyat tushgan restoranlar":entry[0]));
       var valEsc=esc(entry[0]).replace(/'/g,"\\'");
-      var onclick=isBoshqalar?`muammoliShowSingleBoshqalarList('${filterType}')`:`muammoliShowFilteredList('${filterType}','${valEsc}')`;
+      var onclick=isGroup?`muammoliShowGroupList('${filterType}','${entry[0]}')`:`muammoliShowFilteredList('${filterType}','${valEsc}')`;
       var labelColor='var(--white)';
-      if(filterType==='restoran'&&!isBoshqalar){
+      if(filterType==='restoran'&&!isGroup){
         var cnt=muammoliRestoranMaxTuriCount31(entry[0]);
         if(cnt>=3) labelColor='#e34948';
         else if(cnt>=2) labelColor='#eda100';
@@ -3154,20 +3158,6 @@ function renderMuammoliDashboard(){
       </div>`;
     }).join('');
   };
-
-  var pendingHtml=pendingSorted.length?pendingSorted.map(function(it){
-    var days=muammoliDaysSince(it.createdAt);
-    var color=days>=5?'#e34948':(days>=2?'#eda100':'#1baf7a');
-    var bg=days>=5?'rgba(227,73,72,0.15)':(days>=2?'rgba(237,161,0,0.15)':'rgba(27,175,122,0.15)');
-    var nom=it.restoran||it.masulBolim||'—';
-    return `<div class="mm-pending-item">
-      <div style="min-width:0">
-        <div style="font-size:13px;font-weight:600;color:var(--white)">${esc(nom)}${it.manba!=='hamkor'?' — '+esc(it.ism||'—'):''}</div>
-        <div style="font-size:11px;color:var(--white-50)">${esc(it.turi||'Boshqa')}</div>
-      </div>
-      <span class="mm-pending-days" style="background:${bg};color:${color}">${days} kun</span>
-    </div>`;
-  }).join(''):'<div style="text-align:center;padding:20px;color:var(--white-50);font-size:13px">Hal qilinmagan murojaatlar yo\'q 🎉</div>';
 
   var kunlikHtml=kunlikRecentKeys.length?kunlikRecentKeys.map(function(k){
     var parts=k.split('-');
@@ -3205,11 +3195,8 @@ function renderMuammoliDashboard(){
     </div>
     <div class="mm-dash-section">
       <div class="mm-dash-title">🏪 Eng ko'p shikoyat qilingan restoranlar</div>
-      ${restoranSorted.length?barsHtml(restoranSorted,restoranMax,'restoran'):'<div style="color:var(--white-50);font-size:13px">Ma\'lumot yo\'q</div>'}
-    </div>
-    <div class="mm-dash-section">
-      <div class="mm-dash-title">⏳ Hal qilinmagan murojaatlar (kutish vaqti bo'yicha)</div>
-      ${pendingHtml}
+      <div class="frow" style="margin-bottom:8px"><input class="fi" id="mm-restoran-dash-search" placeholder="🔍 Restoran nomi..." oninput="muammoliRestoranDashSearch(this.value)"></div>
+      <div id="mm-restoran-dash-list">${restoranSorted.length?barsHtml(restoranSorted,restoranMax,'restoran'):'<div style="color:var(--white-50);font-size:13px">Ma\'lumot yo\'q</div>'}</div>
     </div>
     <div class="mm-dash-section">
       <div class="mm-dash-title">📅 Kunlik murojaatlar soni <span style="font-weight:400;color:var(--white-50);font-size:12px">(o'rtacha ${kunlikOrtacha.toFixed(1)}/kun)</span></div>
@@ -3285,9 +3272,59 @@ function muammoliToggleQolganKunlar(){
   muammoliQolganKunlarOpen=!muammoliQolganKunlarOpen;
   renderMuammoliDashboard();
 }
-function muammoliShowSingleBoshqalarList(filterType){
-  var srcArr=filterType==='restoran'?(window.muammoliRestoranSingle||[]):(window.muammoliTuriRest||[]);
+function muammoliRestoranBarRow(nom,count){
+  var valEsc=esc(nom).replace(/'/g,"\\'");
+  var labelColor='var(--white)';
+  var cnt=muammoliRestoranMaxTuriCount31(nom);
+  if(cnt>=3) labelColor='#e34948';
+  else if(cnt>=2) labelColor='#eda100';
+  return `<div class="mm-pending-item" style="cursor:pointer" onclick="muammoliShowFilteredList('restoran','${valEsc}')">
+    <span style="font-size:13px;color:${labelColor};font-weight:${labelColor!=='var(--white)'?'700':'400'}">${esc(nom)}</span>
+    <span style="font-weight:700;color:var(--lime)">${count}</span>
+  </div>`;
+}
+function muammoliRestoranDashSearch(q){
+  var el=document.getElementById('mm-restoran-dash-list');
+  if(!el)return;
+  q=(q||'').trim().toLowerCase();
+  if(!q){
+    var grouped=window.muammoliRestoranGroupedEntries||[];
+    el.innerHTML=grouped.length?grouped.map(function(entry){
+      if(entry[0]==='__ikkita__') return `<div class="mm-pending-item" style="cursor:pointer" onclick="muammoliShowGroupList('restoran','__ikkita__')"><span style="font-size:13px;color:var(--white)">2 ta shikoyat tushgan restoranlar</span><span style="font-weight:700;color:var(--lime)">${entry[1]}</span></div>`;
+      if(entry[0]==='__bitta__') return `<div class="mm-pending-item" style="cursor:pointer" onclick="muammoliShowGroupList('restoran','__bitta__')"><span style="font-size:13px;color:var(--white)">1 ta shikoyat tushgan restoranlar</span><span style="font-weight:700;color:var(--lime)">${entry[1]}</span></div>`;
+      return muammoliRestoranBarRow(entry[0],entry[1]);
+    }).join(''):'<div style="color:var(--white-50);font-size:13px">Ma\'lumot yo\'q</div>';
+    return;
+  }
+  var all=window.muammoliRestoranAll||[];
+  var matched=all.filter(function(e){ return e[0].toLowerCase().includes(q); });
+  el.innerHTML=matched.length?matched.map(function(e){ return muammoliRestoranBarRow(e[0],e[1]); }).join(''):'<div style="text-align:center;padding:12px;color:var(--white-50);font-size:13px">Topilmadi</div>';
+}
+function muammoliShowGroupList(filterType,groupKey){
+  var srcArr;
+  var title;
+  if(groupKey==='__boshqalar__'){
+    srcArr=(window.muammoliTuriRest||[]);
+    title='Boshqalar';
+  }else if(groupKey==='__ikkita__'){
+    srcArr=(window.muammoliRestoranTwo||[]);
+    title="2 ta shikoyat tushgan restoranlar";
+  }else{
+    srcArr=(window.muammoliRestoranSingle||[]);
+    title="1 ta shikoyat tushgan restoranlar";
+  }
+  window.muammoliGroupListSrc=srcArr;
+  window.muammoliGroupListFilterType=filterType;
+  window.muammoliGroupListTitle=title;
+  muammoliRenderGroupListModal('');
+}
+function muammoliRenderGroupListModal(q){
+  var filterType=window.muammoliGroupListFilterType;
+  var title=window.muammoliGroupListTitle;
+  var srcArr=window.muammoliGroupListSrc||[];
+  q=(q||'').toLowerCase();
   var rest=srcArr.slice().sort(function(a,b){ return b[1]-a[1]; });
+  if(q) rest=rest.filter(function(e){ return e[0].toLowerCase().includes(q); });
   var rows=rest.map(function(entry){
     var nomEsc=esc(entry[0]).replace(/'/g,"\\'");
     return `<div class="mm-pending-item" style="cursor:pointer" onclick="orgCloseModal();muammoliShowFilteredList('${filterType}','${nomEsc}')">
@@ -3295,11 +3332,14 @@ function muammoliShowSingleBoshqalarList(filterType){
       <span style="font-weight:700;color:var(--white-50)">${entry[1]}</span>
     </div>`;
   }).join('');
-  if(!rows) rows='<div style="text-align:center;padding:16px;color:var(--white-50);font-size:13px">Yo\'q</div>';
-  var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:12px">Boshqalar</div>
-    <div style="max-height:60vh;overflow-y:auto">${rows}</div>
+  if(!rows) rows='<div style="text-align:center;padding:16px;color:var(--white-50);font-size:13px">Topilmadi</div>';
+  var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:12px">${esc(title)}</div>
+    <div class="frow" style="margin-bottom:10px"><input class="fi" id="mm-group-search" placeholder="🔍 Restoran nomi..." value="${esc(q)}" oninput="muammoliRenderGroupListModal(this.value)"></div>
+    <div style="max-height:55vh;overflow-y:auto">${rows}</div>
     <button class="fcancel" style="width:100%;margin-top:12px" onclick="orgCloseModal()">Yopish</button>`;
   orgShowModal(html);
+  var inp=document.getElementById('mm-group-search');
+  if(inp){ inp.focus(); inp.setSelectionRange(inp.value.length,inp.value.length); }
 }
 var muammoliTuriGroupExpanded={};
 var muammoliTuriGroupCurRestoran=null;
