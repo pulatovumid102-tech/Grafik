@@ -2180,18 +2180,29 @@ async function muammoliLoad(){
       muammoliDb=rows[0].data;
       if(!muammoliDb.items)muammoliDb.items=[];
       muammoliEnsureLists();
+      muammoliMigratePhones();
       muammoliSave();
     }else{
       var d=localStorage.getItem('muammoli_mijozlar');
       muammoliDb=d?JSON.parse(d):{items:[]};
       muammoliEnsureLists();
+      muammoliMigratePhones();
       try{await fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'muammoli_mijozlar',data:muammoliDb})});}catch(e2){}
     }
   }catch(e){
     var d=localStorage.getItem('muammoli_mijozlar');
     muammoliDb=d?JSON.parse(d):{items:[]};
     muammoliEnsureLists();
+    muammoliMigratePhones();
   }
+}
+function muammoliMigratePhones(){
+  var changed=false;
+  (muammoliDb.items||[]).forEach(function(it){
+    var norm=normalizePhone(it.tel);
+    if(norm!==it.tel){ it.tel=norm; changed=true; }
+  });
+  return changed;
 }
 function muammoliGetTurlarMijoz(){
   return (muammoliDb.turlarMijoz&&muammoliDb.turlarMijoz.length?muammoliDb.turlarMijoz:MUAMMOLI_TURLARI_MIJOZ).slice().sort((a,b)=>a.localeCompare(b,'uz'));
@@ -2887,7 +2898,7 @@ function muammoliRefreshForm(){
     </div>`;
 
   var bodyBlock=`<div class="frow"><label class="flbl">Mijoz ismi <span style="color:#ff7070">*</span></label><input class="fi" id="mm-ism" value="${esc(d.ism||'')}" placeholder="Mijozning ismi"></div>
-       <div class="frow"><label class="flbl">Mijoz raqami</label><input class="fi" id="mm-tel" value="${esc(d.tel||'+998')}" placeholder="+998..."></div>
+       <div class="frow"><label class="flbl">Mijoz raqami</label><input class="fi" id="mm-tel" value="${esc(d.tel||'+998')}" placeholder="+998..." oninput="formatPhoneInput(this)"></div>
        ${turiBlock}
        ${restoranBlock}`;
 
@@ -2944,7 +2955,7 @@ async function saveMuammoliForm(){
 
   var ism=document.getElementById('mm-ism').value.trim();
   if(!ism){notify('Mijoz ismini kiriting!');return;}
-  var tel=document.getElementById('mm-tel').value.trim();
+  var tel=normalizePhone(document.getElementById('mm-tel').value.trim());
   var restoran3=document.getElementById('mm-restoran').value.trim();
   if(restoran3&&!baza415AllRestoranNomlari().includes(restoran3)){notify("Restoran 415 baza ro'yxatidan tanlanishi kerak!");return;}
   muammoliDraft.restoran=restoran3;
@@ -3415,12 +3426,14 @@ async function baza415Load(){
       if(!baza415Db.restoranlar)baza415Db.restoranlar=[];
       var changed1=baza415MigrateFilial();
       var changed2=baza415MigrateFaollik();
-      if(changed1||changed2)baza415Save();
+      var changed3=baza415MigratePhones();
+      if(changed1||changed2||changed3)baza415Save();
     }else{
       var d=localStorage.getItem('baza415');
       baza415Db=d?JSON.parse(d):{restoranlar:[]};
       baza415MigrateFilial();
       baza415MigrateFaollik();
+      baza415MigratePhones();
       try{await fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'baza415',data:baza415Db})});}catch(e2){}
     }
   }catch(e){
@@ -3428,7 +3441,18 @@ async function baza415Load(){
     baza415Db=d?JSON.parse(d):{restoranlar:[]};
     baza415MigrateFilial();
     baza415MigrateFaollik();
+    baza415MigratePhones();
   }
+}
+function baza415MigratePhones(){
+  var changed=false;
+  (baza415Db.restoranlar||[]).forEach(function(r){
+    (r.kontaktlar||[]).forEach(function(k){
+      var norm=normalizePhone(k.tel);
+      if(norm!==k.tel){ k.tel=norm; changed=true; }
+    });
+  });
+  return changed;
 }
 function baza415MigrateFaollik(){
   var changed=false;
@@ -3541,28 +3565,28 @@ function showBaza415RestForm(id){
       </div>
     </div>
     ${isNew?`
-    <div class="frow"><label class="flbl">Call center raqami</label><input class="fi" id="bz-rest-callcenter-tel" value="+998" placeholder="+998..."></div>
+    <div class="frow"><label class="flbl">Call center raqami</label><input class="fi" id="bz-rest-callcenter-tel" value="+998" placeholder="+998..." oninput="formatPhoneInput(this)"></div>
     <div style="border:1px solid var(--white-10);border-radius:10px;padding:12px;margin-bottom:10px">
       <div style="font-size:12px;font-weight:700;color:var(--lime);margin-bottom:8px">Direktor</div>
       <input class="fi" id="bz-rest-direktor-ism" placeholder="Ismi" style="margin-top:0;margin-bottom:6px">
-      <input class="fi" id="bz-rest-direktor-tel" value="+998" placeholder="+998..." style="margin-top:0">
+      <input class="fi" id="bz-rest-direktor-tel" value="+998" placeholder="+998..." style="margin-top:0" oninput="formatPhoneInput(this)">
     </div>
     <div style="border:1px solid var(--white-10);border-radius:10px;padding:12px;margin-bottom:10px">
       <div style="font-size:12px;font-weight:700;color:var(--lime);margin-bottom:8px">Menejer</div>
       <input class="fi" id="bz-rest-menejer-ism" placeholder="Ismi" style="margin-top:0;margin-bottom:6px">
-      <input class="fi" id="bz-rest-menejer-tel" value="+998" placeholder="+998..." style="margin-top:0">
+      <input class="fi" id="bz-rest-menejer-tel" value="+998" placeholder="+998..." style="margin-top:0" oninput="formatPhoneInput(this)">
     </div>
     <div style="border:1px solid var(--white-10);border-radius:10px;padding:12px;margin-bottom:10px">
       <div style="font-size:12px;font-weight:700;color:var(--lime);margin-bottom:8px">Kassir-1</div>
       <input class="fi" id="bz-rest-kassir-ism" placeholder="Ismi" style="margin-top:0;margin-bottom:6px">
-      <input class="fi" id="bz-rest-kassir-tel" value="+998" placeholder="+998..." style="margin-top:0">
+      <input class="fi" id="bz-rest-kassir-tel" value="+998" placeholder="+998..." style="margin-top:0" oninput="formatPhoneInput(this)">
     </div>
     <div id="bz-rest-extra-wrap"></div>
     <button type="button" class="abtn" style="margin-bottom:10px" onclick="baza415AddExtraContactRow()">＋ Kontakt qo'shish</button>
     <div style="border:1px solid var(--white-10);border-radius:10px;padding:12px;margin-bottom:10px">
       <div style="font-size:12px;font-weight:700;color:var(--lime);margin-bottom:8px">Buxgalter</div>
       <input class="fi" id="bz-rest-bux-ism" placeholder="Ismi" style="margin-top:0;margin-bottom:6px">
-      <input class="fi" id="bz-rest-bux-tel" value="+998" placeholder="+998..." style="margin-top:0">
+      <input class="fi" id="bz-rest-bux-tel" value="+998" placeholder="+998..." style="margin-top:0" oninput="formatPhoneInput(this)">
     </div>
     `:''}
     <div class="fbtns"><button class="fsave" onclick="saveBaza415Rest('${id||''}')">Saqlash</button><button class="fcancel" onclick="renderBaza415List()">Bekor</button></div>
@@ -3579,7 +3603,7 @@ function baza415AddExtraContactRow(){
   div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:11px;color:var(--white-50);font-weight:700">Qo'shimcha kontakt</span><button type="button" class="abtn abtn-red" onclick="this.closest('.bz-extra-contact-row').remove()" style="padding:2px 6px">✕</button></div>
     <input class="fi" id="bz-rest-extra-rol-${i}" placeholder="Lavozimi (masalan: Ombor mudiri)" style="margin-top:0;margin-bottom:6px">
     <input class="fi" id="bz-rest-extra-ism-${i}" placeholder="Ismi" style="margin-top:0;margin-bottom:6px">
-    <input class="fi" id="bz-rest-extra-tel-${i}" value="+998" placeholder="+998..." style="margin-top:0">`;
+    <input class="fi" id="bz-rest-extra-tel-${i}" value="+998" placeholder="+998..." style="margin-top:0" oninput="formatPhoneInput(this)">`;
   wrap.appendChild(div);
 }
 async function saveBaza415Rest(id){
@@ -3591,15 +3615,15 @@ async function saveBaza415Rest(id){
   var newRestObj=null, kontaktlar=null;
   var lines=null;
   if(!isEdit){
-    var callcenterTel=document.getElementById('bz-rest-callcenter-tel').value.trim();
+    var callcenterTel=normalizePhone(document.getElementById('bz-rest-callcenter-tel').value.trim());
     var direktorIsm=document.getElementById('bz-rest-direktor-ism').value.trim();
-    var direktorTel=document.getElementById('bz-rest-direktor-tel').value.trim();
+    var direktorTel=normalizePhone(document.getElementById('bz-rest-direktor-tel').value.trim());
     var menejerIsm=document.getElementById('bz-rest-menejer-ism').value.trim();
-    var menejerTel=document.getElementById('bz-rest-menejer-tel').value.trim();
+    var menejerTel=normalizePhone(document.getElementById('bz-rest-menejer-tel').value.trim());
     var kassirIsm=document.getElementById('bz-rest-kassir-ism').value.trim();
-    var kassirTel=document.getElementById('bz-rest-kassir-tel').value.trim();
+    var kassirTel=normalizePhone(document.getElementById('bz-rest-kassir-tel').value.trim());
     var buxIsm=document.getElementById('bz-rest-bux-ism').value.trim();
-    var buxTel=document.getElementById('bz-rest-bux-tel').value.trim();
+    var buxTel=normalizePhone(document.getElementById('bz-rest-bux-tel').value.trim());
     kontaktlar=[];
     if(callcenterTel&&callcenterTel!=='+998')kontaktlar.push({id:'kt'+Date.now()+'_cc', rol:'Call center', ism:'', tel:callcenterTel});
     if(direktorIsm||direktorTel)kontaktlar.push({id:'kt'+Date.now()+'_0', rol:'Direktor', ism:direktorIsm, tel:direktorTel});
@@ -3611,7 +3635,7 @@ async function saveBaza415Rest(id){
       var telEl=row.querySelector('[id^="bz-rest-extra-tel-"]');
       var rol=(rolEl&&rolEl.value.trim())||'';
       var ism=(ismEl&&ismEl.value.trim())||'';
-      var tel=(telEl&&telEl.value.trim())||'';
+      var tel=normalizePhone((telEl&&telEl.value.trim())||'');
       if(rol||ism||tel)kontaktlar.push({id:'kt'+Date.now()+'_x'+idx, rol:rol||'Boshqa', ism:ism, tel:tel});
     });
     if(buxIsm||(buxTel&&buxTel!=='+998'))kontaktlar.push({id:'kt'+Date.now()+'_bux', rol:'Buxgalter', ism:buxIsm, tel:buxTel});
@@ -3731,7 +3755,7 @@ function showBaza415ContactForm(id){
   document.getElementById('baza415-filial-form').innerHTML=`<div class="form-box fade">
     <div class="frow"><label class="flbl">Lavozimi</label><input class="fi" id="bz-contact-rol" value="${esc(k?.rol||'')}" placeholder="Masalan: Menejer, Kassir, 2-Kassir, Buxgalter, Ombor mudiri..."></div>
     <div class="frow"><label class="flbl">Ismi</label><input class="fi" id="bz-contact-ism" value="${esc(k?.ism||'')}" placeholder="Ismi"></div>
-    <div class="frow"><label class="flbl">Tel raqami</label><input class="fi" id="bz-contact-tel" value="${esc(k?.tel||'+998')}" placeholder="+998..."></div>
+    <div class="frow"><label class="flbl">Tel raqami</label><input class="fi" id="bz-contact-tel" value="${esc(k?.tel||'+998')}" placeholder="+998..." oninput="formatPhoneInput(this)"></div>
     <div class="fbtns"><button class="fsave" onclick="saveBaza415Contact('${id||''}')">Saqlash</button><button class="fcancel" onclick="renderBaza415Restoran()">Bekor</button></div>
   </div>`;
   document.getElementById('bz-contact-rol').focus();
@@ -3741,7 +3765,7 @@ async function saveBaza415Contact(id){
   var restId=r.id;
   var rol=document.getElementById('bz-contact-rol').value.trim();
   var ism=document.getElementById('bz-contact-ism').value.trim();
-  var tel=document.getElementById('bz-contact-tel').value.trim();
+  var tel=normalizePhone(document.getElementById('bz-contact-tel').value.trim());
   if(!rol){notify('Lavozimni kiriting!');return;}
   var newContact=id?null:{id:'kt'+Date.now(), rol, ism, tel};
   var ok=await baza415MutateAndSave(function(db){
@@ -3853,7 +3877,7 @@ function partnershipEditContactsModal(restoranId){
   }
   var rowsHtml=contacts.map(function(k){
     return `<div class="frow"><label class="flbl">${esc(k.rol||'Kontakt')}${k.ism?' — '+esc(k.ism):''}</label>
-      <input class="fi" id="pc-tel-${k.id}" value="${esc(k.tel||'')}" placeholder="+998..."></div>`;
+      <input class="fi" id="pc-tel-${k.id}" value="${esc(k.tel||'')}" placeholder="+998..." oninput="formatPhoneInput(this)"></div>`;
   }).join('');
   var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">${esc(r.nom)} — raqamlar</div>
     ${rowsHtml}
@@ -3870,7 +3894,7 @@ async function partnershipSaveContacts(restoranId){
   var updates={};
   contacts.forEach(function(k){
     var inp=document.getElementById('pc-tel-'+k.id);
-    if(inp) updates[k.id]=inp.value.trim();
+    if(inp) updates[k.id]=normalizePhone(inp.value.trim());
   });
   var ok=await baza415MutateAndSave(function(db){
     var freshR=(db.restoranlar||[]).find(x=>x.id===restoranId);
@@ -4628,6 +4652,25 @@ function findNode(ns,id){for(var n of ns){if(n.id===id)return n;var f=findNode(n
 function rmNode(ns,id){return ns.filter(n=>n.id!==id).map(n=>({...n,children:rmNode(n.children||[],id)}));}
 function openImg(nid){var flow=getFlow();var n=findNode(flow.nodes,nid);if(!n?.img)return;document.getElementById('img-src').src=n.img;document.getElementById('img-modal').classList.add('open');}
 function closeImg(){document.getElementById('img-modal').classList.remove('open');document.getElementById('img-src').src='';}
+// Telefon raqamini kiritish paytida avtomatik "+998 99 477 41 48" ko'rinishiga o'tkazadi.
+function formatPhoneInput(inp){
+  var digits=inp.value.replace(/\D/g,'').slice(0,12);
+  var out='+';
+  if(digits.length>0) out+=digits.slice(0,3);
+  if(digits.length>3) out+=' '+digits.slice(3,5);
+  if(digits.length>5) out+=' '+digits.slice(5,8);
+  if(digits.length>8) out+=' '+digits.slice(8,10);
+  if(digits.length>10) out+=' '+digits.slice(10,12);
+  inp.value=out;
+}
+// Har qanday ko'rinishda saqlangan raqamni "+998 99 477 41 48" ko'rinishiga
+// o'tkazadi. Agar 12 xonali (998+9) o'zbek raqamiga to'g'ri kelmasa, tegilmaydi.
+function normalizePhone(raw){
+  if(!raw)return raw;
+  var digits=String(raw).replace(/\D/g,'');
+  if(digits.length!==12||digits.slice(0,3)!=='998')return raw;
+  return '+'+digits.slice(0,3)+' '+digits.slice(3,5)+' '+digits.slice(5,8)+' '+digits.slice(8,10)+' '+digits.slice(10,12);
+}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function formatUzPhone(raw){
   if(!raw)return '';
