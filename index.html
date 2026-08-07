@@ -2181,12 +2181,14 @@ async function muammoliLoad(){
       if(!muammoliDb.items)muammoliDb.items=[];
       muammoliEnsureLists();
       muammoliMigratePhones();
+      muammoliMigrateDuplicateIds();
       muammoliSave();
     }else{
       var d=localStorage.getItem('muammoli_mijozlar');
       muammoliDb=d?JSON.parse(d):{items:[]};
       muammoliEnsureLists();
       muammoliMigratePhones();
+      muammoliMigrateDuplicateIds();
       try{await fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'muammoli_mijozlar',data:muammoliDb})});}catch(e2){}
     }
   }catch(e){
@@ -2194,6 +2196,7 @@ async function muammoliLoad(){
     muammoliDb=d?JSON.parse(d):{items:[]};
     muammoliEnsureLists();
     muammoliMigratePhones();
+    muammoliMigrateDuplicateIds();
   }
 }
 function muammoliMigratePhones(){
@@ -2201,6 +2204,19 @@ function muammoliMigratePhones(){
   (muammoliDb.items||[]).forEach(function(it){
     var norm=normalizePhone(it.tel);
     if(norm!==it.tel){ it.tel=norm; changed=true; }
+  });
+  return changed;
+}
+function muammoliMigrateDuplicateIds(){
+  var changed=false;
+  var seen={};
+  (muammoliDb.items||[]).forEach(function(it){
+    if(!it.id){ it.id='mm'+Date.now()+'_'+Math.random().toString(36).slice(2,7); changed=true; return; }
+    if(seen[it.id]){
+      it.id='mm'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+      changed=true;
+    }
+    seen[it.id]=true;
   });
   return changed;
 }
@@ -2873,7 +2889,7 @@ function showMuammoliForm(id){
     muammoliDraft=JSON.parse(JSON.stringify(it));
     muammoliEditId=id;
   }else{
-    muammoliDraft={id:'mm'+Date.now(), manba:'mijoz', holati:'ochiq'};
+    muammoliDraft={id:'mm'+Date.now()+'_'+Math.random().toString(36).slice(2,7), manba:'mijoz', holati:'ochiq'};
     muammoliEditId=null;
   }
   if(!muammoliDraft.manba) muammoliDraft.manba='mijoz';
@@ -2983,6 +2999,10 @@ async function saveMuammoliForm(){
     }
   });
   if(!ok){ notify("⚠️ Saqlashda xatolik! Qayta urinib ko'ring."); return; }
+  muammoliDraft=null;
+  muammoliEditId=null;
+  var formEl=document.getElementById('muammoli-form');
+  if(formEl) formEl.innerHTML='';
   notify('Saqlandi ✓'); renderMuammoli();
 
   if(isEdit){
