@@ -3923,10 +3923,37 @@ function muammoliHamkorQualifies(nom){
   });
   return Object.values(counts).some(function(c){ return c>=3; });
 }
+function muammoliHamkorQoshilganSana(nom){
+  var cutoff=muammoliHamkorCutoff(nom);
+  var turiItemsInWindow={};
+  (muammoliDb.items||[]).forEach(function(it){
+    if(it.restoran!==nom||!it.turi||!it.createdAt)return;
+    var t=new Date(it.createdAt).getTime();
+    if(isNaN(t)||t<cutoff)return;
+    if(!turiItemsInWindow[it.turi])turiItemsInWindow[it.turi]=[];
+    turiItemsInWindow[it.turi].push(it);
+  });
+  var qoshilganSana=null;
+  Object.keys(turiItemsInWindow).forEach(function(turi){
+    var arr=turiItemsInWindow[turi];
+    if(arr.length<3)return;
+    var sorted=arr.slice().sort(function(a,b){ return new Date(a.createdAt)-new Date(b.createdAt); });
+    var thirdDate=new Date(sorted[2].createdAt);
+    if(!qoshilganSana||thirdDate<qoshilganSana) qoshilganSana=thirdDate;
+  });
+  return qoshilganSana;
+}
 function muammoliHamkorGetQualifyingList(){
   var restoranlarSet={};
   (muammoliDb.items||[]).forEach(function(it){ if(it.restoran) restoranlarSet[it.restoran]=true; });
-  return Object.keys(restoranlarSet).filter(muammoliHamkorQualifies).sort(function(a,b){ return a.localeCompare(b,'uz'); });
+  return Object.keys(restoranlarSet).filter(muammoliHamkorQualifies).sort(function(a,b){
+    var da=muammoliHamkorQoshilganSana(a);
+    var db=muammoliHamkorQoshilganSana(b);
+    if(!da&&!db)return a.localeCompare(b,'uz');
+    if(!da)return 1;
+    if(!db)return -1;
+    return da-db;
+  });
 }
 function renderMuammoliHamkorlar(){
   var list=muammoliHamkorGetQualifyingList();
@@ -3939,29 +3966,17 @@ function renderMuammoliHamkorlar(){
     var cutoff=muammoliHamkorCutoff(nom);
     var tarix=(muammoliDb.items||[]).filter(function(it){ return it.restoran===nom; }).sort(function(a,b){ return new Date(b.createdAt)-new Date(a.createdAt); });
     var turiCounts={};
-    var turiItemsInWindow={};
     tarix.forEach(function(it){
       if(!it.turi||!it.createdAt)return;
       var t=new Date(it.createdAt).getTime();
       if(isNaN(t)||t<cutoff)return;
       turiCounts[it.turi]=(turiCounts[it.turi]||0)+1;
-      if(!turiItemsInWindow[it.turi])turiItemsInWindow[it.turi]=[];
-      turiItemsInWindow[it.turi].push(it);
     });
     var qualifyingTuri=Object.entries(turiCounts).filter(function(e){ return e[1]>=3; }).sort(function(a,b){ return b[1]-a[1]; }).map(function(e){ return e[0]+' ('+e[1]+')'; }).join(', ');
-    // Ro'yxatga qachon qo'shilgani: har qualifying turi uchun 3-chi murojaat sanasi,
-    // ulardan eng erta bo'lgani — restoran birinchi marta shu ro'yxatga tushgan payt.
-    var qoshilganSana=null;
-    Object.keys(turiItemsInWindow).forEach(function(turi){
-      var arr=turiItemsInWindow[turi];
-      if(arr.length<3)return;
-      var sorted=arr.slice().sort(function(a,b){ return new Date(a.createdAt)-new Date(b.createdAt); });
-      var thirdDate=new Date(sorted[2].createdAt);
-      if(!qoshilganSana||thirdDate<qoshilganSana) qoshilganSana=thirdDate;
-    });
+    var qoshilganSana=muammoliHamkorQoshilganSana(nom);
     var kunSoni=qoshilganSana?Math.floor((Date.now()-qoshilganSana.getTime())/(24*60*60*1000)):null;
     var borderColor=kunSoni===null?'var(--white-10)':(kunSoni>=3?'#e34948':'#ef9f27');
-    var compactRow=`<div class="section-item" style="border-color:${borderColor}" onclick="muammoliHamkorToggle('${nomEsc}')">
+    var compactRow=`<div class="section-item" style="border-color:${borderColor};border-width:2px" onclick="muammoliHamkorToggle('${nomEsc}')">
       <div style="min-width:0">
         <div class="section-name">🏪 ${esc(nom)}</div>
         ${qualifyingTuri?`<div style="font-size:11px;color:#ff9090;margin-top:2px">${esc(qualifyingTuri)}</div>`:''}
