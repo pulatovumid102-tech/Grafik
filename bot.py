@@ -411,19 +411,31 @@ def collect_support_usernames(org_nodes: list) -> list:
     return collect_dept_usernames(org_nodes, "support")
 
 
+def _employee_schedule_for_day(node: dict, kun_key: str):
+    """Xodimning berilgan kun uchun ish vaqtini qaytaradi: agar shu kunga
+    'istisno' (boshqa vaqt) belgilangan bo'lsa o'shani, aks holda umumiy
+    ish jadvalini qaytaradi. Natija: (ishBoshlanish, ishTugash)."""
+    for exc in node.get("istisnoKunlar") or []:
+        if exc.get("kun") == kun_key and exc.get("boshlanish") and exc.get("tugash"):
+            return exc["boshlanish"], exc["tugash"]
+    return node.get("ishBoshlanish"), node.get("ishTugash")
+
+
 def _is_currently_working(node: dict) -> bool:
-    """Xodimning ish jadvali (kuni + soati) hozirgi paytga to'g'ri kelishini
-    tekshiradi. Jadval kiritilmagan bo'lsa — False qaytaradi (tag qilinmasin)."""
-    if not node.get("ishBoshlanish") or not node.get("ishTugash"):
-        return False
+    """Xodimning ish jadvali (kuni + soati, istisno kunlarni hisobga olib)
+    hozirgi paytga to'g'ri kelishini tekshiradi. Jadval kiritilmagan
+    bo'lsa — False qaytaradi (tag qilinmasin)."""
     now = datetime.now(TASHKENT_TZ)
     kun_key = ISH_KUN_KEYLARI[now.weekday()]
     kunlar = node.get("ishKunlari")
     if kunlar is not None and kun_key not in kunlar:
         return False
+    boshlanish, tugash = _employee_schedule_for_day(node, kun_key)
+    if not boshlanish or not tugash:
+        return False
     try:
-        h1, m1 = map(int, node["ishBoshlanish"].split(":"))
-        h2, m2 = map(int, node["ishTugash"].split(":"))
+        h1, m1 = map(int, boshlanish.split(":"))
+        h2, m2 = map(int, tugash.split(":"))
     except Exception:
         return False
     start_min = h1 * 60 + m1
@@ -1573,9 +1585,8 @@ async def daily_tomorrow_schedule_reminder(context: ContextTypes.DEFAULT_TYPE) -
                 lines.append(f"🏢 {dept}")
                 for n in members:
                     fio = n.get("fio") or n.get("name") or "—"
-                    boshlanish = n.get("ishBoshlanish") or "—"
-                    tugash = n.get("ishTugash") or "—"
-                    lines.append(f"👤 {fio} — {boshlanish}–{tugash}")
+                    boshlanish, tugash = _employee_schedule_for_day(n, tomorrow_kun)
+                    lines.append(f"👤 {fio} — {boshlanish or '—'}–{tugash or '—'}")
                 lines.append("")
         else:
             lines.append("Hech kim ishga chiqmaydi.")
@@ -1650,11 +1661,12 @@ def _find_coverage_gaps(dept_start: int, dept_end: int, employees: list, kun_key
         kunlar = emp.get("ishKunlari")
         if kunlar is not None and kun_key not in kunlar:
             continue
-        if not emp.get("ishBoshlanish") or not emp.get("ishTugash"):
+        boshlanish, tugash = _employee_schedule_for_day(emp, kun_key)
+        if not boshlanish or not tugash:
             continue
         try:
-            es = _minutes(emp["ishBoshlanish"])
-            ee = _minutes(emp["ishTugash"])
+            es = _minutes(boshlanish)
+            ee = _minutes(tugash)
         except Exception:
             continue
         for i in range(max(es, dept_start), min(ee, dept_end)):
@@ -1678,7 +1690,8 @@ async def check_ish_boshlanish_reminder(context: ContextTypes.DEFAULT_TYPE) -> N
     """Kunning eng erta ish boshlanish vaqtiga 10 daqiqa qolganda — HR guruhiga
     BUGUNGI TO'LIQ jadval (barcha bo'lim, barcha xodim, dam olish kuni bilan)
     yuboriladi. Boshqa (keyinroq) vaqtlar uchun esa faqat o'sha vaqtga to'g'ri
-    keladigan xodimlar, o'z bo'limi bilan, qisqa xabar sifatida yuboriladi."""
+    keladigan xodimlar, o'z bo'limi bilan, qisqa xabar sifatida yuboriladi.
+    Har xodimning bugungi ISTISNO kuni bo'lsa, o'sha vaqt ishlatiladi."""
     app = context.application
     try:
         org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
@@ -1700,7 +1713,14 @@ async def check_ish_boshlanish_reminder(context: ContextTypes.DEFAULT_TYPE) -> N
         if not active_today:
             return
 
-        times_today = sorted(set(n.get("ishBoshlanish") for n in active_today if n.get("ishBoshlanish")))
+        # Har xodimning BUGUNGI (istisno kunlarni hisobga olgan) boshlanish vaqti
+        today_start = {}
+        for n in active_today:
+            b, _ = _employee_schedule_for_day(n, today_kun)
+            if b:
+                today_start[n.get("id") or id(n)] = b
+
+        times_today = sorted(set(today_start.values()))
         if not times_today:
             return
         earliest = times_today[0]
@@ -1738,12 +1758,13 @@ async def check_ish_boshlanish_reminder(context: ContextTypes.DEFAULT_TYPE) -> N
                         if kunlar is not None and today_kun not in kunlar:
                             lines.append(f"👤 {fio} — Dam olish kuni")
                         else:
-                            lines.append(f"👤 {fio} — {n.get('ishBoshlanish','—')}")
+                            b, t = _employee_schedule_for_day(n, today_kun)
+                            lines.append(f"👤 {fio} — {b or '—'}–{t or '—'}")
                     lines.append("")
                 lines.append(instruction)
                 text = "\n".join(lines)
             else:
-                group = [n for n in active_today if n.get("ishBoshlanish") == vaqt]
+                group = [n for n in active_today if today_start.get(n.get("id") or id(n)) == vaqt]
                 by_dept = _group_employees_by_dept(group, org_nodes)
                 lines = [f"⏰ Ish vaqti boshlanishiga 10 daqiqa qolgan xodimlar ({vaqt}):", ""]
                 for dept, members in sorted(by_dept.items()):
@@ -1841,7 +1862,9 @@ async def check_ish_kelmagan(context: ContextTypes.DEFAULT_TYPE) -> None:
             kunlar = n.get("ishKunlari")
             if kunlar is not None and today_kun not in kunlar:
                 continue
-            vaqt = n.get("ishBoshlanish")
+            vaqt, _ = _employee_schedule_for_day(n, today_kun)
+            if not vaqt:
+                continue
             try:
                 h, m = map(int, vaqt.split(":"))
             except Exception:
@@ -1857,7 +1880,7 @@ async def check_ish_kelmagan(context: ContextTypes.DEFAULT_TYPE) -> None:
         for vaqt in due_times:
             group = [
                 n for n in employees
-                if n.get("ishBoshlanish") == vaqt
+                if _employee_schedule_for_day(n, today_kun)[0] == vaqt
                 and (n.get("ishKunlari") is None or today_kun in n.get("ishKunlari"))
             ]
             missing = []
