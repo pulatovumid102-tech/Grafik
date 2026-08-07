@@ -2262,8 +2262,10 @@ function renderMuammoli(){
   var h=items.map(muammoliCard).join('');
   if(!h)h='<div style="text-align:center;padding:32px;color:var(--white-50);font-size:13px">Murojaatlar yo\'q</div>';
   document.getElementById('muammoli-list').innerHTML=h;
-  document.getElementById('muammoli-form').innerHTML='';
-  muammoliDraft=null; muammoliEditId=null;
+  if(!muammoliDraft){
+    document.getElementById('muammoli-form').innerHTML='';
+    muammoliEditId=null;
+  }
 }
 function renderMuammoliArchive(){
   muammoliCurrentRenderFn=renderMuammoliArchive;
