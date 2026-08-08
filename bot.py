@@ -626,7 +626,7 @@ async def screenshot_request_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         try:
             org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
             org_nodes = org_rows[0]["data"] if org_rows else []
-            usernames = collect_support_usernames(org_nodes)
+            usernames = collect_dept_usernames_active(org_nodes, "support")
             if usernames:
                 text += "\n\n" + " ".join(f"@{u}" for u in usernames)
         except Exception as e:
