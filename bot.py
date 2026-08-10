@@ -312,7 +312,7 @@ async def muammoli_check_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
         org_nodes = org_rows[0]["data"] if org_rows else []
-        usernames = collect_support_usernames(org_nodes)
+        usernames = collect_dept_usernames_active(org_nodes, "support")
         if usernames:
             text += "\n\n" + " ".join(f"@{u}" for u in usernames)
     except Exception as e:
@@ -519,7 +519,7 @@ async def daily_muammoli_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
 
         org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
         org_nodes = org_rows[0]["data"] if org_rows else []
-        usernames = collect_support_usernames(org_nodes)
+        usernames = collect_dept_usernames_active(org_nodes, "support")
 
         time_label = datetime.now(TASHKENT_TZ).strftime("%H:%M")
         lines = [f"🔔 KUNLIK ESLATMA — Support bo'limiga — {time_label}"]
@@ -580,7 +580,7 @@ async def check_overdue_muammoli(context: ContextTypes.DEFAULT_TYPE) -> None:
                     f"📋 Turi: {it.get('turi', 'Boshqa')}\n"
                     "Iltimos, tezroq hal qiling!"
                 )
-                usernames = collect_support_usernames(org_nodes)
+                usernames = collect_dept_usernames_active(org_nodes, "support")
                 tags = " ".join(f"@{u}" for u in usernames)
                 text += "\n\n@umidpulatov"
                 if tags:
@@ -662,7 +662,7 @@ async def handle_support_photo(update: Update, context: ContextTypes.DEFAULT_TYP
     try:
         org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
         org_nodes = org_rows[0]["data"] if org_rows else []
-        usernames = collect_support_usernames(org_nodes)
+        usernames = collect_dept_usernames_active(org_nodes, "support")
     except Exception as e:
         log.error("Org struktura tekshirish xatosi: %s", e)
         return
@@ -1279,6 +1279,381 @@ def build_baza415_excel(restoranlar: list, today_display: str) -> io.BytesIO:
     return buf
 
 
+# ============================================================
+# JIHOZLAR VA MASHINA TIZIMI (fotograf uchun)
+# ============================================================
+JIHOZLAR_GROUP_ID = -5477097122
+JIHOZLAR_STATE_ID = "jihozlar_davomat"
+
+FOTOGRAF_FIO = "G'aniyev Tohir Abdurafiq o'g'li"
+NAZORATCHI_FIO = "Zilola Maxamatjonova"
+FOTOGRAF_INFO = {
+    "fio": FOTOGRAF_FIO,
+    "passport": "AE7299807",
+    "tugilgan": "28.02.1999",
+    "guvohnoma": "AF0838258",
+}
+
+KUNLIK_JIHOZLAR_DATA = [
+    [1, "Kamera", "Sony FX 30", "ILME-FX30B/QWW87874"],
+    [2, "Ob'ektiv", "EPZ 18-105 /F4 G OSS", "SELP18105G"],
+    [3, "Sinxronizator", "X2TS", "R211-190627"],
+    [4, "Fleshka", "SanDisk 128gb", "SDSDXXD-128G-GN4IN"],
+    [5, "Batareyka", "NP-FZ100", "NW101032228EU260415"],
+    [6, "Lampa", "AD100PRO2", "CAN ICES-003(B) / NMB-003(B)"],
+    [7, "Nosadka softboks uchun", "705-S0000-00", "—"],
+    [8, "Sumka", "CANON EOS", "—"],
+]
+HAFTALIK_JIHOZLAR_DATA = [
+    [1, "Shtativ", "QIHE/280/118/100", "—"],
+    [2, "Shtativ", "Jmary", "MT-75"],
+    [3, "Oktoboks 65 sm", "NS65P", "NW10105596EU2500325"],
+    [4, "Derzhatel podsvetka", "ST-RF1", "NW101011O3EU260428"],
+]
+
+# Kunlik jarayon: 4 ta video, tartib bo'yicha (kim yuborishi va tasdiq matni)
+JIHOZLAR_SEQUENCE = [
+    (NAZORATCHI_FIO, "✅ Jihozlar topshirildi va hujjatlar imzolandi. Endi mashinaga o'tasiz."),
+    (FOTOGRAF_FIO, "✅ Mashina Tohirga topshirildi."),
+    (FOTOGRAF_FIO, "✅ Tohir qaytib keldi. Endi jihozlarni qaytarishga o'tasiz."),
+    (NAZORATCHI_FIO, "✅ Jihozlar va mashina qaytarib olindi. Kun yakunlandi."),
+]
+
+
+def _jihoz_doc_header(ws, title, fill_color, xodim_label, xodim_info, sana_dt):
+    bold = Font(name="Arial", bold=True, size=11)
+    kun_nomlari = ["Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba", "Yakshanba"]
+    kun_nomi = kun_nomlari[sana_dt.weekday()]
+
+    ws.merge_cells("A1:D1")
+    ws["A1"] = f"Sana: {sana_dt.strftime('%d.%m.%Y')} ({kun_nomi})"
+    ws["A1"].font = Font(name="Arial", bold=True, size=13)
+    ws.row_dimensions[1].height = 22
+
+    ws.merge_cells("A2:D2")
+    ws["A2"] = title
+    ws["A2"].font = Font(name="Arial", bold=True, size=12, color=fill_color)
+    ws.row_dimensions[2].height = 20
+
+    ws.merge_cells("A3:D3")
+    ws["A3"] = f"{xodim_label}: {xodim_info['fio']}"
+    ws["A3"].font = bold
+    ws.row_dimensions[3].height = 18
+
+    ws.merge_cells("A4:D4")
+    passport_line = f"Passport: {xodim_info['passport']}   Tug'ilgan sana: {xodim_info['tugilgan']}"
+    if xodim_info.get("guvohnoma"):
+        passport_line += f"   Haydovchilik guvohnomasi: {xodim_info['guvohnoma']}"
+    ws["A4"] = passport_line
+    ws["A4"].font = Font(name="Arial", size=10)
+    ws.row_dimensions[4].height = 16
+
+
+def _jihoz_doc_signatures(ws, start_row, fill_color, xodim_info):
+    bold = Font(name="Arial", bold=True, size=11)
+    normal = Font(name="Arial", size=10)
+
+    r = start_row
+    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=2)
+    ws.cell(row=r, column=1, value="Topshirilgan vaqt:").font = bold
+    ws.merge_cells(start_row=r, start_column=3, end_row=r, end_column=4)
+    ws.cell(row=r, column=3, value="_______________").font = normal
+    ws.row_dimensions[r].height = 20
+
+    r += 1
+    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=2)
+    ws.cell(row=r, column=1, value="Qabul qilingan vaqt:").font = bold
+    ws.merge_cells(start_row=r, start_column=3, end_row=r, end_column=4)
+    ws.cell(row=r, column=3, value="_______________").font = normal
+    ws.row_dimensions[r].height = 20
+
+    r += 2
+    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=4)
+    ws.cell(row=r, column=1, value="ERTALAB — TOPSHIRISH").font = Font(name="Arial", bold=True, size=10, color=fill_color)
+    ws.row_dimensions[r].height = 16
+
+    r += 1
+    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=2)
+    ws.cell(row=r, column=1, value="Xodim (oldim):").font = bold
+    ws.cell(row=r, column=1).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ws.cell(row=r, column=3, value=xodim_info["fio"]).font = normal
+    ws.cell(row=r, column=4, value="Imzo: _______________").font = bold
+    ws.row_dimensions[r].height = 26
+
+    r += 1
+    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=2)
+    ws.cell(row=r, column=1, value="Nazoratchi (berdim):").font = bold
+    ws.cell(row=r, column=1).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ws.cell(row=r, column=3, value=NAZORATCHI_FIO).font = normal
+    ws.cell(row=r, column=4, value="Imzo: _______________").font = bold
+    ws.row_dimensions[r].height = 26
+
+    r += 2
+    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=4)
+    ws.cell(row=r, column=1, value="KECHQURUN — QABUL QILISH").font = Font(name="Arial", bold=True, size=10, color=fill_color)
+    ws.row_dimensions[r].height = 16
+
+    r += 1
+    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=2)
+    ws.cell(row=r, column=1, value="Xodim (qaytardim):").font = bold
+    ws.cell(row=r, column=1).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ws.cell(row=r, column=3, value=xodim_info["fio"]).font = normal
+    ws.cell(row=r, column=4, value="Imzo: _______________").font = bold
+    ws.row_dimensions[r].height = 26
+
+    r += 1
+    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=2)
+    ws.cell(row=r, column=1, value="Nazoratchi (qabul qildim):").font = bold
+    ws.cell(row=r, column=1).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ws.cell(row=r, column=3, value=NAZORATCHI_FIO).font = normal
+    ws.cell(row=r, column=4, value="Imzo: _______________").font = bold
+    ws.row_dimensions[r].height = 26
+
+
+def build_jihozlar_excel(sana_dt, title, fill_color, data) -> io.BytesIO:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Dalolatnoma"
+
+    normal = Font(name="Arial", size=10)
+    header_font = Font(name="Arial", bold=True, size=10, color="FFFFFF")
+    thin = Side(style="thin", color="666666")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    center = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    left = Alignment(horizontal="left", vertical="center", wrap_text=True)
+
+    _jihoz_doc_header(ws, title, fill_color, "Uskunalardan foydalanuvchi xodim", FOTOGRAF_INFO, sana_dt)
+
+    header_row = 6
+    headers = ["№", "Nomi", "Modeli", "Seriya raqami", "Topshirdi\n(✓)", "Qabul qildi\n(✓)"]
+    ws.row_dimensions[header_row].height = 30
+    header_fill = PatternFill("solid", fgColor=fill_color)
+    for i, h in enumerate(headers, start=1):
+        c = ws.cell(row=header_row, column=i, value=h)
+        c.font = header_font
+        c.fill = header_fill
+        c.border = border
+        c.alignment = center
+
+    for r_off, row in enumerate(data, start=1):
+        r = header_row + r_off
+        ws.row_dimensions[r].height = 24
+        full_row = row + ["", ""]
+        for c_idx, val in enumerate(full_row, start=1):
+            cell = ws.cell(row=r, column=c_idx, value=val)
+            cell.font = normal
+            cell.border = border
+            cell.alignment = center if c_idx in (1, 5, 6) else left
+
+    sign_start = header_row + len(data) + 3
+    _jihoz_doc_signatures(ws, sign_start, fill_color, FOTOGRAF_INFO)
+
+    widths = [5, 26, 26, 28, 14, 14]
+    for i, w in enumerate(widths, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf
+
+
+def build_mashina_excel(sana_dt) -> io.BytesIO:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Dalolatnoma"
+
+    bold = Font(name="Arial", bold=True, size=11)
+    fill_color = "2a5ea8"
+
+    _jihoz_doc_header(ws, "MASHINANI TOPSHIRISH VA QABUL QILISH DALOLATNOMASI", fill_color,
+                       "Mashinadan foydalanuvchi xodim", FOTOGRAF_INFO, sana_dt)
+
+    ws.merge_cells("A5:D5")
+    ws["A5"] = "Chevrolet Spark  |  Davlat raqami: 01H131XC  |  Rangi: Yashil  |  Ishlab chiqarilgan yili: 2015"
+    ws["A5"].font = Font(name="Arial", size=10)
+    ws.row_dimensions[5].height = 16
+
+    ws.merge_cells("A6:D6")
+    ws["A6"] = "Kuzov raqami: XWBMA481JFA512764  |  Dvigatel raqami: B10D1201370KD3"
+    ws["A6"].font = Font(name="Arial", size=10)
+    ws.row_dimensions[6].height = 16
+
+    r = 8
+    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=2)
+    ws.cell(row=r, column=1, value="Mashina topshirildi:").font = bold
+    ws.cell(row=r, column=3, value="☐").font = Font(name="Arial", size=18)
+    ws.cell(row=r, column=3).alignment = Alignment(horizontal="center")
+    ws.row_dimensions[r].height = 24
+
+    r += 1
+    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=2)
+    ws.cell(row=r, column=1, value="Mashina qabul qilindi:").font = bold
+    ws.cell(row=r, column=3, value="☐").font = Font(name="Arial", size=18)
+    ws.cell(row=r, column=3).alignment = Alignment(horizontal="center")
+    ws.row_dimensions[r].height = 24
+
+    _jihoz_doc_signatures(ws, r + 2, fill_color, FOTOGRAF_INFO)
+
+    widths = [22, 20, 22, 22]
+    for i, w in enumerate(widths, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf
+
+
+async def daily_jihozlar_hujjat(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Har kuni 23:00 (Toshkent) da, agar ERTAGA yakshanba bo'lmasa, kunlik
+    jihozlar va mashina hujjatlarini JIHOZLAR guruhiga yuboradi."""
+    app = context.application
+    try:
+        now = datetime.now(TASHKENT_TZ)
+        tomorrow = now + timedelta(days=1)
+        if tomorrow.weekday() == 6:  # Yakshanba
+            return
+
+        kunlik_buf = build_jihozlar_excel(tomorrow, "KUNLIK JIHOZLARNI TOPSHIRISH VA QABUL QILISH DALOLATNOMASI", "1E7A4A", KUNLIK_JIHOZLAR_DATA)
+        mashina_buf = build_mashina_excel(tomorrow)
+        date_tag = tomorrow.strftime("%Y%m%d")
+
+        text = (
+            f"📋 Ertangi kun ({tomorrow.strftime('%d.%m.%Y')}) uchun jihozlar va mashina hujjatlari.\n\n"
+            "Zilola, ertalab jihozlarni va tasdiqlangan hujjatlarni ikki tomonlama imzolab, "
+            "video xabar yuboring."
+        )
+        await app.bot.send_message(chat_id=JIHOZLAR_GROUP_ID, text=text)
+        await app.bot.send_document(chat_id=JIHOZLAR_GROUP_ID, document=kunlik_buf, filename=f"kunlik_jihozlar_{date_tag}.xlsx")
+        await app.bot.send_document(chat_id=JIHOZLAR_GROUP_ID, document=mashina_buf, filename=f"mashina_{date_tag}.xlsx")
+
+        def _reset(data):
+            data[tomorrow.strftime("%Y-%m-%d")] = {"step": 0}
+        await sb_mutate_and_save(JIHOZLAR_STATE_ID, _reset)
+
+        log.info("Kunlik jihozlar hujjati yuborildi: %s", tomorrow.strftime("%d.%m.%Y"))
+    except Exception as e:
+        log.error("Kunlik jihozlar hujjati xatosi: %s", e)
+
+
+async def weekly_jihozlar_hujjat(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Har shanba, haftalik jihozlar hujjatini JIHOZLAR guruhiga yuboradi."""
+    app = context.application
+    try:
+        now = datetime.now(TASHKENT_TZ)
+        buf = build_jihozlar_excel(now, "HAFTALIK JIHOZLARNI TOPSHIRISH VA QABUL QILISH DALOLATNOMASI", "8a5c00", HAFTALIK_JIHOZLAR_DATA)
+        date_tag = now.strftime("%Y%m%d")
+        text = (
+            "📋 Haftalik jihozlar hujjati (mashina bagajidagi jihozlar).\n\n"
+            "Tohir, ko'chaga chiqib, mashina yonida bagajdagi jihozlarni video oling va guruhga yuboring."
+        )
+        await app.bot.send_message(chat_id=JIHOZLAR_GROUP_ID, text=text)
+        await app.bot.send_document(chat_id=JIHOZLAR_GROUP_ID, document=buf, filename=f"haftalik_jihozlar_{date_tag}.xlsx")
+        log.info("Haftalik jihozlar hujjati yuborildi")
+    except Exception as e:
+        log.error("Haftalik jihozlar hujjati xatosi: %s", e)
+
+
+async def test_jihozlar_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("⏳ Tekshirilmoqda, biroz kuting...")
+    await daily_jihozlar_hujjat(context)
+    await weekly_jihozlar_hujjat(context)
+    await update.message.reply_text("✅ Tayyor! Jihozlar guruhini tekshiring — 3 ta hujjat o'sha yerga yuborildi.")
+
+
+async def handle_jihozlar_video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Jihozlar guruhiga kelgan video xabarlarni (krujok) kuzatib, kunlik
+    4 bosqichli jarayonni (Zilola->Tohir->Tohir->Zilola) tekshiradi."""
+    if not update.effective_chat or update.effective_chat.id != JIHOZLAR_GROUP_ID:
+        return
+    user = update.effective_user
+    if not user or not user.username:
+        return
+    try:
+        username = user.username.lstrip("@")
+        org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
+        org_nodes = org_rows[0]["data"] if org_rows else []
+
+        sender_fio = None
+        for n in org_nodes:
+            if username in parse_tg_field(n):
+                sender_fio = (n.get("fio") or "").strip()
+                break
+        if sender_fio not in (FOTOGRAF_FIO, NAZORATCHI_FIO):
+            return
+
+        now = datetime.now(TASHKENT_TZ)
+        today_str = now.strftime("%Y-%m-%d")
+
+        state_rows = await sb_get("biznes_data", params={"id": f"eq.{JIHOZLAR_STATE_ID}"})
+        state = state_rows[0]["data"] if state_rows and isinstance(state_rows[0].get("data"), dict) else {}
+        day_state = state.get(today_str) or {"step": 0}
+        step = day_state.get("step", 0)
+
+        if step >= 4:
+            return
+
+        expected_fio, confirm_text = JIHOZLAR_SEQUENCE[step]
+        if sender_fio != expected_fio:
+            return
+
+        day_state["step"] = step + 1
+        day_state[f"video{step+1}_at"] = now.isoformat()
+        day_state[f"video{step+1}_by"] = username
+
+        def _mark(data):
+            data[today_str] = day_state
+        ok = await sb_mutate_and_save(JIHOZLAR_STATE_ID, _mark)
+        if not ok:
+            log.error("Jihozlar davomat saqlanmadi")
+            return
+
+        await context.application.bot.send_message(chat_id=JIHOZLAR_GROUP_ID, text=confirm_text)
+        log.info("Jihozlar video qadam %d tasdiqlandi: %s", step + 1, username)
+    except Exception as e:
+        log.error("Jihozlar video ishlov berish xatosi: %s", e)
+
+
+async def check_jihozlar_deadline(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Soat 11:00 va 20:00 da, kunlik jihozlar jarayoni belgilangan
+    bosqichda qolib ketgan bo'lsa, @umidpulatov'ni tag qilib ogohlantiradi."""
+    app = context.application
+    try:
+        now = datetime.now(TASHKENT_TZ)
+        today_str = now.strftime("%Y-%m-%d")
+        hour = now.hour
+
+        state_rows = await sb_get("biznes_data", params={"id": f"eq.{JIHOZLAR_STATE_ID}"})
+        state = state_rows[0]["data"] if state_rows and isinstance(state_rows[0].get("data"), dict) else {}
+        day_state = state.get(today_str)
+        if not day_state:
+            return
+        step = day_state.get("step", 0)
+
+        if hour == 11 and step < 2 and not day_state.get("alert11_sent"):
+            labels = ["Jihozlar topshirilishi (Zilola)", "Mashina topshirilishi (Tohir)"]
+            missing = labels[step:2]
+            text = "⚠️ Soat 11:00 bo'ldi, lekin quyidagilar hali tasdiqlanmagan:\n" + "\n".join(f"• {m}" for m in missing) + "\n\n@umidpulatov"
+            await app.bot.send_message(chat_id=JIHOZLAR_GROUP_ID, text=text)
+            day_state["alert11_sent"] = True
+            def _mark11(data):
+                data[today_str] = day_state
+            await sb_mutate_and_save(JIHOZLAR_STATE_ID, _mark11)
+
+        if hour == 20 and step < 4 and not day_state.get("alert20_sent"):
+            labels = ["Jihozlar topshirilishi (Zilola)", "Mashina topshirilishi (Tohir)", "Tohirning qaytishi", "Jihozlar/mashina qaytarib olinishi (Zilola)"]
+            missing = labels[step:4]
+            text = "⚠️ Soat 20:00 bo'ldi, lekin quyidagilar hali tasdiqlanmagan:\n" + "\n".join(f"• {m}" for m in missing) + "\n\n@umidpulatov"
+            await app.bot.send_message(chat_id=JIHOZLAR_GROUP_ID, text=text)
+            day_state["alert20_sent"] = True
+            def _mark20(data):
+                data[today_str] = day_state
+            await sb_mutate_and_save(JIHOZLAR_STATE_ID, _mark20)
+    except Exception as e:
+        log.error("Jihozlar muddat tekshiruvi xatosi: %s", e)
+
+
 async def daily_baza415_report(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Har kuni 10:00 (Toshkent) da, 415 baza'dagi barcha restoranlar
     ro'yxatini Excel fayl sifatida tegishli guruhga yuboradi."""
@@ -1426,7 +1801,7 @@ async def daily_promokod_report(context: ContextTypes.DEFAULT_TYPE) -> None:
         try:
             org_rows = await sb_get("biznes_data", params={"id": "eq.org"})
             org_nodes = org_rows[0]["data"] if org_rows else []
-            usernames = collect_support_usernames(org_nodes)
+            usernames = collect_dept_usernames_active(org_nodes, "support")
             if usernames:
                 text += "\n\n" + " ".join(f"@{u}" for u in usernames)
         except Exception as e:
@@ -2162,9 +2537,11 @@ def main() -> None:
     app.add_handler(CommandHandler("test_dedlayn", test_deadline_cmd))
     app.add_handler(CommandHandler("test_hisobot", test_hisobot_cmd))
     app.add_handler(CommandHandler("test_baza415", test_baza415_cmd))
+    app.add_handler(CommandHandler("test_jihozlar", test_jihozlar_cmd))
     app.add_handler(CommandHandler("noaktiv_hamkorlar", noaktiv_hamkorlar_cmd))
     app.add_handler(MessageHandler(filters.PHOTO, handle_support_photo))
     app.add_handler(MessageHandler(filters.VIDEO_NOTE, handle_staff_video_note))
+    app.add_handler(MessageHandler(filters.VIDEO_NOTE, handle_jihozlar_video), group=1)
     app.job_queue.run_repeating(poll_job, interval=POLL_SECONDS, first=5)
 
     # Skrinshot so'rovi — har 30 daqiqada, 10:30 dan 23:30 gacha
@@ -2198,6 +2575,9 @@ def main() -> None:
     app.job_queue.run_daily(daily_promokod_report, time=dt_time(hour=18, minute=0, tzinfo=TASHKENT_TZ))
     app.job_queue.run_daily(weekly_pul_berish_report, time=dt_time(hour=18, minute=0, tzinfo=TASHKENT_TZ), days=(5,))
     app.job_queue.run_daily(daily_baza415_report, time=dt_time(hour=10, minute=0, tzinfo=TASHKENT_TZ))
+    app.job_queue.run_daily(daily_jihozlar_hujjat, time=dt_time(hour=23, minute=0, tzinfo=TASHKENT_TZ))
+    app.job_queue.run_daily(weekly_jihozlar_hujjat, time=dt_time(hour=9, minute=0, tzinfo=TASHKENT_TZ), days=(6,))
+    app.job_queue.run_repeating(check_jihozlar_deadline, interval=60, first=25)
     app.job_queue.run_daily(check_yashil_hamkor_auto, time=dt_time(hour=9, minute=0, tzinfo=TASHKENT_TZ))
 
     # Ish davomati — ish boshlanishiga 10 daqiqa qolganda eslatma, har daqiqada tekshiriladi
