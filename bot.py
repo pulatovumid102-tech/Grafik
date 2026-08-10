@@ -2572,7 +2572,7 @@ def main() -> None:
     app.job_queue.run_daily(daily_today_tasks_reminder, time=dt_time(hour=10, minute=0, tzinfo=TASHKENT_TZ))
 
     # Buxgalteriya — haftalik hisobot (Promokod + Pul berish), faqat JUMA 10:00 (Toshkent vaqti)
-    app.job_queue.run_daily(daily_promokod_report, time=dt_time(hour=18, minute=0, tzinfo=TASHKENT_TZ))
+    app.job_queue.run_daily(daily_promokod_report, time=dt_time(hour=18, minute=0, tzinfo=TASHKENT_TZ), days=(1, 2, 3, 4, 5, 6))
     app.job_queue.run_daily(weekly_pul_berish_report, time=dt_time(hour=18, minute=0, tzinfo=TASHKENT_TZ), days=(5,))
     app.job_queue.run_daily(daily_baza415_report, time=dt_time(hour=10, minute=0, tzinfo=TASHKENT_TZ))
     app.job_queue.run_daily(daily_jihozlar_hujjat, time=dt_time(hour=23, minute=0, tzinfo=TASHKENT_TZ))
