@@ -1295,8 +1295,8 @@ FOTOGRAF_INFO = {
 }
 
 KUNLIK_JIHOZLAR_DATA = [
-    [1, "Kamera", "Sony FX 30", "ILME-FX30B/QWW87874"],
-    [2, "Ob'ektiv", "EPZ 18-105 /F4 G OSS", "SELP18105G"],
+    [1, "Kamera", "Sony A7R4", "ILCE-7RM4A/WW44785"],
+    [2, "Ob'ektiv", "Sony FE 24-105mm f4 G OSS", "SEL24105G/Q"],
     [3, "Sinxronizator", "X2TS", "R211-190627"],
     [4, "Fleshka", "SanDisk 128gb", "SDSDXXD-128G-GN4IN"],
     [5, "Batareyka", "NP-FZ100", "NW101032228EU260415"],
