@@ -3039,7 +3039,12 @@ async function saveMuammoliForm(){
     if(saveBtn2){ saveBtn2.disabled=false; saveBtn2.textContent='Saqlash'; saveBtn2.style.opacity='1'; }
     return;
   }
-  notify('Saqlandi ✓'); renderMuammoli();
+  notify('Saqlandi ✓');
+  muammoliDraft=null;
+  muammoliEditId=null;
+  var formEl2=document.getElementById('muammoli-form');
+  if(formEl2) formEl2.innerHTML='';
+  renderMuammoli();
 
   if(isEdit){
     sendGroupMessage(
