@@ -4035,10 +4035,29 @@ async function muammoliHamkorlarLoad(){
       muammoliHamkorlarDb=rows[0].data;
       if(!muammoliHamkorlarDb.resetlar)muammoliHamkorlarDb.resetlar={};
       if(!muammoliHamkorlarDb.gaplashuvlar)muammoliHamkorlarDb.gaplashuvlar={};
+      if(muammoliHamkorlarMigrateDuplicateGaplashuv())await muammoliHamkorlarSave();
     }else{
       try{await fetch(SB_URL+'/rest/v1/biznes_data',{method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({id:'muammoli_hamkorlar',data:muammoliHamkorlarDb})});}catch(e2){}
     }
   }catch(e){}
+}
+function muammoliHamkorlarMigrateDuplicateGaplashuv(){
+  var changed=false;
+  Object.keys(muammoliHamkorlarDb.gaplashuvlar||{}).forEach(function(nom){
+    var arr=muammoliHamkorlarDb.gaplashuvlar[nom]||[];
+    var seen={};
+    var deduped=arr.filter(function(g){
+      var key=(g.sana||'')+'|'+(g.izoh||'')+'|'+(g.kim||'');
+      if(seen[key])return false;
+      seen[key]=true;
+      return true;
+    });
+    if(deduped.length!==arr.length){
+      muammoliHamkorlarDb.gaplashuvlar[nom]=deduped;
+      changed=true;
+    }
+  });
+  return changed;
 }
 async function muammoliHamkorlarSave(){
   try{
