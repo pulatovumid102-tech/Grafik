@@ -2949,7 +2949,7 @@ function muammoliRefreshForm(){
   document.getElementById('muammoli-form').innerHTML=`<div class="form-box fade">
     ${bodyBlock}
     <div class="frow"><label class="flbl">Batafsil</label><textarea class="fi" id="mm-izoh" style="min-height:70px;resize:vertical" placeholder="Nima bo'lganini batafsil yozing...">${esc(d.izoh||'')}</textarea></div>
-    <div class="fbtns"><button class="fsave" onclick="saveMuammoliForm()">Saqlash</button><button class="fcancel" onclick="muammoliCancelForm()">Bekor</button></div>
+    <div class="fbtns"><button class="fsave" id="mm-save-btn" onclick="saveMuammoliForm()">Saqlash</button><button class="fcancel" onclick="muammoliCancelForm()">Bekor</button></div>
   </div>`;
   document.removeEventListener('click', mmRestoranOutsideClick);
   document.addEventListener('click', mmRestoranOutsideClick);
@@ -2991,8 +2991,10 @@ function mmRestoranPick(nom){
   if(inp)inp.value=nom;
   if(dd)dd.style.display='none';
 }
+var muammoliSavingInProgress=false;
 async function saveMuammoliForm(){
   if(!muammoliDraft)return;
+  if(muammoliSavingInProgress)return;
   var turi=document.getElementById('mm-turi').value;
   if(!turi){notify('Murojaat turini tanlang!');return;}
   var izoh=document.getElementById('mm-izoh').value.trim();
@@ -3008,6 +3010,10 @@ async function saveMuammoliForm(){
   muammoliDraft.manba='mijoz';
   muammoliDraft.turi=turi;
   muammoliDraft.izoh=izoh;
+
+  muammoliSavingInProgress=true;
+  var saveBtn=document.getElementById('mm-save-btn');
+  if(saveBtn){ saveBtn.disabled=true; saveBtn.textContent='Saqlanmoqda...'; saveBtn.style.opacity='0.6'; }
 
   var isEdit=!!muammoliEditId;
   var editId=muammoliEditId;
@@ -3026,7 +3032,13 @@ async function saveMuammoliForm(){
       db.items.push(draftCopy);
     }
   });
-  if(!ok){ notify("⚠️ Saqlashda xatolik! Qayta urinib ko'ring."); return; }
+  muammoliSavingInProgress=false;
+  if(!ok){
+    notify("⚠️ Saqlashda xatolik! Qayta urinib ko'ring.");
+    var saveBtn2=document.getElementById('mm-save-btn');
+    if(saveBtn2){ saveBtn2.disabled=false; saveBtn2.textContent='Saqlash'; saveBtn2.style.opacity='1'; }
+    return;
+  }
   notify('Saqlandi ✓'); renderMuammoli();
 
   if(isEdit){
@@ -3673,7 +3685,7 @@ function showBaza415RestForm(id){
       <input class="fi" id="bz-rest-bux-tel" value="+998" placeholder="+998..." style="margin-top:0" oninput="formatPhoneInput(this)">
     </div>
     `:''}
-    <div class="fbtns"><button class="fsave" onclick="saveBaza415Rest('${id||''}')">Saqlash</button><button class="fcancel" onclick="renderBaza415List()">Bekor</button></div>
+    <div class="fbtns"><button class="fsave" id="bz-save-btn" onclick="saveBaza415Rest('${id||''}')">Saqlash</button><button class="fcancel" onclick="renderBaza415List()">Bekor</button></div>
   </div>`;
   document.getElementById('bz-rest-nom').focus();
 }
@@ -3690,7 +3702,9 @@ function baza415AddExtraContactRow(){
     <input class="fi" id="bz-rest-extra-tel-${i}" value="+998" placeholder="+998..." style="margin-top:0" oninput="formatPhoneInput(this)">`;
   wrap.appendChild(div);
 }
+var saveBaza415RestInProgress=false;
 async function saveBaza415Rest(id){
+  if(saveBaza415RestInProgress)return;
   var nom=document.getElementById('bz-rest-nom').value.trim();
   if(!nom){notify('Restoran nomini kiriting!');return;}
   var berishDan=document.getElementById('bz-rest-berish-dan').value;
@@ -3732,6 +3746,9 @@ async function saveBaza415Rest(id){
     if(kassirIsm||kassirTel)lines.push('👤 Kassir-1: '+(kassirIsm||'—')+' — '+(kassirTel||'—'));
     if(buxIsm||(buxTel&&buxTel!=='+998'))lines.push('🧾 Buxgalter: '+(buxIsm||'—')+' — '+(buxTel||'—'));
   }
+  saveBaza415RestInProgress=true;
+  var bzBtn=document.getElementById('bz-save-btn');
+  if(bzBtn){ bzBtn.disabled=true; bzBtn.textContent='Saqlanmoqda...'; bzBtn.style.opacity='0.6'; }
   var ok=await baza415MutateAndSave(function(db){
     if(isEdit){
       var r=(db.restoranlar||[]).find(x=>x.id===id);
@@ -3746,7 +3763,13 @@ async function saveBaza415Rest(id){
       db.restoranlar.push(newRestObj);
     }
   });
-  if(!ok){ notify("⚠️ Saqlashda xatolik!"); return; }
+  saveBaza415RestInProgress=false;
+  if(!ok){
+    notify("⚠️ Saqlashda xatolik!");
+    var bzBtn2=document.getElementById('bz-save-btn');
+    if(bzBtn2){ bzBtn2.disabled=false; bzBtn2.textContent='Saqlash'; bzBtn2.style.opacity='1'; }
+    return;
+  }
   notify('Saqlandi ✓'); renderBaza415List();
   if(lines) sendGroupMessage(lines.join('\n'),BAZA415_GROUP_ID);
 }
