@@ -4049,6 +4049,23 @@ async function muammoliHamkorlarSave(){
     return resp.ok;
   }catch(e){ console.error('muammoliHamkorlarSave exception:', e); return false; }
 }
+async function muammoliHamkorlarMutateAndSave(mutatorFn){
+  try{
+    var resp=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.muammoli_hamkorlar',{headers:SB_H});
+    var rows=await resp.json();
+    var freshDb=(rows&&rows.length&&rows[0].data)?rows[0].data:muammoliHamkorlarDb;
+    if(!freshDb.gaplashuvlar)freshDb.gaplashuvlar={};
+    if(!freshDb.resetlar)freshDb.resetlar={};
+    mutatorFn(freshDb);
+    var patchResp=await fetch(SB_URL+'/rest/v1/biznes_data?on_conflict=id',{method:'POST',headers:{...SB_H,'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:'muammoli_hamkorlar',data:freshDb})});
+    if(!patchResp.ok)return false;
+    muammoliHamkorlarDb=freshDb;
+    return true;
+  }catch(e){
+    console.error('muammoliHamkorlarMutateAndSave error', e);
+    return false;
+  }
+}
 function muammoliHamkorCutoff(nom){
   var resetIso=(muammoliHamkorlarDb.resetlar||{})[nom];
   var d31=Date.now()-31*24*60*60*1000;
@@ -4151,7 +4168,7 @@ function renderMuammoliHamkorlar(){
     var formHtml=showForm?`<div style="margin-top:8px">
       <textarea class="fi" id="mh-izoh-${nom.replace(/[^a-zA-Z0-9]/g,'')}" style="min-height:60px;resize:vertical;background:#fff;color:#2e2c28" placeholder="Restoran nima dedi?"></textarea>
       <div class="fbtns" style="margin-top:6px">
-        <button class="fsave" onclick="muammoliHamkorSaveGaplashdim('${nomEsc}')">Saqlash</button>
+        <button class="fsave" id="mh-save-btn-${nom.replace(/[^a-zA-Z0-9]/g,'')}" onclick="muammoliHamkorSaveGaplashdim('${nomEsc}')">Saqlash</button>
         <button class="fcancel" style="color:#5a574f;background:#e2dfd6" onclick="muammoliHamkorGaplashuvFormNom=null;renderMuammoliHamkorlar()">Bekor</button>
       </div>
     </div>`:`<button class="sek-abtn" style="margin-top:8px" onclick="muammoliHamkorGaplashuvFormNom='${nomEsc}';renderMuammoliHamkorlar()">💬 Restoran bilan gaplashdim</button>`;
@@ -4170,18 +4187,30 @@ function muammoliHamkorToggle(nom){
   muammoliHamkorGaplashuvFormNom=null;
   renderMuammoliHamkorlar();
 }
+var muammoliHamkorSavingInProgress=false;
 async function muammoliHamkorSaveGaplashdim(nom){
+  if(muammoliHamkorSavingInProgress)return;
   var safeId=nom.replace(/[^a-zA-Z0-9]/g,'');
   var inp=document.getElementById('mh-izoh-'+safeId);
   var izoh=inp?inp.value.trim():'';
   if(!izoh){ notify('Izoh kiriting!'); return; }
-  if(!muammoliHamkorlarDb.gaplashuvlar[nom])muammoliHamkorlarDb.gaplashuvlar[nom]=[];
+  muammoliHamkorSavingInProgress=true;
+  var btn=document.getElementById('mh-save-btn-'+safeId);
+  if(btn){ btn.disabled=true; btn.textContent='Saqlanmoqda...'; btn.style.opacity='0.6'; }
   var kim=kaitenMyFio()||(CURRENT_USER_TG?CURRENT_USER_TG.replace(/^@/,''):'Xodim');
   var sana=new Date().toISOString();
-  muammoliHamkorlarDb.gaplashuvlar[nom].push({sana:sana,izoh:izoh,kim:kim});
-  muammoliHamkorlarDb.resetlar[nom]=sana;
-  var ok=await muammoliHamkorlarSave();
-  if(!ok){ notify("⚠️ Saqlashda xatolik!"); return; }
+  var ok=await muammoliHamkorlarMutateAndSave(function(db){
+    if(!db.gaplashuvlar[nom])db.gaplashuvlar[nom]=[];
+    db.gaplashuvlar[nom].push({sana:sana,izoh:izoh,kim:kim});
+    db.resetlar[nom]=sana;
+  });
+  muammoliHamkorSavingInProgress=false;
+  if(!ok){
+    notify("⚠️ Saqlashda xatolik!");
+    var btn2=document.getElementById('mh-save-btn-'+safeId);
+    if(btn2){ btn2.disabled=false; btn2.textContent='Saqlash'; btn2.style.opacity='1'; }
+    return;
+  }
   notify('Saqlandi ✓, limit yangilandi');
   muammoliHamkorGaplashuvFormNom=null;
   muammoliHamkorExpandedNom=null;
