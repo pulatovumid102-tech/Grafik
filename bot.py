@@ -1199,6 +1199,108 @@ def build_pul_berish_excel(items: list, today_display: str) -> io.BytesIO:
     return buf
 
 
+def build_murojaatlar_hisobot_excel(items: list, davr_boshlanish: str, davr_tugash: str) -> io.BytesIO:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Murojaatlar"
+
+    bold = Font(name="Arial", bold=True, size=11)
+    normal = Font(name="Arial", size=10)
+    header_font = Font(name="Arial", bold=True, size=10, color="FFFFFF")
+    header_fill = PatternFill("solid", fgColor="1E7A4A")
+    thin = Side(style="thin", color="666666")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    center = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    left = Alignment(horizontal="left", vertical="center", wrap_text=True)
+
+    ws.merge_cells("A1:I1")
+    ws["A1"] = f"Davr: {davr_boshlanish} — {davr_tugash}"
+    ws["A1"].font = Font(name="Arial", bold=True, size=13)
+    ws.row_dimensions[1].height = 22
+
+    ws.merge_cells("A2:I2")
+    ws["A2"] = "MUROJAATLAR — KUNMA-KUN HISOBOT"
+    ws["A2"].font = Font(name="Arial", bold=True, size=12, color="1E7A4A")
+    ws.row_dimensions[2].height = 20
+
+    headers = ["Sana", "Mijoz", "Telefon", "Restoran", "Muammo turi", "Izoh (tafsilot)", "Holati", "Yechim", "Kim hal qildi"]
+    header_row = 4
+    ws.row_dimensions[header_row].height = 24
+    for i, h in enumerate(headers, start=1):
+        c = ws.cell(row=header_row, column=i, value=h)
+        c.font = header_font
+        c.fill = header_fill
+        c.border = border
+        c.alignment = center
+
+    # Eng yangi sana birinchi bo'lib chiqishi uchun teskari tartiblaymiz
+    sorted_items = sorted(items, key=lambda it: it.get("createdAt") or "", reverse=True)
+
+    for r_off, it in enumerate(sorted_items, start=1):
+        r = header_row + r_off
+        ws.row_dimensions[r].height = 34
+        holati = "Hal qilindi" if it.get("holati") == "hal_qilindi" else "Ochiq"
+        row_vals = [
+            _fmt_date_only(it.get("createdAt", "")),
+            it.get("ism") or "—",
+            it.get("tel") or "—",
+            it.get("restoran") or "—",
+            it.get("turi") or "—",
+            it.get("izoh") or "—",
+            holati,
+            it.get("yechimIzohi") or "—",
+            it.get("halQildiBy") or "—",
+        ]
+        for c_idx, val in enumerate(row_vals, start=1):
+            cell = ws.cell(row=r, column=c_idx, value=val)
+            cell.font = normal
+            cell.border = border
+            cell.alignment = center if c_idx in (1, 3, 7) else left
+
+    widths = [12, 20, 16, 20, 24, 34, 12, 30, 18]
+    for i, w in enumerate(widths, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf
+
+
+async def murojaatlar_hisobot_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/murojaatlar_hisobot buyrug'i — oxirgi 30 kunlik murojaatlar
+    (mijoz, restoran, muammo, yechim bilan) Excel faylini yuboradi."""
+    await update.message.reply_text("⏳ Tayyorlanmoqda, biroz kuting...")
+    try:
+        rows = await sb_get("biznes_data", params={"id": "eq.muammoli_mijozlar"})
+        muammoli_data = rows[0]["data"] if rows else {}
+        items = muammoli_data.get("items", []) if isinstance(muammoli_data, dict) else []
+
+        now = datetime.now(TASHKENT_TZ)
+        chegara = now - timedelta(days=30)
+        filtered = []
+        for it in items:
+            created_at = it.get("createdAt")
+            if not created_at:
+                continue
+            try:
+                created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+            except Exception:
+                continue
+            if created_dt >= chegara:
+                filtered.append(it)
+
+        davr_boshlanish = chegara.strftime("%d.%m.%Y")
+        davr_tugash = now.strftime("%d.%m.%Y")
+        buf = build_murojaatlar_hisobot_excel(filtered, davr_boshlanish, davr_tugash)
+        date_tag = now.strftime("%Y%m%d")
+        await update.message.reply_document(document=buf, filename=f"murojaatlar_hisobot_{date_tag}.xlsx")
+        log.info("Murojaatlar hisoboti yuborildi: %d ta", len(filtered))
+    except Exception as e:
+        log.error("Murojaatlar hisoboti xatosi: %s", e)
+        await update.message.reply_text("⚠️ Xatolik yuz berdi.")
+
+
 def build_baza415_excel(restoranlar: list, today_display: str) -> io.BytesIO:
     wb = Workbook()
     ws = wb.active
@@ -2537,6 +2639,7 @@ def main() -> None:
     app.add_handler(CommandHandler("test_dedlayn", test_deadline_cmd))
     app.add_handler(CommandHandler("test_hisobot", test_hisobot_cmd))
     app.add_handler(CommandHandler("test_baza415", test_baza415_cmd))
+    app.add_handler(CommandHandler("murojaatlar_hisobot", murojaatlar_hisobot_cmd))
     app.add_handler(CommandHandler("test_jihozlar", test_jihozlar_cmd))
     app.add_handler(CommandHandler("noaktiv_hamkorlar", noaktiv_hamkorlar_cmd))
     app.add_handler(MessageHandler(filters.PHOTO, handle_support_photo))
