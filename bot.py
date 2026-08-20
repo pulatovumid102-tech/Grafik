@@ -1223,7 +1223,7 @@ def build_murojaatlar_hisobot_excel(items: list, davr_boshlanish: str, davr_tuga
     ws["A2"].font = Font(name="Arial", bold=True, size=12, color="1E7A4A")
     ws.row_dimensions[2].height = 20
 
-    headers = ["Sana", "Mijoz", "Telefon", "Restoran", "Muammo turi", "Izoh (tafsilot)", "Holati", "Yechim", "Kim hal qildi"]
+    headers = ["Sana", "Mijoz", "Restoran", "Muammo turi", "Izoh (tafsilot)", "Qabul qildi", "Holati", "Yechim", "Kim hal qildi"]
     header_row = 4
     ws.row_dimensions[header_row].height = 24
     for i, h in enumerate(headers, start=1):
@@ -1243,10 +1243,10 @@ def build_murojaatlar_hisobot_excel(items: list, davr_boshlanish: str, davr_tuga
         row_vals = [
             _fmt_date_only(it.get("createdAt", "")),
             it.get("ism") or "—",
-            it.get("tel") or "—",
             it.get("restoran") or "—",
             it.get("turi") or "—",
             it.get("izoh") or "—",
+            it.get("createdByName") or "—",
             holati,
             it.get("yechimIzohi") or "—",
             it.get("halQildiBy") or "—",
@@ -1257,7 +1257,7 @@ def build_murojaatlar_hisobot_excel(items: list, davr_boshlanish: str, davr_tuga
             cell.border = border
             cell.alignment = center if c_idx in (1, 3, 7) else left
 
-    widths = [12, 20, 16, 20, 24, 34, 12, 30, 18]
+    widths = [12, 20, 20, 24, 34, 18, 12, 30, 18]
     for i, w in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(i)].width = w
 
