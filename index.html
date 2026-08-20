@@ -3518,10 +3518,41 @@ function muammoliShowFilteredList(filterType,value){
     return;
   }
 
+  if(filterType==='turi'){
+    var restoranCountsT={};
+    items.forEach(function(it){ var rn=it.restoran||'Restoransiz'; restoranCountsT[rn]=(restoranCountsT[rn]||0)+1; });
+    var restoranSortedT=Object.entries(restoranCountsT).sort(function(a,b){ return b[1]-a[1]; });
+    var rows2=restoranSortedT.map(function(entry){
+      var rNom=entry[0], soni=entry[1];
+      var rEsc=esc(rNom).replace(/'/g,"\\'");
+      var onclick=rNom==='Restoransiz'?'':`orgCloseModal();muammoliShowTuriRestoranCards('${esc(value).replace(/'/g,"\\\\'")}','${rEsc}')`;
+      return `<div class="mm-pending-item" style="${rNom!=='Restoransiz'?'cursor:pointer':''}" onclick="${onclick}">
+        <span style="font-size:13px;color:var(--white)">${esc(rNom)}</span>
+        <span style="font-weight:700;color:var(--lime)">${soni} ta</span>
+      </div>`;
+    }).join('');
+    if(!rows2) rows2='<div style="text-align:center;padding:16px;color:var(--white-50);font-size:13px">Topilmadi</div>';
+    var html2=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:12px">${esc(value)}</div>
+      <div style="max-height:65vh;overflow-y:auto">${rows2}</div>
+      <button class="fcancel" style="width:100%;margin-top:12px" onclick="orgCloseModal()">Yopish</button>`;
+    orgShowModal(html2);
+    return;
+  }
+
   var rows=items.slice().sort(function(a,b){ return new Date(b.createdAt||0)-new Date(a.createdAt||0); }).map(function(it){ return muammoliCard(it); }).join('');
   if(!rows) rows='<div style="text-align:center;padding:16px;color:var(--white-50);font-size:13px">Topilmadi</div>';
   var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:12px">${esc(value)}</div>
     <div style="max-height:70vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px">${rows}</div>
+    <button class="fcancel" style="width:100%;margin-top:12px" onclick="orgCloseModal()">Yopish</button>`;
+  orgShowModal(html);
+}
+function muammoliShowTuriRestoranCards(turi,restoran){
+  var items=(muammoliDb.items||[]).filter(function(it){ return it.turi===turi && it.restoran===restoran; });
+  var rows=items.slice().sort(function(a,b){ return new Date(b.createdAt||0)-new Date(a.createdAt||0); }).map(function(it){ return muammoliCard(it); }).join('');
+  if(!rows) rows='<div style="text-align:center;padding:16px;color:var(--white-50);font-size:13px">Topilmadi</div>';
+  var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:4px">${esc(restoran)}</div>
+    <div style="font-size:12px;color:var(--white-50);margin-bottom:12px">${esc(turi)}</div>
+    <div style="max-height:65vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px">${rows}</div>
     <button class="fcancel" style="width:100%;margin-top:12px" onclick="orgCloseModal()">Yopish</button>`;
   orgShowModal(html);
 }
