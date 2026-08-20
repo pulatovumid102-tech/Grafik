@@ -4447,6 +4447,8 @@ async function partnershipSaveCalled(restoranId){
         freshR.qongiroq.lastCalledBy=lastCalledBy;
         freshR.qongiroq.lastCalledAt=lastCalledAt;
         if(izohInp){ freshR.qongiroq.izoh=izohInp; freshR.qongiroq.izohBy=lastCalledBy; freshR.qongiroq.izohAt=lastCalledAt; }
+        if(!freshR.qongiroqTarix)freshR.qongiroqTarix=[];
+        freshR.qongiroqTarix.push({sana:lastCalledDate, vaqt:lastCalledAt, kim:lastCalledBy, izoh:izohInp||''});
         savedNom=freshR.nom;
         var patchResp=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.baza415',{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({data:freshData})});
         if(patchResp.ok){
@@ -4603,6 +4605,8 @@ async function zvonok2SaveCalled(restoranId){
         freshR.qongiroq2.lastCalledBy=lastCalledBy;
         freshR.qongiroq2.lastCalledAt=lastCalledAt;
         if(izohInp){ freshR.qongiroq2.izoh=izohInp; freshR.qongiroq2.izohBy=lastCalledBy; freshR.qongiroq2.izohAt=lastCalledAt; }
+        if(!freshR.qongiroq2Tarix)freshR.qongiroq2Tarix=[];
+        freshR.qongiroq2Tarix.push({sana:lastCalledDate, vaqt:lastCalledAt, kim:lastCalledBy, izoh:izohInp||''});
         savedNom=freshR.nom;
         var patchResp=await fetch(SB_URL+'/rest/v1/biznes_data?id=eq.baza415',{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify({data:freshData})});
         if(patchResp.ok){
