@@ -3281,14 +3281,14 @@ function renderMuammoliDashboard(){
       <div class="mm-dash-title">🎟 Promokodlar</div>
       ${promokod7kunKeys.map(function(k,ki){
         var soni=(promokodByDate[k]||[]).length;
-        var label=ki===0?'Bugun':(ki===1?'Kecha':k.split('-').reverse().join('.'));
+        var label=k.split('-').reverse().join('.');
         return `<div class="mm-pending-item" style="cursor:pointer" onclick="muammoliShowPromokodDayList('${k}')">
           <span style="font-size:13px;color:var(--white)">${label}</span>
           <span style="font-weight:700;color:var(--lime)">${soni} ta</span>
         </div>`;
       }).join('')}
       <div class="mm-pending-item" style="border-top:1px solid var(--white-10);margin-top:6px;padding-top:10px">
-        <span style="font-size:13px;color:var(--white-80);font-weight:600">Oxirgi oy (jami)</span>
+        <span style="font-size:13px;color:var(--white-80);font-weight:600">${OY_NOMLARI[new Date().getMonth()]} (jami)</span>
         <span style="font-weight:700;color:var(--lime)">${promokodOylikSoni} ta · ${promokodOylikSumma.toLocaleString()} so'm</span>
       </div>
     </div>
