@@ -1378,7 +1378,7 @@ def build_zvonoklar_hisobot_excel(restoranlar: list) -> io.BytesIO:
 
 
 async def zvonoklar_hisobot_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """/zvonoklar_hisobot buyrug'i — bugungi Zvonok 1 va Zvonok 2
+    """/zvonoklar_hisobot buyrug'i — oxirgi 7 kunlik Zvonok 1 va Zvonok 2
     qo'ng'iroqlar holatini (bitta faylda, 2 ta varaq) yuboradi."""
     await update.message.reply_text("⏳ Tayyorlanmoqda, biroz kuting...")
     try:
