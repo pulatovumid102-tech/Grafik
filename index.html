@@ -3432,7 +3432,7 @@ function muammoliShowFilteredList(filterType,value){
       var turiNom=entry[0], soni=entry[1];
       var isOpen=!!muammoliTuriGroupExpanded[turiNom];
       var turiEsc=esc(turiNom).replace(/'/g,"\\'");
-      var groupItems=items.filter(function(it){ return (it.turi||'Boshqa')===turiNom; });
+      var groupItems=items.filter(function(it){ return (it.turi||'Boshqa')===turiNom; }).sort(function(a,b){ return new Date(b.createdAt||0)-new Date(a.createdAt||0); });
       var cardsHtml=isOpen?groupItems.map(function(it){ return muammoliCard(it); }).join(''):'';
       return `<div style="margin-bottom:8px">
         <div class="mm-action-row" onclick="muammoliToggleTuriGroup('${turiEsc}')">
@@ -3463,7 +3463,7 @@ function muammoliShowFilteredList(filterType,value){
     return;
   }
 
-  var rows=items.map(function(it){ return muammoliCard(it); }).join('');
+  var rows=items.slice().sort(function(a,b){ return new Date(b.createdAt||0)-new Date(a.createdAt||0); }).map(function(it){ return muammoliCard(it); }).join('');
   if(!rows) rows='<div style="text-align:center;padding:16px;color:var(--white-50);font-size:13px">Topilmadi</div>';
   var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:12px">${esc(value)}</div>
     <div style="max-height:70vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px">${rows}</div>
