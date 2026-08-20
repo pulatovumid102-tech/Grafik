@@ -1267,6 +1267,112 @@ def build_murojaatlar_hisobot_excel(items: list, davr_boshlanish: str, davr_tuga
     return buf
 
 
+def _zvonok_fill_sheet(ws, title: str, fill_color: str, restoranlar: list, qongiroq_field: str, today_str: str, today_display: str):
+    normal = Font(name="Arial", size=10)
+    header_font = Font(name="Arial", bold=True, size=10, color="FFFFFF")
+    header_fill = PatternFill("solid", fgColor=fill_color)
+    thin = Side(style="thin", color="666666")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    center = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    left = Alignment(horizontal="left", vertical="center", wrap_text=True)
+
+    ws.merge_cells("A1:H1")
+    ws["A1"] = f"Sana: {today_display}"
+    ws["A1"].font = Font(name="Arial", bold=True, size=13)
+    ws.row_dimensions[1].height = 22
+
+    ws.merge_cells("A2:H2")
+    ws["A2"] = title
+    ws["A2"].font = Font(name="Arial", bold=True, size=12, color=fill_color)
+    ws.row_dimensions[2].height = 20
+
+    headers = ["Sana", "№", "Restoran", "Berish vaqti", "Tel qilindimi", "Qo'ng'iroq vaqti", "Kim qildi", "Izoh"]
+    header_row = 4
+    ws.row_dimensions[header_row].height = 20
+    for i, h in enumerate(headers, start=1):
+        c = ws.cell(row=header_row, column=i, value=h)
+        c.font = header_font
+        c.fill = header_fill
+        c.border = border
+        c.alignment = center
+
+    faol = sorted(
+        [r for r in restoranlar if r.get("berishVaqtiDan") and not r.get("yashilHamkor")],
+        key=lambda r: (r.get("nom") or "").lower(),
+    )
+    for idx, r in enumerate(faol, start=1):
+        row_n = header_row + idx
+        ws.row_dimensions[row_n].height = 22
+        q = r.get(qongiroq_field) or {}
+        called_today = q.get("lastCalledDate") == today_str
+        gacha = r.get("berishVaqtiGacha") or ""
+        vaqt = f"{r.get('berishVaqtiDan','')}{'–'+gacha if gacha else ''}"
+        call_time = "—"
+        if called_today and q.get("lastCalledAt"):
+            try:
+                call_dt = datetime.fromisoformat(q["lastCalledAt"].replace("Z", "+00:00")).astimezone(TASHKENT_TZ)
+                call_time = call_dt.strftime("%H:%M")
+            except Exception:
+                call_time = "—"
+        row_vals = [
+            today_display,
+            idx,
+            r.get("nom") or "—",
+            vaqt,
+            "✅ Ha" if called_today else "❌ Yo'q",
+            call_time if called_today else "—",
+            q.get("lastCalledBy") or "—" if called_today else "—",
+            q.get("izoh") or "—",
+        ]
+        for c_idx, val in enumerate(row_vals, start=1):
+            cell = ws.cell(row=row_n, column=c_idx, value=val)
+            cell.font = normal
+            cell.border = border
+            cell.alignment = center if c_idx in (1, 2, 4, 5, 6) else left
+
+    widths = [12, 5, 24, 14, 16, 16, 20, 30]
+    for i, w in enumerate(widths, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+
+def build_zvonoklar_hisobot_excel(restoranlar: list) -> io.BytesIO:
+    now = datetime.now(TASHKENT_TZ)
+    today_str = now.strftime("%Y-%m-%d")
+    today_display = now.strftime("%d.%m.%Y")
+
+    wb = Workbook()
+    ws1 = wb.active
+    ws1.title = "Zvonok 1"
+    _zvonok_fill_sheet(ws1, "ZVONOK 1 — QO'NG'IROQLAR RO'YXATI", "1E7A4A", restoranlar, "qongiroq", today_str, today_display)
+
+    ws2 = wb.create_sheet("Zvonok 2")
+    _zvonok_fill_sheet(ws2, "ZVONOK 2 — QO'NG'IROQLAR RO'YXATI", "8a5c00", restoranlar, "qongiroq2", today_str, today_display)
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf
+
+
+async def zvonoklar_hisobot_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/zvonoklar_hisobot buyrug'i — bugungi Zvonok 1 va Zvonok 2
+    qo'ng'iroqlar holatini (bitta faylda, 2 ta varaq) yuboradi."""
+    await update.message.reply_text("⏳ Tayyorlanmoqda, biroz kuting...")
+    try:
+        rows = await sb_get("biznes_data", params={"id": "eq.baza415"})
+        baza_data = rows[0]["data"] if rows else {}
+        restoranlar = baza_data.get("restoranlar", []) if isinstance(baza_data, dict) else []
+
+        buf = build_zvonoklar_hisobot_excel(restoranlar)
+        date_tag = datetime.now(TASHKENT_TZ).strftime("%Y%m%d")
+        await update.message.reply_document(document=buf, filename=f"zvonoklar_hisobot_{date_tag}.xlsx")
+        log.info("Zvonoklar hisoboti yuborildi")
+    except Exception as e:
+        log.error("Zvonoklar hisoboti xatosi: %s", e)
+        await update.message.reply_text("⚠️ Xatolik yuz berdi.")
+
+
+
 async def murojaatlar_hisobot_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """/murojaatlar_hisobot buyrug'i — oxirgi 30 kunlik murojaatlar
     (mijoz, restoran, muammo, yechim bilan) Excel faylini yuboradi."""
@@ -2640,6 +2746,7 @@ def main() -> None:
     app.add_handler(CommandHandler("test_hisobot", test_hisobot_cmd))
     app.add_handler(CommandHandler("test_baza415", test_baza415_cmd))
     app.add_handler(CommandHandler("murojaatlar_hisobot", murojaatlar_hisobot_cmd))
+    app.add_handler(CommandHandler("zvonoklar_hisobot", zvonoklar_hisobot_cmd))
     app.add_handler(CommandHandler("test_jihozlar", test_jihozlar_cmd))
     app.add_handler(CommandHandler("noaktiv_hamkorlar", noaktiv_hamkorlar_cmd))
     app.add_handler(MessageHandler(filters.PHOTO, handle_support_photo))
