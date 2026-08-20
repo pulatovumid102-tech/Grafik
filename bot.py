@@ -1275,7 +1275,7 @@ def build_murojaatlar_hisobot_excel(items: list, davr_boshlanish: str, davr_tuga
     return buf
 
 
-def _zvonok_fill_sheet(ws, title: str, fill_color: str, restoranlar: list, qongiroq_field: str, today_str: str, today_display: str):
+def _zvonok_fill_sheet(ws, title: str, fill_color: str, restoranlar: list, tarix_field: str, davr_boshlanish: str, davr_tugash: str):
     normal = Font(name="Arial", size=10)
     header_font = Font(name="Arial", bold=True, size=10, color="FFFFFF")
     header_fill = PatternFill("solid", fgColor=fill_color)
@@ -1284,17 +1284,17 @@ def _zvonok_fill_sheet(ws, title: str, fill_color: str, restoranlar: list, qongi
     center = Alignment(horizontal="center", vertical="center", wrap_text=True)
     left = Alignment(horizontal="left", vertical="center", wrap_text=True)
 
-    ws.merge_cells("A1:H1")
-    ws["A1"] = f"Sana: {today_display}"
+    ws.merge_cells("A1:G1")
+    ws["A1"] = f"Davr: {davr_boshlanish} — {davr_tugash}"
     ws["A1"].font = Font(name="Arial", bold=True, size=13)
     ws.row_dimensions[1].height = 22
 
-    ws.merge_cells("A2:H2")
+    ws.merge_cells("A2:G2")
     ws["A2"] = title
     ws["A2"].font = Font(name="Arial", bold=True, size=12, color=fill_color)
     ws.row_dimensions[2].height = 20
 
-    headers = ["Sana", "№", "Restoran", "Berish vaqti", "Tel qilindimi", "Qo'ng'iroq vaqti", "Kim qildi", "Izoh"]
+    headers = ["Sana", "Restoran", "Berish vaqti", "Qo'ng'iroq vaqti", "Kim qildi", "Izoh"]
     header_row = 4
     ws.row_dimensions[header_row].height = 20
     for i, h in enumerate(headers, start=1):
@@ -1304,57 +1304,72 @@ def _zvonok_fill_sheet(ws, title: str, fill_color: str, restoranlar: list, qongi
         c.border = border
         c.alignment = center
 
-    faol = sorted(
-        [r for r in restoranlar if r.get("berishVaqtiDan") and not r.get("yashilHamkor")],
-        key=lambda r: (r.get("nom") or "").lower(),
-    )
-    for idx, r in enumerate(faol, start=1):
-        row_n = header_row + idx
-        ws.row_dimensions[row_n].height = 22
-        q = r.get(qongiroq_field) or {}
-        called_today = q.get("lastCalledDate") == today_str
+    now = datetime.now(TASHKENT_TZ)
+    chegara_str = (now - timedelta(days=7)).strftime("%Y-%m-%d")
+
+    qatorlar = []
+    for r in restoranlar:
         gacha = r.get("berishVaqtiGacha") or ""
         vaqt = f"{r.get('berishVaqtiDan','')}{'–'+gacha if gacha else ''}"
-        call_time = "—"
-        if called_today and q.get("lastCalledAt"):
+        tarix = r.get(tarix_field) or []
+        for entry in tarix:
+            sana = entry.get("sana") or ""
+            if sana < chegara_str:
+                continue
+            call_time = "—"
+            if entry.get("vaqt"):
+                try:
+                    call_dt = datetime.fromisoformat(entry["vaqt"].replace("Z", "+00:00")).astimezone(TASHKENT_TZ)
+                    call_time = call_dt.strftime("%H:%M")
+                except Exception:
+                    call_time = "—"
+            qatorlar.append({
+                "sana": sana,
+                "nom": r.get("nom") or "—",
+                "vaqt": vaqt,
+                "call_time": call_time,
+                "kim": entry.get("kim") or "—",
+                "izoh": entry.get("izoh") or "—",
+            })
+
+    qatorlar.sort(key=lambda q: (q["sana"], q["call_time"]), reverse=True)
+
+    for idx, q in enumerate(qatorlar, start=1):
+        row_n = header_row + idx
+        ws.row_dimensions[row_n].height = 22
+        sana_display = "—"
+        if q["sana"]:
             try:
-                call_dt = datetime.fromisoformat(q["lastCalledAt"].replace("Z", "+00:00")).astimezone(TASHKENT_TZ)
-                call_time = call_dt.strftime("%H:%M")
+                sana_display = datetime.strptime(q["sana"], "%Y-%m-%d").strftime("%d.%m.%Y")
             except Exception:
-                call_time = "—"
-        row_vals = [
-            today_display,
-            idx,
-            r.get("nom") or "—",
-            vaqt,
-            "✅ Ha" if called_today else "❌ Yo'q",
-            call_time if called_today else "—",
-            q.get("lastCalledBy") or "—" if called_today else "—",
-            q.get("izoh") or "—",
-        ]
+                sana_display = q["sana"]
+        row_vals = [sana_display, q["nom"], q["vaqt"], q["call_time"], q["kim"], q["izoh"]]
         for c_idx, val in enumerate(row_vals, start=1):
             cell = ws.cell(row=row_n, column=c_idx, value=val)
             cell.font = normal
             cell.border = border
-            cell.alignment = center if c_idx in (1, 2, 4, 5, 6) else left
+            cell.alignment = center if c_idx in (1, 3, 4) else left
 
-    widths = [12, 5, 24, 14, 16, 16, 20, 30]
+    if not qatorlar:
+        ws.cell(row=header_row + 1, column=1, value="Oxirgi 7 kunda qo'ng'iroq qilinmagan").font = normal
+
+    widths = [12, 24, 14, 16, 20, 30]
     for i, w in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(i)].width = w
 
 
 def build_zvonoklar_hisobot_excel(restoranlar: list) -> io.BytesIO:
     now = datetime.now(TASHKENT_TZ)
-    today_str = now.strftime("%Y-%m-%d")
-    today_display = now.strftime("%d.%m.%Y")
+    davr_boshlanish = (now - timedelta(days=7)).strftime("%d.%m.%Y")
+    davr_tugash = now.strftime("%d.%m.%Y")
 
     wb = Workbook()
     ws1 = wb.active
     ws1.title = "Zvonok 1"
-    _zvonok_fill_sheet(ws1, "ZVONOK 1 — QO'NG'IROQLAR RO'YXATI", "1E7A4A", restoranlar, "qongiroq", today_str, today_display)
+    _zvonok_fill_sheet(ws1, "ZVONOK 1 — QO'NG'IROQLAR RO'YXATI (oxirgi 7 kun)", "1E7A4A", restoranlar, "qongiroqTarix", davr_boshlanish, davr_tugash)
 
     ws2 = wb.create_sheet("Zvonok 2")
-    _zvonok_fill_sheet(ws2, "ZVONOK 2 — QO'NG'IROQLAR RO'YXATI", "8a5c00", restoranlar, "qongiroq2", today_str, today_display)
+    _zvonok_fill_sheet(ws2, "ZVONOK 2 — QO'NG'IROQLAR RO'YXATI (oxirgi 7 kun)", "8a5c00", restoranlar, "qongiroq2Tarix", davr_boshlanish, davr_tugash)
 
     buf = io.BytesIO()
     wb.save(buf)
