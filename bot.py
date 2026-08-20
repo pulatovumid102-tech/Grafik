@@ -2790,9 +2790,6 @@ def main() -> None:
     app.job_queue.run_daily(daily_muammoli_reminder, time=dt_time(hour=15, minute=0, tzinfo=TASHKENT_TZ))
     app.job_queue.run_daily(daily_muammoli_reminder, time=dt_time(hour=19, minute=0, tzinfo=TASHKENT_TZ))
 
-    # Muammoli mijozlar — 24 soatlik muddat nazorati, har 30 daqiqada tekshiriladi
-    app.job_queue.run_repeating(check_overdue_muammoli, interval=1800, first=60)
-
     # 415 baza — ovqat berish vaqtiga 1 soat qolganda Partnership guruhiga eslatma
     app.job_queue.run_repeating(check_serving_time_reminders, interval=60, first=30)
     app.job_queue.run_repeating(check_calling_status_before_serving, interval=60, first=45)
@@ -2823,7 +2820,6 @@ def main() -> None:
     # Partnership — kunlik qo'ng'iroqlar hisoboti, har kuni 23:00 (Toshkent vaqti)
     app.job_queue.run_daily(daily_calling_report, time=dt_time(hour=23, minute=0, tzinfo=TASHKENT_TZ))
     app.job_queue.run_daily(daily_zvonok2_report, time=dt_time(hour=23, minute=0, tzinfo=TASHKENT_TZ))
-    app.job_queue.run_daily(daily_muammoli_hamkorlar_reminder, time=dt_time(hour=23, minute=0, tzinfo=TASHKENT_TZ))
 
     # Kaiten — dedlaynga 2 soat qolganda eslatma, har daqiqada tekshiriladi
     app.job_queue.run_repeating(check_deadline_2h_before, interval=60, first=50)
