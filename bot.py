@@ -1240,13 +1240,21 @@ def build_murojaatlar_hisobot_excel(items: list, davr_boshlanish: str, davr_tuga
         r = header_row + r_off
         ws.row_dimensions[r].height = 34
         holati = "Hal qilindi" if it.get("holati") == "hal_qilindi" else "Ochiq"
+        qabul_vaqti = ""
+        if it.get("createdAt"):
+            try:
+                qabul_dt = datetime.fromisoformat(it["createdAt"].replace("Z", "+00:00")).astimezone(TASHKENT_TZ)
+                qabul_vaqti = " (" + qabul_dt.strftime("%H:%M") + ")"
+            except Exception:
+                qabul_vaqti = ""
+        qabul_qildi_val = (it.get("createdByName") or "—") + (qabul_vaqti if it.get("createdByName") else "")
         row_vals = [
             _fmt_date_only(it.get("createdAt", "")),
             it.get("ism") or "—",
             it.get("restoran") or "—",
             it.get("turi") or "—",
             it.get("izoh") or "—",
-            it.get("createdByName") or "—",
+            qabul_qildi_val,
             holati,
             it.get("yechimIzohi") or "—",
             it.get("halQildiBy") or "—",
