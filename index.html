@@ -3179,6 +3179,16 @@ function renderMuammoliDashboard(){
   var promokodOylikSoni=promokodOylik.length;
   var promokodOylikSumma=promokodOylikSoni*PROMOKOD_SUMMA;
   window.muammoliPromokodOylik=promokodOylik;
+
+  // Barcha oylarni (kamayish tartibida) hisoblaymiz
+  var promokodByOy={};
+  promokodItems.forEach(function(it){
+    var dt=new Date(it.archivedAt);
+    var oyKey=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');
+    promokodByOy[oyKey]=(promokodByOy[oyKey]||0)+1;
+  });
+  var promokodOyKeys=Object.keys(promokodByOy).sort().reverse();
+  window.muammoliPromokodByOy=promokodByOy;
   window.muammoliPromokodByDate=promokodByDate;
 
   // Eng ko'p shikoyat qilingan restoranlar (faqat restoran bilan bog'liqlar)
@@ -3288,9 +3298,18 @@ function renderMuammoliDashboard(){
           <span style="font-weight:700;color:var(--lime)">${soni} ta</span>
         </div>`;
       }).join('')}
-      <div class="mm-pending-item" style="cursor:pointer;border-top:1px solid var(--white-10);margin-top:6px;padding-top:10px" onclick="muammoliShowPromokodMonthList()">
-        <span style="font-size:13px;color:var(--white-80);font-weight:600">${OY_NOMLARI[new Date().getMonth()]} (jami)</span>
-        <span style="font-weight:700;color:var(--lime)">${promokodOylikSoni} ta · ${promokodOylikSumma.toLocaleString()} so'm</span>
+      <div style="border-top:1px solid var(--white-10);margin-top:6px;padding-top:6px">
+        <div style="font-size:11px;color:var(--white-50);margin-bottom:4px">Oylar bo'yicha:</div>
+        ${promokodOyKeys.map(function(oyKey){
+          var parts=oyKey.split('-');
+          var oyNomi=OY_NOMLARI[parseInt(parts[1],10)-1]+' '+parts[0];
+          var soni=promokodByOy[oyKey];
+          var summa=soni*PROMOKOD_SUMMA;
+          return `<div class="mm-pending-item" style="cursor:pointer" onclick="muammoliShowPromokodMonthList('${oyKey}')">
+            <span style="font-size:13px;color:var(--white-80);font-weight:600">${esc(oyNomi)}</span>
+            <span style="font-weight:700;color:var(--lime)">${soni} ta · ${summa.toLocaleString()} so'm</span>
+          </div>`;
+        }).join('')}
       </div>
     </div>
     <div class="mm-dash-section">
@@ -3400,16 +3419,20 @@ function muammoliRestoranDashSearch(q){
   var matched=all.filter(function(e){ return e[0].toLowerCase().includes(q); });
   el.innerHTML=matched.length?matched.map(function(e){ return muammoliRestoranBarRow(e[0],e[1]); }).join(''):'<div style="text-align:center;padding:12px;color:var(--white-50);font-size:13px">Topilmadi</div>';
 }
-function muammoliShowPromokodMonthList(){
+function muammoliShowPromokodMonthList(oyKey){
   var promokodByDate=window.muammoliPromokodByDate||{};
-  var today=new Date();
   function dateKey(d){
     var y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
     return y+'-'+m+'-'+day;
   }
+  var parts=oyKey.split('-');
+  var yil=parseInt(parts[0],10), oyIdx=parseInt(parts[1],10)-1;
+  var today=new Date();
+  var isCurrentMonth=(yil===today.getFullYear() && oyIdx===today.getMonth());
+  var oxirgiKun=isCurrentMonth?today.getDate():new Date(yil,oyIdx+1,0).getDate();
   var kunlar=[];
-  for(var d=1; d<=today.getDate(); d++){
-    var dt=new Date(today.getFullYear(), today.getMonth(), d);
+  for(var d=1; d<=oxirgiKun; d++){
+    var dt=new Date(yil, oyIdx, d);
     kunlar.push(dateKey(dt));
   }
   kunlar.reverse();
@@ -3421,7 +3444,7 @@ function muammoliShowPromokodMonthList(){
     </div>`;
   }).join('');
   var OY_NOMLARI2=['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
-  var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:12px">🎟 Promokodlar — ${OY_NOMLARI2[today.getMonth()]}</div>
+  var html=`<div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:12px">🎟 Promokodlar — ${OY_NOMLARI2[oyIdx]} ${yil}</div>
     <div style="max-height:65vh;overflow-y:auto">${rows}</div>
     <button class="fcancel" style="width:100%;margin-top:12px" onclick="orgCloseModal()">Yopish</button>`;
   orgShowModal(html);
