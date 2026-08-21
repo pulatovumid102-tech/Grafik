@@ -1911,8 +1911,9 @@ async def daily_baza415_report(context: ContextTypes.DEFAULT_TYPE) -> None:
 async def check_yashil_hamkor_auto(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Har kuni tekshiradi: faollashtirilgan sanasidan 15 kun o'tgan, hali
     Yashil hamkor bo'lmagan restoranlarni. Agar shu 15 kun ichida bitta
-    muammo turi 3 martaga yetmagan bo'lsa — avtomatik Yashil hamkor qiladi
-    va 415 baza guruhiga xabar beradi."""
+    muammo turi 3 martaga yetmagan bo'lsa — avtomatik Yashil hamkor qiladi.
+    Xabar FAQAT bazaga muvaffaqiyatli yozilgandan keyin yuboriladi — shunda
+    xabar va haqiqiy holat hech qachon bir-biridan farq qilmaydi."""
     app = context.application
     try:
         baza_rows = await sb_get("biznes_data", params={"id": "eq.baza415"})
@@ -1924,7 +1925,6 @@ async def check_yashil_hamkor_auto(context: ContextTypes.DEFAULT_TYPE) -> None:
         items = muammoli_data.get("items", []) if isinstance(muammoli_data, dict) else []
 
         now = datetime.now(timezone.utc)
-        newly_green_ids = []
 
         for r in restoranlar:
             if r.get("yashilHamkor"):
@@ -1957,9 +1957,22 @@ async def check_yashil_hamkor_auto(context: ContextTypes.DEFAULT_TYPE) -> None:
             if max_count >= 3:
                 continue  # muammoli hamkor bo'lgan, yashil bo'lolmaydi
 
-            newly_green_ids.append(r.get("id"))
+            rest_id = r.get("id")
+            rest_nom = r.get("nom", "—")
+            yashil_sana = now.isoformat()
 
-            lines = ["🟢 YASHIL HAMKOR STATUSIGA O'TDI", "", f"🏪 {r.get('nom','—')}", "📅 15 kunlik kuzatuv davomida yashil hamkor statusini oldi", ""]
+            def _mark(fresh_data, rid=rest_id, ysana=yashil_sana):
+                for fr in fresh_data.get("restoranlar", []):
+                    if fr.get("id") == rid:
+                        fr["yashilHamkor"] = True
+                        fr["yashilBelgilaganSana"] = ysana
+
+            saved_ok = await sb_mutate_and_save("baza415", _mark)
+            if not saved_ok:
+                log.error("Yashil hamkor: bazaga yozish muvaffaqiyatsiz — %s (keyingi tekshiruvda qayta urinib ko'riladi)", rest_nom)
+                continue  # xabar yuborilmaydi, keyingi safar qayta urinib ko'radi
+
+            lines = ["🟢 YASHIL HAMKOR STATUSIGA O'TDI", "", f"🏪 {rest_nom}", "📅 15 kunlik kuzatuv davomida yashil hamkor statusini oldi", ""]
             if counts:
                 lines.append("Kuzatuv davrida uchragan muammolar:")
                 for turi, c in counts.items():
@@ -1970,16 +1983,7 @@ async def check_yashil_hamkor_auto(context: ContextTypes.DEFAULT_TYPE) -> None:
             lines.append(datetime.now(TASHKENT_TZ).strftime("%d.%m.%Y"))
 
             await app.bot.send_message(chat_id=BAZA415_REPORT_GROUP_ID, text="\n".join(lines))
-            log.info("Avtomatik yashil hamkor: %s", r.get("nom"))
-
-        if newly_green_ids:
-            yashil_sana = now.isoformat()
-            def _mark(fresh_data):
-                for fr in fresh_data.get("restoranlar", []):
-                    if fr.get("id") in newly_green_ids:
-                        fr["yashilHamkor"] = True
-                        fr["yashilBelgilaganSana"] = yashil_sana
-            await sb_mutate_and_save("baza415", _mark)
+            log.info("Avtomatik yashil hamkor: %s", rest_nom)
     except Exception as e:
         log.error("Yashil hamkor avtomatik tekshiruvi xatosi: %s", e)
 
