@@ -1525,6 +1525,20 @@ FOTOGRAF_INFO = {
     "guvohnoma": "AF0838258",
 }
 
+
+def _jihoz_role(fio: str) -> str:
+    """Ism ичida qanday maxsus harf ('Ğ', o', ' va h.k.) ishlatilganidan
+    qat'iy nazar, xodimning fotograf yoki nazoratchi ekanini aniqlaydi
+    (faqat ismning o'zagini — 'tohir' yoki 'zilola' so'zini — qidiradi)."""
+    if not fio:
+        return None
+    normalized = fio.lower()
+    if "tohir" in normalized:
+        return "fotograf"
+    if "zilola" in normalized:
+        return "nazoratchi"
+    return None
+
 KUNLIK_JIHOZLAR_DATA = [
     [1, "Kamera", "Sony A7R4", "ILCE-7RM4A/WW44785"],
     [2, "Ob'ektiv", "Sony FE 24-105mm f4 G OSS", "SEL24105G/Q"],
@@ -1544,10 +1558,10 @@ HAFTALIK_JIHOZLAR_DATA = [
 
 # Kunlik jarayon: 4 ta video, tartib bo'yicha (kim yuborishi va tasdiq matni)
 JIHOZLAR_SEQUENCE = [
-    (NAZORATCHI_FIO, "✅ Jihozlar topshirildi va hujjatlar imzolandi. Endi mashinaga o'tasiz."),
-    (FOTOGRAF_FIO, "✅ Mashina Tohirga topshirildi."),
-    (FOTOGRAF_FIO, "✅ Tohir qaytib keldi. Endi jihozlarni qaytarishga o'tasiz."),
-    (NAZORATCHI_FIO, "✅ Jihozlar va mashina qaytarib olindi. Kun yakunlandi."),
+    ("nazoratchi", "✅ Jihozlar topshirildi va hujjatlar imzolandi. Endi mashinaga o'tasiz."),
+    ("fotograf", "✅ Mashina Tohirga topshirildi."),
+    ("fotograf", "✅ Tohir qaytib keldi. Endi jihozlarni qaytarishga o'tasiz."),
+    ("nazoratchi", "✅ Jihozlar va mashina qaytarib olindi. Kun yakunlandi."),
 ]
 
 
@@ -1811,7 +1825,8 @@ async def handle_jihozlar_video(update: Update, context: ContextTypes.DEFAULT_TY
             if username in parse_tg_field(n):
                 sender_fio = (n.get("fio") or "").strip()
                 break
-        if sender_fio not in (FOTOGRAF_FIO, NAZORATCHI_FIO):
+        sender_role = _jihoz_role(sender_fio)
+        if sender_role is None:
             return
 
         now = datetime.now(TASHKENT_TZ)
@@ -1825,8 +1840,8 @@ async def handle_jihozlar_video(update: Update, context: ContextTypes.DEFAULT_TY
         if step >= 4:
             return
 
-        expected_fio, confirm_text = JIHOZLAR_SEQUENCE[step]
-        if sender_fio != expected_fio:
+        expected_role, confirm_text = JIHOZLAR_SEQUENCE[step]
+        if sender_role != expected_role:
             return
 
         day_state["step"] = step + 1
